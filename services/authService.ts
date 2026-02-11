@@ -52,11 +52,10 @@ export async function login(
 
 export async function signup(
   payload: {
-    firstName: string;
-    lastName: string;
+    displayName: string;  // ✅ Changed from firstName/lastName
     email: string;
     password: string;
-    phone: string;
+    phoneNumber: string;  // ✅ Changed from phone
   },
   userType: 'customer' | 'provider'
 ) {
