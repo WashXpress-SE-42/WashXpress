@@ -7,6 +7,10 @@ export async function getToken() {
   return SecureStore.getItemAsync("accessToken");
 }
 
+export async function getUserType() {
+  return SecureStore.getItemAsync("userType");
+}
+
 function ensureToken(token: unknown): string {
   if (!token || typeof token !== "string") {
     throw new Error("No valid token returned from server");
@@ -14,7 +18,11 @@ function ensureToken(token: unknown): string {
   return token;
 }
 
-export async function login(email: string, password: string) {
+export async function login(
+  email: string, 
+  password: string, 
+  userType: 'customer' | 'provider'
+) {
   const res = await apiFetch<{
     data: {
       token: string;
@@ -23,28 +31,35 @@ export async function login(email: string, password: string) {
   }>("/auth/signin", {
     method: "POST",
     body: JSON.stringify({ email, password }),
-  });
+  }, userType);
 
   const customToken = ensureToken(res.data?.token);
+  console.log("✅ Got custom token from backend");
+
   const userCredential = await signInWithCustomToken(auth, customToken);
   const idToken = await userCredential.user.getIdToken();
+  console.log("✅ Got ID token from Firebase");
 
   await SecureStore.setItemAsync("accessToken", idToken);
+  await SecureStore.setItemAsync("userType", userType);
   await SecureStore.setItemAsync(
-    "customer",
+    userType === 'customer' ? "customer" : "provider",
     JSON.stringify(res.data?.user ?? null)
   );
 
-  return res.data?.user;
+  return { user: res.data?.user, userType };
 }
 
-export async function signup(payload: {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  phone: string;
-}) {
+export async function signup(
+  payload: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    phone: string;
+  },
+  userType: 'customer' | 'provider'
+) {
   const res = await apiFetch<{
     data: {
       token: string;
@@ -53,22 +68,22 @@ export async function signup(payload: {
   }>("/auth/signup", {
     method: "POST",
     body: JSON.stringify(payload),
-  });
+  }, userType);
 
   const customToken = ensureToken(res.data?.token);
   const userCredential = await signInWithCustomToken(auth, customToken);
   const idToken = await userCredential.user.getIdToken();
 
   await SecureStore.setItemAsync("accessToken", idToken);
+  await SecureStore.setItemAsync("userType", userType);
   await SecureStore.setItemAsync(
-    "customer",
+    userType === 'customer' ? "customer" : "provider",
     JSON.stringify(res.data?.user ?? null)
   );
 
-  return res.data?.user;
+  return { user: res.data?.user, userType };
 }
 
-// ✅ Add this back!
 export interface CustomerProfile {
   firstName?: string;
   lastName?: string;
@@ -88,5 +103,7 @@ export async function signOut() {
     // ignore if token expired etc.
   }
   await SecureStore.deleteItemAsync("accessToken");
+  await SecureStore.deleteItemAsync("userType");
   await SecureStore.deleteItemAsync("customer");
+  await SecureStore.deleteItemAsync("provider");
 }

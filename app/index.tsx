@@ -1,11 +1,12 @@
-import { Redirect, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
-import { getToken } from "../services/authService";
+import { Redirect } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { View, ActivityIndicator } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 export default function Index() {
-  const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userType, setUserType] = useState<'customer' | 'provider' | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -13,27 +14,35 @@ export default function Index() {
 
   const checkAuth = async () => {
     try {
-      const token = await getToken();
-      if (token) {
-        // TODO: Remove 'as any' once expo-router types are regenerated
-        router.replace("/home" as any);
-      } else {
-        router.replace("/login");
+      const token = await SecureStore.getItemAsync('accessToken');
+      const type = await SecureStore.getItemAsync('userType');
+
+      if (token && type) {
+        setIsAuthenticated(true);
+        setUserType(type as 'customer' | 'provider');
       }
-    } catch (e) {
-      router.replace("/login");
+    } catch (error) {
+      console.error('Auth check error:', error);
     } finally {
-      setIsChecking(false);
+      setIsLoading(false);
     }
   };
 
-  if (isChecking) {
+  if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
   }
 
-  return null;
+  if (isAuthenticated && userType === 'customer') {
+    return <Redirect href="/customer-home" />;
+  }
+
+  if (isAuthenticated && userType === 'provider') {
+    return <Redirect href="/provider-home" />;
+  }
+
+  return <Redirect href="/login" />;
 }
