@@ -1,8 +1,9 @@
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
 
-const API_BASE_URL =
-  Constants.expoConfig?.extra?.API_BASE_URL ?? "http://10.0.2.2:3000";
+const API_BASE_URL = 
+  Constants.expoConfig?.extra?.API_BASE_URL ?? 
+  "http://192.168.1.2:3000";
 
 async function getToken() {
   return await SecureStore.getItemAsync("accessToken");

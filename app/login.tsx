@@ -3,16 +3,27 @@ import { login } from "../services/authService";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
+import { getProfile } from '../services/authService';
 
 // Run this ONCE before login
-useEffect(() => {
-  const clearBadToken = async () => {
-    await SecureStore.deleteItemAsync("accessToken");
-    await SecureStore.deleteItemAsync("customer");
-    console.log("✅ Cleared old tokens");
-  };
-  clearBadToken();
-}, []);
+// useEffect(() => {
+//   const clearBadToken = async () => {
+//     await SecureStore.deleteItemAsync("accessToken");
+//     await SecureStore.deleteItemAsync("customer");
+//     console.log("✅ Cleared old tokens");
+//   };
+//   clearBadToken();
+// }, []);
+
+const testProfile = async () => {
+  try {
+    console.log("🔍 Fetching profile...");
+    const profile = await getProfile();
+    console.log("✅ Profile data:", profile);
+  } catch (error) {
+    console.error("❌ Profile fetch error:", error);
+  }
+}
 
 export default function Login() {
   const router = useRouter();
@@ -37,6 +48,10 @@ export default function Login() {
 
       // Helpful debug: remove later
       console.log("✅ login() result:", result);
+      
+
+      // Call it after login
+      testProfile();
 
       router.replace("/home");
     } catch (error: any) {
