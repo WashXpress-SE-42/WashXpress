@@ -69,7 +69,9 @@ export default function ProfileScreen() {
       <Text style={styles.title}>Profile</Text>
       <View style={styles.infoContainer}>
         <Text style={styles.label}>Name:</Text>
-        <Text style={styles.value}>{profile.firstName} {profile.lastName}</Text>
+        <Text style={styles.value}>
+          {profile.displayName || `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'No Name'}
+        </Text>
       </View>
       <View style={styles.infoContainer}>
         <Text style={styles.label}>Email:</Text>
@@ -77,7 +79,7 @@ export default function ProfileScreen() {
       </View>
       <View style={styles.infoContainer}>
         <Text style={styles.label}>Phone:</Text>
-        <Text style={styles.value}>{profile.phone}</Text>
+        <Text style={styles.value}>{profile.phoneNumber}</Text>
       </View>
       <Button title="Sign Out" onPress={handleSignOut} color="red" />
     </View>

@@ -18,19 +18,22 @@ function ensureToken(token: unknown): string {
   return token;
 }
 
-export async function login(
-  email: string, 
-  password: string, 
+export async function signin(
+  email: string,
+  password: string,
   userType: 'customer' | 'provider'
 ) {
+  const endpoint = '/auth/signin';
+
   const res = await apiFetch<{
     data: {
       token: string;
       user: any;
     };
-  }>("/auth/signin", {
+  }>(endpoint, {  // ✅ Use full endpoint path
     method: "POST",
     body: JSON.stringify({ email, password }),
+    requiresAuth: false,
   }, userType);
 
   const customToken = ensureToken(res.data?.token);
@@ -52,21 +55,24 @@ export async function login(
 
 export async function signup(
   payload: {
-    displayName: string;  // ✅ Changed from firstName/lastName
+    displayName: string;
     email: string;
     password: string;
-    phoneNumber: string;  // ✅ Changed from phone
+    phoneNumber: string;
   },
   userType: 'customer' | 'provider'
 ) {
+  const endpoint = '/auth/signup';
+
   const res = await apiFetch<{
     data: {
       token: string;
       user: any;
     };
-  }>("/auth/signup", {
+  }>(endpoint, {  // ✅ Use full endpoint path
     method: "POST",
     body: JSON.stringify(payload),
+    requiresAuth: false,
   }, userType);
 
   const customToken = ensureToken(res.data?.token);
@@ -84,14 +90,42 @@ export async function signup(
 }
 
 export interface CustomerProfile {
+  displayName?: string;
   firstName?: string;
   lastName?: string;
   email?: string;
-  phone?: string;
+  phoneNumber?: string;
+  vehicleInfo?: {
+    brand: string;
+    model: string;
+    color: string;
+    plateNumber: string;
+  };
+  vehicles?: {
+    id: string;
+    brand: string;
+    model: string;
+    color: string;
+    plateNumber: string;
+  }[];
+  addresses?: {
+    id: string;
+    label: string;
+    description: string;
+  }[];
+  services?: {
+    id: string;
+    name: string;
+    price: number;
+    duration: string;
+  }[];
+  subscription?: {
+    tier: string;
+  };
 }
 
 export async function getProfile() {
-  return apiFetch<CustomerProfile>("/profile");
+  return apiFetch<CustomerProfile>("/profile");  // ✅ This is correct with your base URL
 }
 
 export async function signOut() {

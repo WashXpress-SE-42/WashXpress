@@ -13,7 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { login } from '../services/authService';
+import { signin } from '../services/authService';
 
 export default function LoginScreen() {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'provider'>('customer');
@@ -31,14 +31,14 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       console.log(`🔐 Logging in as ${selectedRole}...`);
-      const result = await login(email, password, selectedRole);
+      const result = await signin(email, password, selectedRole);
       console.log('✅ Login successful:', result);
 
       // Navigate based on role
       if (selectedRole === 'customer') {
-        router.replace('/customer-home' as any);
+        router.replace('/customerOrderScreen' as any);
       } else {
-        router.replace('/provider-home' as any);
+        router.replace('/washerJobBoardScreen' as any);
       }
     } catch (error: any) {
       console.error('❌ Login error:', error);
@@ -47,7 +47,6 @@ export default function LoginScreen() {
       setLoading(false);
     }
   };
-
   return (
     <>
       <StatusBar barStyle="light-content" />

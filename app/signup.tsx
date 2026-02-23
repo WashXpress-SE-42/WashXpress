@@ -20,20 +20,20 @@ import { signup } from '../services/authService';
 const carTypes = ['Sedan', 'SUV', 'Hatchback', 'Coupe', 'Convertible', 'Truck', 'Van', 'Wagon'];
 
 const carBrands = [
-  'Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz', 
-  'Audi', 'Volkswagen', 'Nissan', 'Hyundai', 'Kia', 'Mazda', 
+  'Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz',
+  'Audi', 'Volkswagen', 'Nissan', 'Hyundai', 'Kia', 'Mazda',
   'Subaru', 'Tesla', 'Lexus', 'Acura', 'Other'
 ];
 
 const carColors = [
-  'White', 'Black', 'Silver', 'Gray', 'Red', 'Blue', 
+  'White', 'Black', 'Silver', 'Gray', 'Red', 'Blue',
   'Green', 'Yellow', 'Orange', 'Brown', 'Beige', 'Gold', 'Other'
 ];
 
 export default function SignupScreen() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  
+
   // Step 1 - Personal Information
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -41,7 +41,7 @@ export default function SignupScreen() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // Step 2 - Vehicle Information
   const [carType, setCarType] = useState('');
   const [carBrand, setCarBrand] = useState('');
@@ -73,73 +73,73 @@ export default function SignupScreen() {
     }
   };
 
-const handleSignup = async () => {
-  if (!isStep2Valid) {
-    Alert.alert('Error', 'Please fill in all vehicle details');
-    return;
-  }
-
-  // Validate phone number (9 or 10 digits)
-  if (phone.length !== 9 && phone.length !== 10) {
-    Alert.alert('Error', 'Phone number must be 9 or 10 digits');
-    return;
-  }
-
-  setLoading(true);
-  try {
-    console.log('📝 Creating account...');
-    
-    // ✅ Remove leading 0 if present
-    const cleanedPhone = phone.startsWith('0') ? phone.substring(1) : phone;
-    
-    const payload = {
-      displayName: `${firstName} ${lastName}`,
-      email,
-      password,
-      phoneNumber: `+94${cleanedPhone}`,  // ✅ Always 9 digits after +94
-    };
-
-    console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
-
-    await signup(payload, 'customer');
-    console.log('✅ Account created successfully');
-    
-    Alert.alert(
-      'Success!',
-      'Your account has been created successfully.',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.replace('/customer-home'),
-        },
-      ]
-    );
-  } catch (error: any) {
-    console.error('❌ Signup error:', error);
-    
-    let errorMessage = error.message || 'Failed to create account';
-    if (error.message === 'Validation failed') {
-      errorMessage = 'Please check:\n• Email format is valid\n• Phone number is 9-10 digits\n• Password is at least 6 characters';
+  const handleSignup = async () => {
+    if (!isStep2Valid) {
+      Alert.alert('Error', 'Please fill in all vehicle details');
+      return;
     }
-    
-    Alert.alert('Registration Failed', errorMessage);
-  } finally {
-    setLoading(false);
-  }
-};
 
-  const SelectModal = ({ 
-    visible, 
-    onClose, 
-    title, 
-    options, 
-    onSelect, 
-    selectedValue 
-  }: { 
-    visible: boolean; 
-    onClose: () => void; 
-    title: string; 
-    options: string[]; 
+    // Validate phone number (9 or 10 digits)
+    if (phone.length !== 9 && phone.length !== 10) {
+      Alert.alert('Error', 'Phone number must be 9 or 10 digits');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('📝 Creating account...');
+
+      // ✅ Remove leading 0 if present
+      const cleanedPhone = phone.startsWith('0') ? phone.substring(1) : phone;
+
+      const payload = {
+        displayName: `${firstName} ${lastName}`,
+        email,
+        password,
+        phoneNumber: `+94${cleanedPhone}`,  // ✅ Always 9 digits after +94
+      };
+
+      console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
+
+      await signup(payload, 'customer');
+      console.log('✅ Account created successfully');
+
+      Alert.alert(
+        'Success!',
+        'Your account has been created successfully.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/customerOrderScreen' as any),
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('❌ Signup error:', error);
+
+      let errorMessage = error.message || 'Failed to create account';
+      if (error.message === 'Validation failed') {
+        errorMessage = 'Please check:\n• Email format is valid\n• Phone number is 9-10 digits\n• Password is at least 6 characters';
+      }
+
+      Alert.alert('Registration Failed', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const SelectModal = ({
+    visible,
+    onClose,
+    title,
+    options,
+    onSelect,
+    selectedValue
+  }: {
+    visible: boolean;
+    onClose: () => void;
+    title: string;
+    options: string[];
     onSelect: (value: string) => void;
     selectedValue: string;
   }) => (
@@ -190,7 +190,7 @@ const handleSignup = async () => {
   return (
     <>
       <StatusBar barStyle="dark-content" />
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
@@ -213,7 +213,7 @@ const handleSignup = async () => {
           <View style={[styles.progressFill, { width: `${(step / 2) * 100}%` }]} />
         </View>
 
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
@@ -312,10 +312,10 @@ const handleSignup = async () => {
                     style={styles.eyeIcon}
                     onPress={() => setShowPassword(!showPassword)}
                   >
-                    <Ionicons 
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'} 
-                      size={20} 
-                      color="#9ca3af" 
+                    <Ionicons
+                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={20}
+                      color="#9ca3af"
                     />
                   </TouchableOpacity>
                 </View>
@@ -625,36 +625,36 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   phoneInputContainer: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  borderWidth: 1,
-  borderColor: '#d1d5db',
-  borderRadius: 12,
-  backgroundColor: '#fff',
-  overflow: 'hidden',
-},
-phonePrefix: {
-  paddingHorizontal: 16,
-  paddingVertical: 12,
-  backgroundColor: '#f3f4f6',
-},
-phonePrefixText: {
-  fontSize: 16,
-  fontWeight: '600',
-  color: '#374151',
-},
-phoneDivider: {
-  width: 1,
-  height: 24,
-  backgroundColor: '#d1d5db',
-},
-phoneInput: {
-  flex: 1,
-  paddingHorizontal: 16,
-  paddingVertical: 12,
-  fontSize: 16,
-  color: '#111827',
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+  phonePrefix: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#f3f4f6',
+  },
+  phonePrefixText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  phoneDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#d1d5db',
+  },
+  phoneInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#111827',
+  },
   summaryLabel: {
     fontSize: 14,
     color: '#3b82f6',

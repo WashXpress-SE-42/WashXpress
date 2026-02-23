@@ -2,6 +2,22 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow customers to read/write their own data
+    match /customers/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    
+    // Allow providers to read bookings
+    match /bookings/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow anyone authenticated to read services
+    match /Service/{document=**} {
+      allow read: if request.auth != null;
+    }
+    
+    // Default deny
     match /{document=**} {
       allow read, write: if false;
     }
