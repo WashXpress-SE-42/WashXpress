@@ -90,6 +90,7 @@ export async function signup(
 }
 
 export interface CustomerProfile {
+  uid?: string;
   displayName?: string;
   firstName?: string;
   lastName?: string;
