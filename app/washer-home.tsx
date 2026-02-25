@@ -243,7 +243,7 @@ export default function WasherHomeScreen() {
 
                 <TouchableOpacity
                     style={styles.notificationButton}
-                    onPress={() => router.push('/washer-notifications')}
+                    onPress={() => router.push('/washer-notifications' as any)}
                 >
                     {pendingRequests.length > 0 && (
                         <View style={styles.badge}>
@@ -262,7 +262,7 @@ export default function WasherHomeScreen() {
                 {currentJob ? (
                     <TouchableOpacity
                         style={styles.currentJobBanner}
-                        onPress={() => router.push(`/washer-booking-details?id=${currentJob.id}`)}
+                        onPress={() => router.push(`/washer-booking-details?id=${currentJob.id}` as any)}
                     >
                         <View style={styles.currentJobHeader}>
                             <View style={styles.pulseIndicator} />
@@ -337,7 +337,7 @@ export default function WasherHomeScreen() {
                 <View style={styles.earningsCard}>
                     <View style={styles.earningsHeader}>
                         <Text style={styles.sectionTitle}>Earnings</Text>
-                        <TouchableOpacity onPress={() => router.push('/washer-earnings')}>
+                        <TouchableOpacity onPress={() => router.push('/washer-earnings' as any)}>
                             <Text style={styles.viewAllText}>View All</Text>
                         </TouchableOpacity>
                     </View>
@@ -436,7 +436,7 @@ export default function WasherHomeScreen() {
 
                         <TouchableOpacity
                             style={styles.nextBookingCard}
-                            onPress={() => router.push(`/washer-booking-details?id=${nextBooking.id}`)}
+                            onPress={() => router.push(`/washer-booking-details?id=${nextBooking.id}` as any)}
                         >
                             <View style={styles.nextBookingHeader}>
                                 <View>
@@ -485,7 +485,7 @@ export default function WasherHomeScreen() {
                     <View style={styles.quickActionsGrid}>
                         <TouchableOpacity
                             style={styles.quickActionCard}
-                            onPress={() => router.push('/washer-bookings')}
+                            onPress={() => router.push('/washer-bookings' as any)}
                         >
                             <Ionicons name="calendar-outline" size={32} color="#007AFF" />
                             <Text style={styles.quickActionText}>My Bookings</Text>
@@ -493,7 +493,7 @@ export default function WasherHomeScreen() {
 
                         <TouchableOpacity
                             style={styles.quickActionCard}
-                            onPress={() => router.push('/washer-earnings')}
+                            onPress={() => router.push('/washer-earnings' as any)}
                         >
                             <Ionicons name="stats-chart-outline" size={32} color="#007AFF" />
                             <Text style={styles.quickActionText}>Earnings</Text>
@@ -501,7 +501,7 @@ export default function WasherHomeScreen() {
 
                         <TouchableOpacity
                             style={styles.quickActionCard}
-                            onPress={() => router.push('/washer-reviews')}
+                            onPress={() => router.push('/washer-reviews' as any)}
                         >
                             <Ionicons name="star-outline" size={32} color="#007AFF" />
                             <Text style={styles.quickActionText}>Reviews</Text>
@@ -509,7 +509,7 @@ export default function WasherHomeScreen() {
 
                         <TouchableOpacity
                             style={styles.quickActionCard}
-                            onPress={() => router.push('/washer-profile')}
+                            onPress={() => router.push('/washer-profile' as any)}
                         >
                             <Ionicons name="person-outline" size={32} color="#007AFF" />
                             <Text style={styles.quickActionText}>Profile</Text>

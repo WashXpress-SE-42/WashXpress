@@ -3,10 +3,10 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "node set-ip.js && expo start",
+    "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "node set-ip.js && expo start --android",
-    "ios": "node set-ip.js && expo start --ios",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint"
   },
@@ -17,6 +17,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "@tanstack/react-query": "^5.90.21",
     "axios": "^1.13.5",
     "expo": "~54.0.32",
     "expo-constants": "~18.0.13",

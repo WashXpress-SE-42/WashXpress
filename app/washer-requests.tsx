@@ -108,7 +108,7 @@ export default function WasherRequestsScreen() {
                         {
                             text: 'View Job',
                             onPress: () => {
-                                router.replace(`/washer-booking-details?id=${requestId}`);
+                                router.replace(`/washer-booking-details?id=${requestId}` as any);
                             },
                         },
                     ]

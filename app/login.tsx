@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { signin } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen() {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'provider'>('customer');
@@ -21,6 +22,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { setAuth } = useAuth(); // Global auth context
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -32,6 +34,11 @@ export default function LoginScreen() {
     try {
       console.log(`🔐 Logging in as ${selectedRole}...`);
       const result = await signin(email, password, selectedRole);
+
+      // ✅ Update global auth state directly
+      if (result.token) {
+        await setAuth(result.token, selectedRole, result.user);
+      }
       console.log('✅ Login successful:', result);
 
       // Navigate based on role

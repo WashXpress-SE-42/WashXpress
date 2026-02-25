@@ -16,6 +16,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { signup } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 
 const carTypes = ['Sedan', 'SUV', 'Hatchback', 'Coupe', 'Convertible', 'Truck', 'Van', 'Wagon'];
 
@@ -33,6 +34,7 @@ const carColors = [
 export default function SignupScreen() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const { setAuth } = useAuth();
 
   // Step 1 - Personal Information
   const [firstName, setFirstName] = useState('');
@@ -101,7 +103,10 @@ export default function SignupScreen() {
 
       console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
 
-      await signup(payload, 'customer');
+      const result = await signup(payload, 'customer') as any;
+      if (result.token) {
+        await setAuth(result.token, 'customer', result.user);
+      }
       console.log('✅ Account created successfully');
 
       Alert.alert(

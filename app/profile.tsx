@@ -1,47 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Button } from 'react-native';
-import { getProfile, signOut, CustomerProfile } from '../services/authService';
 import { router } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../hooks/useProfile';
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<CustomerProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
-    try {
-      console.log("🔍 Fetching profile...");
-      const data = await getProfile();
-      console.log("✅ Profile received:", JSON.stringify(data, null, 2));
-      setProfile(data);
-      setError(null);
-    } catch (err: any) {
-      console.error("❌ Profile error:", err);
-      setError(err.message || "Failed to load profile");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { logout } = useAuth();
+  const { data: profile, isLoading, error, refetch } = useProfile();
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-      router.replace('/'); // Navigate to login/home
+      await logout();
+      router.replace('/');
       console.log("✅ Signed out");
     } catch (err) {
       console.error("❌ Sign out error:", err);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" />
-        <Text>Loading profile...</Text>
+        <ActivityIndicator size="large" color="#2563eb" />
+        <Text style={styles.loadingText}>Loading profile...</Text>
       </View>
     );
   }
@@ -49,8 +30,8 @@ export default function ProfileScreen() {
   if (error) {
     return (
       <View style={styles.container}>
-        <Text style={styles.error}>Error: {error}</Text>
-        <Button title="Try Again" onPress={loadProfile} />
+        <Text style={styles.error}>Error: {error.message}</Text>
+        <Button title="Try Again" onPress={() => refetch()} />
       </View>
     );
   }
@@ -59,7 +40,7 @@ export default function ProfileScreen() {
     return (
       <View style={styles.container}>
         <Text>No profile data</Text>
-        <Button title="Retry" onPress={loadProfile} />
+        <Button title="Retry" onPress={() => refetch()} />
       </View>
     );
   }
@@ -92,6 +73,11 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
     backgroundColor: '#fff',
+  },
+  loadingText: {
+    marginTop: 10,
+    textAlign: 'center',
+    color: '#666'
   },
   title: {
     fontSize: 24,

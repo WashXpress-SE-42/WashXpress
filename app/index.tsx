@@ -69,12 +69,12 @@ export default function Index() {
   }
 
   if (isAuthenticated && userType === 'customer') {
-    return <Redirect href="/customer-home" />;
+    return <Redirect href={"/customer-home" as any} />;
   }
 
   if (isAuthenticated && userType === 'provider') {
-    return <Redirect href="/washer-home" />;
+    return <Redirect href={"/washer-home" as any} />;
   }
 
-  return <Redirect href="/login" />;
+  return <Redirect href={"/login" as any} />;
 }

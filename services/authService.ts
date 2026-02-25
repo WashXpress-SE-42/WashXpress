@@ -50,7 +50,7 @@ export async function signin(
     JSON.stringify(res.data?.user ?? null)
   );
 
-  return { user: res.data?.user, userType };
+  return { user: res.data?.user, userType, token: idToken };
 }
 
 export async function signup(
@@ -86,7 +86,7 @@ export async function signup(
     JSON.stringify(res.data?.user ?? null)
   );
 
-  return { user: res.data?.user, userType };
+  return { user: res.data?.user, userType, token: idToken };
 }
 
 export interface CustomerProfile {
