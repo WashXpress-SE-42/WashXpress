@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   ScrollView,
   StyleSheet,
@@ -14,17 +15,33 @@ import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 
 export default function ProfileScreen() {
-  const { logout } = useAuth();
+  const { logout, userType } = useAuth();
   const { data: profile, isLoading, error, refetch } = useProfile();
 
-  const handleSignOut = async () => {
-    try {
-      await logout();
-      router.replace('/');
-      console.log("✅ Signed out");
-    } catch (err) {
-      console.error("❌ Sign out error:", err);
-    }
+  const handleSignOut = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to log out?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await logout();
+              router.replace('/login');
+              console.log("✅ Signed out");
+            } catch (err) {
+              console.error("❌ Sign out error:", err);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const getUserName = () => {
@@ -79,7 +96,10 @@ export default function ProfileScreen() {
           <Text style={styles.userName}>{getUserName()}</Text>
           <View style={styles.badge}>
             <Text style={styles.badgeText}>
-              {profile?.subscription?.tier || 'Free Member'}
+              {userType === 'customer'
+                ? (profile?.subscription?.tier || 'Free Member')
+                : 'Verified Washer'
+              }
             </Text>
           </View>
         </View>
@@ -112,6 +132,33 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
+
+        {userType === 'provider' && (
+          <View style={styles.infoSection}>
+            <Text style={styles.sectionTitle}>Washer Details</Text>
+            <View style={styles.infoCard}>
+              <View style={styles.infoRow}>
+                <View style={styles.iconContainer}>
+                  <Ionicons name="star" size={20} color="#666" />
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Rating</Text>
+                  <Text style={styles.infoValue}>{(profile as any)?.rating || 'N/A'}</Text>
+                </View>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.infoRow}>
+                <View style={styles.iconContainer}>
+                  <Ionicons name="location" size={20} color="#666" />
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Area</Text>
+                  <Text style={styles.infoValue}>{(profile as any)?.area || 'N/A'}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
 
         <View style={styles.infoSection}>
           <Text style={styles.sectionTitle}>Personal Details</Text>

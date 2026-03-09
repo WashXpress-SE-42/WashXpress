@@ -1,7 +1,7 @@
 import * as SecureStore from "expo-secure-store";
-import { apiFetch } from "./apiClient";
 import { signInWithCustomToken } from "firebase/auth";
 import { auth } from "../firebaseConfig";
+import { apiFetch } from "./apiClient";
 
 export async function getToken() {
   return SecureStore.getItemAsync("accessToken");
@@ -123,6 +123,8 @@ export interface CustomerProfile {
   subscription?: {
     tier: string;
   };
+  area?: string;
+  rating?: number;
 }
 
 export async function getProfile() {

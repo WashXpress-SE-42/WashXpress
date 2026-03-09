@@ -340,11 +340,7 @@ export default function CustomerHomeScreen() {
       </View>
 
 
-      {/* Logout Button (for testing) */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
+      {/* Service Categories section ends above */}
 
       <View style={{ height: 40 }} />
     </ScrollView>

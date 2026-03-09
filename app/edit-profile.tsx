@@ -13,9 +13,11 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { useAuth } from '../context/AuthContext';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
 
 export default function EditProfileScreen() {
+    const { userType } = useAuth();
     const { data: profile, isLoading } = useProfile();
     const updateProfileMutation = useUpdateProfile();
 
@@ -23,6 +25,7 @@ export default function EditProfileScreen() {
     const [lastName, setLastName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [displayName, setDisplayName] = useState('');
+    const [area, setArea] = useState('');
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -32,6 +35,7 @@ export default function EditProfileScreen() {
             setLastName(profile.lastName || '');
             setPhoneNumber(profile.phoneNumber || '');
             setDisplayName(profile.displayName || '');
+            setArea(profile.area || '');
         }
     }, [profile]);
 
@@ -50,13 +54,19 @@ export default function EditProfileScreen() {
         // Determine a fallback displayName if not provided
         const finalDisplayName = displayName.trim() || `${firstName.trim()} ${lastName.trim()}`.trim();
 
+        const updateData: any = {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            phoneNumber: phoneNumber.trim(),
+            displayName: finalDisplayName,
+        };
+
+        if (userType === 'provider') {
+            updateData.area = area.trim();
+        }
+
         updateProfileMutation.mutate(
-            {
-                firstName: firstName.trim(),
-                lastName: lastName.trim(),
-                phoneNumber: phoneNumber.trim(),
-                displayName: finalDisplayName,
-            },
+            updateData,
             {
                 onSuccess: () => {
                     Alert.alert('Success', 'Profile updated successfully', [
@@ -138,6 +148,19 @@ export default function EditProfileScreen() {
                         keyboardType="phone-pad"
                     />
                 </View>
+
+                {userType === 'provider' && (
+                    <View style={styles.formGroup}>
+                        <Text style={styles.label}>Service Area</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={area}
+                            onChangeText={setArea}
+                            placeholder="e.g. Colombo, Pelawatta"
+                            placeholderTextColor="#999"
+                        />
+                    </View>
+                )}
 
                 {/* Email is typically read-only or handled separately via Auth providers */}
                 <View style={styles.formGroup}>

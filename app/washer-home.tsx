@@ -511,19 +511,13 @@ export default function WasherHomeScreen() {
 
                         <TouchableOpacity
                             style={styles.quickActionCard}
-                            onPress={() => router.push('/washer-profile' as any)}
+                            onPress={() => router.push('/profile' as any)}
                         >
                             <Ionicons name="person-outline" size={32} color="#007AFF" />
                             <Text style={styles.quickActionText}>Profile</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
-
-                {/* Logout (for testing) */}
-                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                    <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
-                    <Text style={styles.logoutText}>Logout</Text>
-                </TouchableOpacity>
 
                 <View style={{ height: 40 }} />
             </ScrollView>
