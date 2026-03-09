@@ -65,16 +65,25 @@ export default function EditProfileScreen() {
             updateData.area = area.trim();
         }
 
+        console.log("Saving profile data:", updateData);
+
         updateProfileMutation.mutate(
             updateData,
             {
                 onSuccess: () => {
+                    console.log("✅ Profile update successful");
                     Alert.alert('Success', 'Profile updated successfully', [
-                        { text: 'OK', onPress: () => router.back() }
+                        {
+                            text: 'OK', onPress: () => {
+                                console.log("Navigating back to Profile...");
+                                router.back();
+                            }
+                        }
                     ]);
                 },
                 onError: (err) => {
-                    Alert.alert('Error', err.message || 'Failed to update profile');
+                    console.error("❌ Profile update error:", err);
+                    Alert.alert('Error', err.message || 'Failed to update profile. Please try again.');
                 }
             }
         );

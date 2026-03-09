@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { signInWithCustomToken } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../firebaseConfig";
 import { apiFetch } from "./apiClient";
 
@@ -163,6 +163,25 @@ export async function getProfileFromFirebase(uid: string, userType: 'customer' |
     return null;
   } catch (error) {
     console.error("Error fetching profile from Firebase:", error);
+    throw error;
+  }
+}
+
+export async function updateProfileInFirebase(uid: string, userType: 'customer' | 'provider', data: Partial<CustomerProfile>) {
+  try {
+    const collectionName = userType === 'customer' ? 'customers' : 'providers';
+    const docRef = doc(db, collectionName, uid);
+
+    // Remove metadata fields that shouldn't be updated directly if they exist in the incoming data
+    const { uid: _uid, email: _email, ...updateData } = data;
+
+    await updateDoc(docRef, {
+      ...updateData,
+      updatedAt: new Date().toISOString(),
+    });
+    console.log(`✅ Profile updated in Firestore [${collectionName}/${uid}]`);
+  } catch (error) {
+    console.error("Error updating profile in Firebase:", error);
     throw error;
   }
 }

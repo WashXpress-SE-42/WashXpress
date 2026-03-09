@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../firebaseConfig';
-import { CustomerProfile, getProfileFromFirebase, updateProfile } from '../services/authService';
+import { CustomerProfile, getProfileFromFirebase, updateProfileInFirebase } from '../services/authService';
 
 export function useProfile() {
     const { token, userType, isLoading: authLoading } = useAuth();
@@ -20,10 +20,13 @@ export function useProfile() {
 
 export function useUpdateProfile() {
     const queryClient = useQueryClient();
+    const { userType } = useAuth();
+    const currentUser = auth.currentUser;
 
-    return useMutation<CustomerProfile, Error, Partial<CustomerProfile>>({
+    return useMutation<void, Error, Partial<CustomerProfile>>({
         mutationFn: async (data: Partial<CustomerProfile>) => {
-            return await updateProfile(data);
+            if (!currentUser?.uid || !userType) throw new Error("Not authenticated");
+            return await updateProfileInFirebase(currentUser.uid, userType, data);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['profile'] });
