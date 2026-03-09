@@ -587,7 +587,7 @@ export default function BookingDetailsScreen() {
                         <TouchableOpacity
                             style={styles.rescheduleButton}
                             onPress={() =>
-                                router.push(`/reschedule-booking?id=${booking.id}`)
+                                router.push(`/reschedule-booking?id=${booking.id}` as any)
                             }
                         >
                             <Ionicons name="calendar-outline" size={20} color="#007AFF" />
@@ -609,22 +609,25 @@ export default function BookingDetailsScreen() {
                             )}
                         </TouchableOpacity>
                     </View>
-                )}
+                )
+                }
 
                 {/* Rate Button */}
-                {booking.status === 'completed' && (
-                    <TouchableOpacity
-                        style={styles.rateButton}
-                        onPress={() => router.push(`/rate-booking?id=${booking.id}`)}
-                    >
-                        <Ionicons name="star-outline" size={20} color="#FFF" />
-                        <Text style={styles.rateButtonText}>Rate This Service</Text>
-                    </TouchableOpacity>
-                )}
+                {
+                    booking.status === 'completed' && (
+                        <TouchableOpacity
+                            style={styles.rateButton}
+                            onPress={() => router.push(`/rate-booking?id=${booking.id}` as any)}
+                        >
+                            <Ionicons name="star-outline" size={20} color="#FFF" />
+                            <Text style={styles.rateButtonText}>Rate This Service</Text>
+                        </TouchableOpacity>
+                    )
+                }
 
                 <View style={{ height: 40 }} />
-            </ScrollView>
-        </View>
+            </ScrollView >
+        </View >
     );
 }
 

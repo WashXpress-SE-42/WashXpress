@@ -129,6 +129,13 @@ export async function getProfile() {
   return apiFetch<CustomerProfile>("/profile");  // ✅ This is correct with your base URL
 }
 
+export async function updateProfile(data: Partial<CustomerProfile>) {
+  return apiFetch<CustomerProfile>("/profile", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function signOut() {
   try {
     await apiFetch("/auth/signout", { method: "POST" });

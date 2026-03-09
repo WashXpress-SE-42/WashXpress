@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     Image,
     RefreshControl,
     ScrollView,
@@ -69,6 +70,7 @@ export default function WasherHomeScreen() {
     const [currentJob, setCurrentJob] = useState<Booking | null>(null);
     const [nextBooking, setNextBooking] = useState<Booking | null>(null);
     const [pendingRequests, setPendingRequests] = useState<Booking[]>([]);
+    const setRequests = setPendingRequests;
     const [stats, setStats] = useState<Stats>({
         todayEarnings: 0,
         weekEarnings: 0,

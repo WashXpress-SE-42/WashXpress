@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
 import PayHere from '@/utils/Payhere';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { auth } from '../firebaseConfig';
 
 const API_BASE = process.env.EXPO_PUBLIC_CUSTOMER_API_URL;
@@ -161,7 +161,7 @@ export default function PaymentScreen() {
         </Text>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => router.replace(`/(customer)/bookings/${bookingId}`)}
+          onPress={() => router.replace(`/(customer)/bookings/${bookingId}` as any)}
         >
           <Text style={styles.primaryButtonText}>View Booking</Text>
         </TouchableOpacity>
