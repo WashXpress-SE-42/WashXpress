@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { Header } from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../firebaseConfig';
 import { useProfile } from '../hooks/useProfile';
@@ -94,15 +95,14 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Profile</Text>
-        <TouchableOpacity onPress={() => router.push('/edit-profile')} style={styles.editButton}>
-          <Text style={styles.editButtonText}>Edit</Text>
-        </TouchableOpacity>
-      </View>
+      <Header
+        title="My Profile"
+        rightElement={
+          <TouchableOpacity onPress={() => router.push('/edit-profile')} style={styles.editButton}>
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
 

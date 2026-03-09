@@ -1,11 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity, ActivityIndicator,
-  Alert, StyleSheet, Modal, FlatList,
-} from 'react-native';
 import PayHere from '@/utils/Payhere';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Header } from '../components/Header';
 import { auth } from '../firebaseConfig';
 
 const API_BASE = process.env.EXPO_PUBLIC_CUSTOMER_API_URL;
@@ -326,61 +334,63 @@ export default function SubscriptionsScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.heading}>Subscriptions</Text>
-      <Text style={styles.subheading}>Save more with monthly plans</Text>
+    <View style={styles.container}>
+      <Header title="Subscriptions" />
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.subheading}>Save more with monthly plans</Text>
 
-      {/* Active subscriptions */}
-      {activeSubscriptions.length > 0 && (
+        {/* Active subscriptions */}
+        {activeSubscriptions.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Your Active Plans</Text>
+            {activeSubscriptions.map(sub => (
+              <ActiveSubCard key={sub.id} sub={sub} onCancel={() => handleCancel(sub.id)} />
+            ))}
+          </View>
+        )}
+
+        {/* Plans */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Active Plans</Text>
-          {activeSubscriptions.map(sub => (
-            <ActiveSubCard key={sub.id} sub={sub} onCancel={() => handleCancel(sub.id)} />
+          <Text style={styles.sectionTitle}>
+            {activeSubscriptions.length > 0 ? 'Add Another Plan' : 'Choose a Plan'}
+          </Text>
+          {plans.map(plan => (
+            <PlanCard key={plan.id} plan={plan} onSelect={() => handleSelectPlan(plan)} />
           ))}
         </View>
-      )}
 
-      {/* Plans */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          {activeSubscriptions.length > 0 ? 'Add Another Plan' : 'Choose a Plan'}
-        </Text>
-        {plans.map(plan => (
-          <PlanCard key={plan.id} plan={plan} onSelect={() => handleSelectPlan(plan)} />
-        ))}
-      </View>
-
-      {/* Processing overlay */}
-      {paying && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.overlayText}>Processing payment...</Text>
-        </View>
-      )}
-
-      {/* Vehicle selector modal */}
-      <Modal visible={vehicleModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Select Vehicle</Text>
-            <Text style={styles.modalSub}>Which vehicle is this plan for?</Text>
-            <FlatList
-              data={vehicles}
-              keyExtractor={v => v.id}
-              renderItem={({ item: v }) => (
-                <TouchableOpacity style={styles.vehicleItem} onPress={() => handleSubscribe(v.id)}>
-                  <Text style={styles.vehicleName}>{v.nickname || `${v.make} ${v.model}`}</Text>
-                  <Text style={styles.vehiclePlate}>{v.licensePlate} · {v.year}</Text>
-                </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setVehicleModalVisible(false)}>
-              <Text style={styles.modalCancelText}>Cancel</Text>
-            </TouchableOpacity>
+        {/* Processing overlay */}
+        {paying && (
+          <View style={styles.overlay}>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.overlayText}>Processing payment...</Text>
           </View>
-        </View>
-      </Modal>
-    </ScrollView>
+        )}
+
+        {/* Vehicle selector modal */}
+        <Modal visible={vehicleModalVisible} transparent animationType="slide">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              <Text style={styles.modalTitle}>Select Vehicle</Text>
+              <Text style={styles.modalSub}>Which vehicle is this plan for?</Text>
+              <FlatList
+                data={vehicles}
+                keyExtractor={v => v.id}
+                renderItem={({ item: v }) => (
+                  <TouchableOpacity style={styles.vehicleItem} onPress={() => handleSubscribe(v.id)}>
+                    <Text style={styles.vehicleName}>{v.nickname || `${v.make} ${v.model}`}</Text>
+                    <Text style={styles.vehiclePlate}>{v.licensePlate} · {v.year}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setVehicleModalVisible(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </ScrollView>
+    </View>
   );
 }
 

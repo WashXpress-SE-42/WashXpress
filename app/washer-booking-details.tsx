@@ -1,18 +1,19 @@
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
     ActivityIndicator,
     Alert,
     Linking,
     Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Href, useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Header } from '../components/Header';
 
 interface Booking {
     id: string;
@@ -275,15 +276,14 @@ export default function WasherBookingDetailsScreen() {
     return (
         <View style={styles.container}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Booking Details</Text>
-                <TouchableOpacity onPress={loadBooking}>
-                    <Ionicons name="refresh" size={24} color="#000" />
-                </TouchableOpacity>
-            </View>
+            <Header
+                title="Booking Details"
+                rightElement={
+                    <TouchableOpacity onPress={loadBooking}>
+                        <Ionicons name="refresh" size={24} color="#000" />
+                    </TouchableOpacity>
+                }
+            />
 
             <ScrollView style={styles.content}>
                 {/* Status Banner */}

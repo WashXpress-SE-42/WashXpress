@@ -13,6 +13,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { Header } from '../components/Header';
 
 interface JobRequest {
     id: string;
@@ -229,13 +230,9 @@ export default function WasherJobRequestScreen() {
     return (
         <View style={styles.container}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="close" size={28} color="#000" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Job Request</Text>
-                <View style={{ width: 28 }} />
-            </View>
+            <Header
+                title="Job Request"
+            />
 
             <ScrollView style={styles.content}>
                 {/* Race Mode Banner */}

@@ -11,6 +11,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { Header } from '../components/Header';
 
 const BRAND = '#0ca6e8';
 const BRAND_DARK = '#0d1629';
@@ -156,13 +157,7 @@ export default function ServiceDetailsScreen() {
     return (
         <View style={styles.container}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-                    <Ionicons name="arrow-back" size={24} color={BRAND_DARK} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Service Details</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <Header title="Service Details" />
 
             <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 120 }}>
                 {/* Hero */}

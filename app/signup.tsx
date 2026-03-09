@@ -1,23 +1,24 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  StatusBar,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Modal,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { signup } from '../services/authService';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Header } from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/apiClient';
+import { signup } from '../services/authService';
 
 const carTypes = ['Sedan', 'SUV', 'Hatchback', 'Coupe', 'Convertible', 'Truck', 'Van', 'Wagon'];
 
@@ -256,15 +257,9 @@ export default function SignupScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={24} color="#111827" />
-          </TouchableOpacity>
-          <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>Customer Registration</Text>
-            <Text style={styles.headerSubtitle}>Step {step} of 3 — {stepLabels[step - 1]}</Text>
-          </View>
-        </View>
+        <Header
+          title={`Customer Registration (Step ${step}/3)`}
+        />
 
         {/* Progress Bar with step dots */}
         <View style={styles.progressContainer}>

@@ -12,6 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { Header } from '../components/Header';
 
 interface JobRequest {
     id: string;
@@ -316,17 +317,14 @@ export default function WasherRequestsScreen() {
     return (
         <View style={styles.container}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>
-                    Job Requests {requests.length > 0 && `(${requests.length})`}
-                </Text>
-                <TouchableOpacity onPress={() => loadRequests()}>
-                    <Ionicons name="refresh" size={24} color="#000" />
-                </TouchableOpacity>
-            </View>
+            <Header
+                title={requests.length > 0 ? `Job Requests (${requests.length})` : 'Job Requests'}
+                rightElement={
+                    <TouchableOpacity onPress={() => loadRequests()}>
+                        <Ionicons name="refresh" size={24} color="#000" />
+                    </TouchableOpacity>
+                }
+            />
 
             {/* Race Mode Banner */}
             {requests.length > 0 && (

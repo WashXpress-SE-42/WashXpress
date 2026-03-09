@@ -1,6 +1,5 @@
 import { apiFetch } from '@/services/apiClient';
 import { Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -14,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Header } from '../components/Header';
 
 const BRAND = '#0ca6e8';
 const BRAND_DARK = '#0d1629';
@@ -140,15 +140,14 @@ export default function ServiceBrowseScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBtn}>
-          <Ionicons name="arrow-back" size={24} color={BRAND_DARK} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Browse Services</Text>
-        <TouchableOpacity onPress={() => setShowFilters(true)} style={styles.headerBtn}>
-          <Ionicons name="options-outline" size={24} color={BRAND_DARK} />
-        </TouchableOpacity>
-      </View>
+      <Header
+        title="Browse Services"
+        rightElement={
+          <TouchableOpacity onPress={() => setShowFilters(true)} style={styles.headerBtn}>
+            <Ionicons name="options-outline" size={24} color="#2563eb" />
+          </TouchableOpacity>
+        }
+      />
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>

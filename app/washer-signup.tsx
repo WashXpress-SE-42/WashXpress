@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  StatusBar,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Header } from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 
 const PROVIDER_API_URL = process.env.EXPO_PUBLIC_PROVIDER_API_URL || 'http://localhost:3001/api/provider';
@@ -125,8 +126,8 @@ export default function WasherSignupScreen() {
         hasExperience
           ? 'Your professional experience is under review by our admin team. You will be notified once approved.'
           : certificationPath === 'field_certification'
-          ? 'You will be assigned mentors for field certification. Complete 6 evaluations to get certified.'
-          : 'You will be assigned to a training center. Our team will contact you shortly.',
+            ? 'You will be assigned mentors for field certification. Complete 6 evaluations to get certified.'
+            : 'You will be assigned to a training center. Our team will contact you shortly.',
         [{ text: 'Back to Login', onPress: () => router.replace('/login') }]
       );
     } catch (error: any) {
@@ -148,15 +149,9 @@ export default function WasherSignupScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={24} color="#111827" />
-          </TouchableOpacity>
-          <View style={styles.headerText}>
-            <Text style={styles.headerTitle}>Washer Registration</Text>
-            <Text style={styles.headerSubtitle}>Step {step} of 3 — {stepLabels[step - 1]}</Text>
-          </View>
-        </View>
+        <Header
+          title={`Washer Registration (Step ${step}/3)`}
+        />
 
         {/* Progress */}
         <View style={styles.progressContainer}>
@@ -484,8 +479,8 @@ export default function WasherSignupScreen() {
                     {hasExperience
                       ? 'Experience Review'
                       : certificationPath === 'field_certification'
-                      ? 'Field Certification'
-                      : 'Training Center'}
+                        ? 'Field Certification'
+                        : 'Training Center'}
                   </Text>
                 </View>
               </View>

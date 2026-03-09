@@ -15,6 +15,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { Header } from '../components/Header';
 
 interface Booking {
     id: string;
@@ -271,13 +272,7 @@ export default function BookingDetailsScreen() {
         return (
             <View style={styles.container}>
                 {/* Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Finding Washer</Text>
-                    <View style={{ width: 24 }} />
-                </View>
+                <Header title="Finding Washer" />
 
                 <ScrollView
                     style={styles.content}
@@ -378,15 +373,14 @@ export default function BookingDetailsScreen() {
     return (
         <View style={styles.container}>
             {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Booking Details</Text>
-                <TouchableOpacity onPress={handleRefresh}>
-                    <Ionicons name="refresh" size={24} color="#000" />
-                </TouchableOpacity>
-            </View>
+            <Header
+                title="Booking Details"
+                rightElement={
+                    <TouchableOpacity onPress={handleRefresh}>
+                        <Ionicons name="refresh" size={24} color="#2563eb" />
+                    </TouchableOpacity>
+                }
+            />
 
             <ScrollView style={styles.content}>
                 {/* Status Banner */}

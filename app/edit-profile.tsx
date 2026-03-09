@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -13,6 +12,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { Header } from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { useProfile, useUpdateProfile } from '../hooks/useProfile';
 
@@ -102,13 +102,7 @@ export default function EditProfileScreen() {
             style={styles.container}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Edit Profile</Text>
-                <View style={{ width: 40 }} /> {/* Placeholder for balance */}
-            </View>
+            <Header title="Edit Profile" />
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
 

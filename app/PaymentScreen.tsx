@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Header } from '../components/Header';
 import { auth } from '../firebaseConfig';
 
 const API_BASE = process.env.EXPO_PUBLIC_CUSTOMER_API_URL;
@@ -189,60 +190,61 @@ export default function PaymentScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
-      <Text style={styles.heading}>Complete Payment</Text>
-      <Text style={styles.subheading}>Secure payment via PayHere</Text>
+    <View style={styles.container}>
+      <Header title="Complete Payment" />
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.subheading}>Secure payment via PayHere</Text>
 
-      {/* Booking Summary */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Booking Summary</Text>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Service</Text>
-          <Text style={styles.rowValue}>{serviceName}</Text>
+        {/* Booking Summary */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Booking Summary</Text>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Service</Text>
+            <Text style={styles.rowValue}>{serviceName}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Date</Text>
+            <Text style={styles.rowValue}>{scheduledDate}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Time</Text>
+            <Text style={styles.rowValue}>{scheduledTime}</Text>
+          </View>
+          <View style={[styles.row, styles.totalRow]}>
+            <Text style={styles.totalLabel}>Total Amount</Text>
+            <Text style={styles.totalValue}>LKR {parseFloat(amount).toLocaleString()}</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Date</Text>
-          <Text style={styles.rowValue}>{scheduledDate}</Text>
+
+        {/* Accepted Cards */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Accepted Payment Methods</Text>
+          <Text style={styles.acceptedCards}>💳 Visa · Mastercard · Amex · Mobile Wallet</Text>
         </View>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Time</Text>
-          <Text style={styles.rowValue}>{scheduledTime}</Text>
+
+        {/* Test card note (sandbox only) */}
+        <View style={styles.sandboxNote}>
+          <Text style={styles.sandboxText}>🧪 Sandbox mode — use test card: 4916217501611292</Text>
         </View>
-        <View style={[styles.row, styles.totalRow]}>
-          <Text style={styles.totalLabel}>Total Amount</Text>
-          <Text style={styles.totalValue}>LKR {parseFloat(amount).toLocaleString()}</Text>
-        </View>
-      </View>
 
-      {/* Accepted Cards */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Accepted Payment Methods</Text>
-        <Text style={styles.acceptedCards}>💳 Visa · Mastercard · Amex · Mobile Wallet</Text>
-      </View>
+        {/* Pay Button */}
+        <TouchableOpacity
+          style={[styles.primaryButton, (loading || status === 'processing') && styles.buttonDisabled]}
+          onPress={handlePayment}
+          disabled={loading || status === 'processing'}
+        >
+          {loading || status === 'processing' ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.primaryButtonText}>Pay LKR {parseFloat(amount).toLocaleString()}</Text>
+          )}
+        </TouchableOpacity>
 
-      {/* Test card note (sandbox only) */}
-      <View style={styles.sandboxNote}>
-        <Text style={styles.sandboxText}>🧪 Sandbox mode — use test card: 4916217501611292</Text>
-      </View>
-
-      {/* Pay Button */}
-      <TouchableOpacity
-        style={[styles.primaryButton, (loading || status === 'processing') && styles.buttonDisabled]}
-        onPress={handlePayment}
-        disabled={loading || status === 'processing'}
-      >
-        {loading || status === 'processing' ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.primaryButtonText}>Pay LKR {parseFloat(amount).toLocaleString()}</Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.secondaryButton} onPress={() => router.back()}>
-        <Text style={styles.secondaryButtonText}>Cancel</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => router.back()}>
+          <Text style={styles.secondaryButtonText}>Cancel</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 }
 
