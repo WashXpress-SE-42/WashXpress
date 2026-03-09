@@ -1,8 +1,11 @@
+import * as SecureStore from 'expo-secure-store';
+import { User, onAuthStateChanged } from 'firebase/auth';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { auth } from '../firebaseConfig';
 import { Href, Redirect } from 'expo-router';
 
 export default function Index() {
-  return <Redirect href={"/login" as Href} />;
-}
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userType, setUserType] = useState<'customer' | 'provider' | null>(null);
@@ -39,7 +42,7 @@ export default function Index() {
           }
         } else {
           console.log("❌ No Firebase user found");
-          // Clear any stale storage data
+          // clear any stale storage data
           await Promise.all([
             SecureStore.deleteItemAsync('accessToken'),
             SecureStore.deleteItemAsync('userType')
@@ -66,12 +69,12 @@ export default function Index() {
   }
 
   if (isAuthenticated && userType === 'customer') {
-    return <Redirect href={"/customer-home" as any} />;
+    return <Redirect href="/customer-home" />;
   }
 
   if (isAuthenticated && userType === 'provider') {
-    return <Redirect href={"/washer-home" as any} />;
+    return <Redirect href="/washer-home" />;
   }
 
-  return <Redirect href={"/login" as any} />;
+  return <Redirect href="/login" />;
 }
