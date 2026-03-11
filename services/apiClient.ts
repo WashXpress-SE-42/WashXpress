@@ -91,14 +91,37 @@ export async function apiFetch<T = any>(
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`❌ HTTP ${response.status} [${fullURL}]:`, errorText);
-        let errorMessage = `HTTP ${response.status}`;
+        let errorData: any = null;
         try {
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.message || errorJson.error || errorMessage;
+          errorData = JSON.parse(errorText);
         } catch (e) {
-          errorMessage = errorText || errorMessage;
+          // errorText is not JSON
         }
+
+        // 1. Graceful handling for "pending requests" 404 or empty results
+        // If the endpoint is for pending bookings and we get a 404, treat it as "no bookings"
+        if (response.status === 404 && endpoint.includes('status=pending')) {
+          console.log(`ℹ️ [apiClient] Gracefully handling 404 for pending bookings endpoint: ${endpoint}`);
+          return { success: true, data: { bookings: [], count: 0 } } as any;
+        }
+
+        // 2. Extract readable error message
+        let errorMessage = `HTTP ${response.status}`;
+        if (errorData) {
+          // Extract meaningful fields: message, error, detail
+          errorMessage = errorData.message || errorData.error || errorData.detail || errorMessage;
+          
+          // Ensure it's not still an object (e.g. if some weird JSON was returned)
+          if (typeof errorMessage !== 'string') {
+            errorMessage = JSON.stringify(errorMessage);
+          }
+        } else if (errorText && errorText.length < 200) {
+          errorMessage = errorText;
+        }
+
+        // 3. Log detailed error info for debugging
+        console.error(`❌ API Error [${response.status}] ${fullURL}:`, errorData || errorText);
+        
         throw new Error(errorMessage);
       }
 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { auth } from '../firebaseConfig';
 import { CustomerProfile, signOut } from '../services/authService';
 
 interface AuthState {
@@ -18,44 +19,56 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
-    isLoading: false, // ⛔ Auto-retrieval disabled for testing — was: true
+    isLoading: true,
     token: null,
     userType: null,
     user: null,
   });
 
-  // ⛔ AUTO TOKEN RETRIEVAL DISABLED FOR TESTING — uncomment to re-enable
-  // useEffect(() => {
-  //   // Load auth state from storage on mount
-  //   const loadStore = async () => {
-  //     try {
-  //       const token = await SecureStore.getItemAsync('accessToken');
-  //       const userType = (await SecureStore.getItemAsync('userType')) as 'customer' | 'provider' | null;
-  //       
-  //       let user = null;
-  //       if (userType) {
-  //         const userStr = await SecureStore.getItemAsync(userType === 'customer' ? 'customer' : 'provider');
-  //         if (userStr) {
-  //           user = JSON.parse(userStr);
-  //         }
-  //       }
-  //
-  //       setState({
-  //         isLoading: false,
-  //         token,
-  //         userType,
-  //         user,
-  //       });
-  //     } catch (error) {
-  //       console.error('Failed to load auth state:', error);
-  //       setState(s => ({ ...s, isLoading: false }));
-  //     }
-  //   };
-  //
-  //   loadStore();
-  // }, []);
+  useEffect(() => {
+    // Load auth state from storage on mount
+    const loadStore = async () => {
+      try {
+        const token = await SecureStore.getItemAsync('accessToken');
+        const userType = (await SecureStore.getItemAsync('userType')) as 'customer' | 'provider' | null;
+        
+        let user = null;
+        if (userType) {
+          const userStr = await SecureStore.getItemAsync(userType === 'customer' ? 'customer' : 'provider');
+          if (userStr) {
+            user = JSON.parse(userStr);
+          }
+        }
+
+        console.log(`[AuthContext] Restored state: userType=${userType}, hasToken=${!!token}`);
+        setState({
+          isLoading: false,
+          token,
+          userType,
+          user,
+        });
+      } catch (error) {
+        console.error('[AuthContext] Failed to load auth state:', error);
+        setState(s => ({ ...s, isLoading: false }));
+      }
+    };
+
+    loadStore();
+
+    // Listen for Firebase Auth changes to keep things in sync
+    const unsubscribe = auth.onAuthStateChanged((user: any) => {
+      if (user) {
+        console.log(`[AuthContext] Firebase Auth User Logged In: ${user.uid}`);
+      } else {
+        console.log('[AuthContext] Firebase Auth User Logged Out');
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   const setAuth = async (token: string, userType: 'customer' | 'provider', user: any) => {
+    console.log(`[AuthContext] Setting Auth: userType=${userType}, uid=${user?.uid}`);
     await SecureStore.setItemAsync('accessToken', token);
     await SecureStore.setItemAsync('userType', userType);
     await SecureStore.setItemAsync(

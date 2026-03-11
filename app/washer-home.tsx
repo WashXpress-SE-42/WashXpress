@@ -230,6 +230,7 @@ export default function WasherHomeScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
+                <TouchableOpacity onPress={() => router.push('/profile' as any)}>
                     <View style={styles.profilePic}>
                         {profile?.photoURL ? (
                             <Image source={{ uri: profile.photoURL }} style={styles.profileImage} />
@@ -237,6 +238,7 @@ export default function WasherHomeScreen() {
                             <Ionicons name="person" size={24} color="#666" />
                         )}
                     </View>
+                </TouchableOpacity>
                     <View style={styles.headerText}>
                         <Text style={styles.greeting}>Welcome back,</Text>
                         <Text style={styles.name}>{profile?.displayName || 'Washer'}</Text>

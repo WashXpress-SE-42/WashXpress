@@ -7,9 +7,12 @@ export function useProfile() {
     const { token, userType, isLoading: authLoading } = useAuth();
     const currentUser = auth.currentUser;
 
+    console.log(`[useProfile] token=${token ? 'EXISTS' : 'NULL'}, userType=${userType}, authLoading=${authLoading}, currentUser=${currentUser?.uid}`);
+
     return useQuery<CustomerProfile | null, Error>({
         queryKey: ['profile', currentUser?.uid],
         queryFn: async () => {
+            console.log(`[useProfile] Fetching profile for UID: ${currentUser?.uid}`);
             if (!currentUser?.uid || !userType) return null;
             return await getProfileFromFirebase(currentUser.uid, userType);
         },

@@ -4,6 +4,7 @@ import React from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -19,6 +20,9 @@ import { useProfile } from '../hooks/useProfile';
 export default function ProfileScreen() {
   const { logout, userType } = useAuth();
   const { data: profile, isLoading, error, refetch } = useProfile();
+
+  console.log(`[ProfileScreen] userType=${userType}, isLoading=${isLoading}, hasProfile=${!!profile}, hasError=${!!error}`);
+  if (profile) console.log(`[ProfileScreen] profileUID=${profile.uid}`);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -109,7 +113,11 @@ export default function ProfileScreen() {
         {/* Avatar Section */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarContainer}>
-            <Ionicons name="person" size={48} color="#2563eb" />
+            {profile?.photoURL ? (
+              <Image source={{ uri: profile.photoURL }} style={styles.avatarImage} />
+            ) : (
+              <Ionicons name="person" size={48} color="#2563eb" />
+            )}
           </View>
           <Text style={styles.userName}>{getUserName()}</Text>
           <View style={styles.badge}>
@@ -172,6 +180,16 @@ export default function ProfileScreen() {
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Area</Text>
                   <Text style={styles.infoValue}>{(profile as any)?.area || 'N/A'}</Text>
+                </View>
+              </View>
+              <View style={styles.divider} />
+              <View style={styles.infoRow}>
+                <View style={styles.iconContainer}>
+                  <Ionicons name="finger-print" size={20} color="#666" />
+                </View>
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Washer ID</Text>
+                  <Text style={styles.infoValue}>{profile?.uid || 'N/A'}</Text>
                 </View>
               </View>
             </View>
@@ -313,6 +331,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   userName: {
     fontSize: 24,

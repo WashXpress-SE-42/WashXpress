@@ -97,6 +97,7 @@ export interface CustomerProfile {
   lastName?: string;
   email?: string;
   phoneNumber?: string;
+  photoURL?: string;
   vehicleInfo?: {
     brand: string;
     model: string;
@@ -145,14 +146,25 @@ export async function updateProfile(data: Partial<CustomerProfile>) {
 export async function getProfileFromFirebase(uid: string, userType: 'customer' | 'provider'): Promise<CustomerProfile | null> {
   try {
     const collectionName = userType === 'customer' ? 'customers' : 'providers';
-    const docRef = doc(db, collectionName, uid);
-    const docSnap = await getDoc(docRef);
+    console.log(`🔍 [getProfileFromFirebase] Trying collection: ${collectionName} for UID: ${uid}`);
+    
+    let docRef = doc(db, collectionName, uid);
+    let docSnap = await getDoc(docRef);
+
+    // If provider not found in 'providers', try 'washers' as a fallback
+    if (!docSnap.exists() && userType === 'provider') {
+      console.log(`⚠️ Profile not found in 'providers', checking 'washers' collection...`);
+      docRef = doc(db, 'washers', uid);
+      docSnap = await getDoc(docRef);
+    }
 
     if (docSnap.exists()) {
       const data = docSnap.data();
+      console.log(`✅ Profile found in collection: ${docSnap.ref.parent.id}`);
+      
       // Safeguard: Confirm UID match
-      // Firestore document ID is the UID, but we also check the internal field if it exists
       if (data.uid && data.uid !== uid) {
+        console.error(`❌ UID mismatch in doc! Doc UID: ${data.uid}, Auth UID: ${uid}`);
         throw new Error("Security verification failed: UID mismatch");
       }
       return {
@@ -160,6 +172,8 @@ export async function getProfileFromFirebase(uid: string, userType: 'customer' |
         ...data,
       } as CustomerProfile;
     }
+    
+    console.warn(`❌ No profile doc found for UID: ${uid} in any expected collection.`);
     return null;
   } catch (error) {
     console.error("Error fetching profile from Firebase:", error);
