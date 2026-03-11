@@ -12,7 +12,7 @@ export default function RootLayout() {
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
   }
-  
+
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
@@ -22,11 +22,12 @@ export default function RootLayout() {
           <Stack.Screen name="signup" />
           <Stack.Screen name="washer-signup" />
           <Stack.Screen name="home" />
+          <Stack.Screen name="washer-job-request" options={{ headerShown: false }} />
+          <Stack.Screen name="washer-booking-details" options={{ headerShown: false }} />
           <Stack.Screen name="customer-home" />
           <Stack.Screen name="provider-home" />
           <Stack.Screen name="washer-home" />
           <Stack.Screen name="washer-pending" />
-          <Stack.Screen name="washer-job-request" />
           <Stack.Screen name="washer-requests" />
           <Stack.Screen name="service-browse" />
           <Stack.Screen name="my-subscription" options={{ headerShown: false }} />
@@ -35,6 +36,10 @@ export default function RootLayout() {
           <Stack.Screen name="edit-profile" />
           <Stack.Screen name="subscriptions" options={{ headerShown: false }} />
           <Stack.Screen name="profile" />
+          <Stack.Screen name="vehicle-list" options={{ headerShown: false }} />
+          <Stack.Screen name="add-vehicle" options={{ headerShown: false }} />
+          <Stack.Screen name="address-list" options={{ headerShown: false }} />
+          <Stack.Screen name="add-address" options={{ headerShown: false }} />
           <Stack.Screen name="create-booking" options={{ headerShown: false }} />
           <Stack.Screen name="booking-confirmation" options={{ headerShown: false, gestureEnabled: false }} />
         </Stack>

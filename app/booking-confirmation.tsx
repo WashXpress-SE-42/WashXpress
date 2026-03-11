@@ -1,33 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-    View, Text, StyleSheet, TouchableOpacity,
-    ActivityIndicator, ScrollView,
+    ActivityIndicator, Animated, ScrollView, StyleSheet,
+    Text, TouchableOpacity, View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { apiFetch } from '../services/apiClient';
 
-interface Booking {
+interface BookingDetail {
     id: string;
     status: string;
     scheduledDate: string;
     scheduledTime: string;
-    paidWithSubscription: boolean;
     totalPrice: number;
     currency: string;
+    paidWithSubscription: boolean;
+    paymentPath: string;
+    notes?: string;
     service: { name: string; duration: number };
-    vehicle: { make: string; model: string; licensePlate: string; type: string };
+    vehicle: { make: string; model: string; year: number; nickname: string; licensePlate: string; type: string };
     address: { label: string; addressLine1: string; city: string };
     priceBreakdown?: { basePrice: number; multiplier: number; totalPrice: number; vehicleType: string };
 }
 
-function formatTime(t: string) {
+function fmt(t: string) {
     const [h, m] = t.split(':').map(Number);
-    const period = h >= 12 ? 'PM' : 'AM';
-    const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
-    return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
+    return `${h > 12 ? h - 12 : h === 0 ? 12 : h}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
 }
-
 function formatDate(d: string) {
     return new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
         weekday: 'long', month: 'long', day: 'numeric',
@@ -36,8 +35,12 @@ function formatDate(d: string) {
 
 export default function BookingConfirmationScreen() {
     const { bookingId, path } = useLocalSearchParams<{ bookingId: string; path: string }>();
-    const [booking, setBooking] = useState<Booking | null>(null);
+    const [booking, setBooking] = useState<BookingDetail | null>(null);
     const [loading, setLoading] = useState(true);
+
+    // Animation
+    const scaleAnim = useRef(new Animated.Value(0)).current;
+    const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         loadBooking();
@@ -47,143 +50,147 @@ export default function BookingConfirmationScreen() {
         try {
             const res = await apiFetch(`/bookings/${bookingId}`, {}, 'customer');
             if (res.success) setBooking(res.data.booking);
-        } catch (err) {
-            console.error('Load booking error:', err);
-        } finally {
+        } catch { /* non-fatal */ }
+        finally {
             setLoading(false);
+            // Trigger animation
+            Animated.parallel([
+                Animated.spring(scaleAnim, { toValue: 1, tension: 60, friction: 7, useNativeDriver: true }),
+                Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+            ]).start();
         }
     };
 
-    if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#2563eb" />
-            </View>
-        );
-    }
-
-    if (!booking) {
-        return (
-            <View style={styles.loadingContainer}>
-                <Text style={{ color: '#ef4444', fontSize: 16 }}>Booking not found</Text>
-                <TouchableOpacity onPress={() => router.replace('/customer-home')} style={styles.homeBtn}>
-                    <Text style={styles.homeBtnText}>Go Home</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
-
-    const isSubscription = booking.paidWithSubscription || path === 'subscription';
+    const isSubscription = path === 'subscription';
 
     return (
-        <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-                {/* Success animation area */}
-                <View style={styles.successArea}>
-                    <View style={styles.successCircle}>
-                        <Ionicons name="checkmark" size={48} color="#fff" />
+        <View style={s.container}>
+            <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
+                {/* Success Icon */}
+                <Animated.View style={[s.iconWrap, { transform: [{ scale: scaleAnim }], opacity: fadeAnim }]}>
+                    <View style={[s.iconCircle, { backgroundColor: isSubscription ? '#dcfce7' : '#e0f4fd' }]}>
+                        <Ionicons
+                            name="checkmark-circle"
+                            size={80}
+                            color={isSubscription ? '#16a34a' : '#0ca6e8'}
+                        />
                     </View>
-                    <Text style={styles.successTitle}>Booking Confirmed!</Text>
-                    <Text style={styles.successSubtitle}>
+                </Animated.View>
+
+                <Animated.View style={{ opacity: fadeAnim }}>
+                    <Text style={s.title}>Booking Confirmed!</Text>
+                    <Text style={s.subtitle}>
                         {isSubscription
-                            ? 'Your subscription wash has been scheduled'
-                            : 'Payment successful · Your wash is scheduled'}
+                            ? 'Your subscription wash has been booked. A washer will accept your job shortly.'
+                            : 'Payment successful! A washer will accept your job shortly.'}
                     </Text>
-                </View>
 
-                {/* Payment method badge */}
-                <View style={[
-                    styles.pathBadge,
-                    { backgroundColor: isSubscription ? '#f0fdf4' : '#eff6ff', borderColor: isSubscription ? '#86efac' : '#bfdbfe' },
-                ]}>
-                    <Ionicons
-                        name={isSubscription ? 'refresh-circle' : 'card'}
-                        size={18}
-                        color={isSubscription ? '#16a34a' : '#2563eb'}
-                    />
-                    <Text style={[styles.pathBadgeText, { color: isSubscription ? '#16a34a' : '#2563eb' }]}>
-                        {isSubscription ? 'Paid via Subscription Wash' : 'Paid via One-Time Payment'}
-                    </Text>
-                </View>
-
-                {/* Booking details card */}
-                <View style={styles.detailsCard}>
-                    <Text style={styles.detailsCardTitle}>Booking Details</Text>
-
-                    <DetailRow icon="receipt-outline" label="Booking ID" value={`#${booking.id.slice(-8).toUpperCase()}`} />
-                    <DetailRow icon="sparkles-outline" label="Service" value={booking.service.name} />
-                    <DetailRow icon="car-outline" label="Vehicle" value={`${booking.vehicle.make} ${booking.vehicle.model} (${booking.vehicle.licensePlate})`} />
-                    <DetailRow icon="calendar-outline" label="Date" value={formatDate(booking.scheduledDate)} />
-                    <DetailRow icon="time-outline" label="Time" value={formatTime(booking.scheduledTime)} />
-                    <DetailRow icon="hourglass-outline" label="Duration" value={`${booking.service.duration} minutes`} />
-                    <DetailRow icon="location-outline" label="Location" value={`${booking.address.label} · ${booking.address.addressLine1}, ${booking.address.city}`} />
-                </View>
-
-                {/* Price breakdown */}
-                <View style={styles.priceCard}>
-                    <Text style={styles.detailsCardTitle}>Price Breakdown</Text>
-                    {booking.priceBreakdown && (
-                        <>
-                            <View style={styles.priceRow}>
-                                <Text style={styles.priceLabel}>{booking.service.name}</Text>
-                                <Text style={styles.priceValue}>LKR {booking.priceBreakdown.basePrice.toLocaleString()}</Text>
-                            </View>
-                            {booking.priceBreakdown.multiplier > 1.0 && (
-                                <View style={styles.priceRow}>
-                                    <Text style={styles.priceLabel}>{booking.priceBreakdown.vehicleType} surcharge</Text>
-                                    <Text style={styles.priceValue}>
-                                        +LKR {(booking.priceBreakdown.totalPrice - booking.priceBreakdown.basePrice).toLocaleString()}
-                                    </Text>
-                                </View>
-                            )}
-                            {isSubscription && (
-                                <View style={styles.priceRow}>
-                                    <Text style={[styles.priceLabel, { color: '#16a34a' }]}>Subscription discount</Text>
-                                    <Text style={[styles.priceValue, { color: '#16a34a' }]}>
-                                        -LKR {booking.priceBreakdown.totalPrice.toLocaleString()}
-                                    </Text>
-                                </View>
-                            )}
-                        </>
-                    )}
-                    <View style={styles.priceDivider} />
-                    <View style={styles.priceRow}>
-                        <Text style={styles.priceTotalLabel}>Total Charged</Text>
-                        <Text style={[styles.priceTotalValue, { color: isSubscription ? '#16a34a' : '#2563eb' }]}>
-                            {isSubscription ? 'FREE' : `LKR ${booking.totalPrice.toLocaleString()}`}
-                        </Text>
-                    </View>
-                </View>
-
-                {/* What's next info */}
-                <View style={styles.infoCard}>
-                    <Text style={styles.infoTitle}>What happens next?</Text>
-                    {[
-                        { icon: 'search-outline', text: 'WashXpress is finding the best available washer near you' },
-                        { icon: 'notifications-outline', text: "You'll get a notification once a washer accepts your booking" },
-                        { icon: 'car-sport-outline', text: 'Your washer will arrive at the scheduled time' },
-                    ].map(({ icon, text }, i) => (
-                        <View key={i} style={styles.infoRow}>
-                            <View style={styles.infoIcon}>
-                                <Ionicons name={icon as any} size={16} color="#2563eb" />
-                            </View>
-                            <Text style={styles.infoText}>{text}</Text>
+                    {/* Payment badge */}
+                    <View style={s.badgeRow}>
+                        <View style={[s.badge, { backgroundColor: isSubscription ? '#dcfce7' : '#dbeafe' }]}>
+                            <Ionicons
+                                name={isSubscription ? 'refresh-circle' : 'card'}
+                                size={14}
+                                color={isSubscription ? '#16a34a' : '#2563eb'}
+                            />
+                            <Text style={[s.badgeTxt, { color: isSubscription ? '#16a34a' : '#2563eb' }]}>
+                                {isSubscription ? 'Paid via Subscription' : 'Paid via PayHere'}
+                            </Text>
                         </View>
-                    ))}
-                </View>
+                    </View>
 
-                {/* Actions */}
-                <TouchableOpacity
-                    style={styles.primaryBtn}
-                    onPress={() => router.replace({ pathname: '/booking-details', params: { bookingId: booking.id } })}
-                >
-                    <Ionicons name="eye-outline" size={20} color="#fff" />
-                    <Text style={styles.primaryBtnText}>Track Booking</Text>
-                </TouchableOpacity>
+                    {/* Booking detail card */}
+                    {loading ? (
+                        <View style={s.loadingCard}>
+                            <ActivityIndicator color="#0ca6e8" />
+                        </View>
+                    ) : booking ? (
+                        <View style={s.detailCard}>
+                            <Text style={s.detailCardTitle}>Booking Summary</Text>
 
-                <TouchableOpacity style={styles.secondaryBtn} onPress={() => router.replace('/customer-home')}>
-                    <Text style={styles.secondaryBtnText}>Back to Home</Text>
-                </TouchableOpacity>
+                            <DetailRow icon="construct-outline" label="Service" value={booking.service.name} />
+                            <DetailRow icon="calendar-outline" label="Date" value={formatDate(booking.scheduledDate)} />
+                            <DetailRow icon="time-outline" label="Time" value={fmt(booking.scheduledTime)} />
+                            <DetailRow
+                                icon="car-outline"
+                                label="Vehicle"
+                                value={booking.vehicle.nickname || `${booking.vehicle.make} ${booking.vehicle.model}`}
+                                sub={`${booking.vehicle.type} · ${booking.vehicle.licensePlate}`}
+                            />
+                            <DetailRow
+                                icon="location-outline"
+                                label="Location"
+                                value={booking.address.label}
+                                sub={`${booking.address.addressLine1}, ${booking.address.city}`}
+                            />
+
+                            {/* Price breakdown */}
+                            <View style={s.divider} />
+                            {isSubscription ? (
+                                <View style={s.priceRow}>
+                                    <Text style={s.priceLbl}>Total Charged</Text>
+                                    <Text style={[s.priceVal, { color: '#16a34a' }]}>FREE (Subscription)</Text>
+                                </View>
+                            ) : (
+                                <>
+                                    {booking.priceBreakdown && booking.priceBreakdown.multiplier > 1.0 && (
+                                        <View style={s.priceRow}>
+                                            <Text style={s.priceLbl}>Base price</Text>
+                                            <Text style={s.priceVal}>LKR {booking.priceBreakdown.basePrice.toLocaleString()}</Text>
+                                        </View>
+                                    )}
+                                    {booking.priceBreakdown && booking.priceBreakdown.multiplier > 1.0 && (
+                                        <View style={s.priceRow}>
+                                            <Text style={s.priceLbl}>{booking.priceBreakdown.vehicleType} surcharge</Text>
+                                            <Text style={s.priceVal}>+LKR {(booking.priceBreakdown.totalPrice - booking.priceBreakdown.basePrice).toLocaleString()}</Text>
+                                        </View>
+                                    )}
+                                    <View style={s.priceRow}>
+                                        <Text style={s.priceTotalLbl}>Total Charged</Text>
+                                        <Text style={s.priceTotalVal}>LKR {booking.totalPrice.toLocaleString()}</Text>
+                                    </View>
+                                </>
+                            )}
+
+                            {/* Customer notes */}
+                            {booking.notes && (
+                                <>
+                                    <View style={s.divider} />
+                                    <View style={s.notesBox}>
+                                        <Ionicons name="document-text-outline" size={14} color="#6b7280" />
+                                        <Text style={s.notesTxt}>{booking.notes}</Text>
+                                    </View>
+                                </>
+                            )}
+                        </View>
+                    ) : null}
+
+                    {/* What happens next */}
+                    <View style={s.nextStepsCard}>
+                        <Text style={s.nextStepsTitle}>What happens next?</Text>
+                        <NextStep n={1} text="Nearby washers are notified about your booking right now." />
+                        <NextStep n={2} text="The first available washer will accept your job." />
+                        <NextStep n={3} text="You'll be notified once a washer is assigned." />
+                        <NextStep n={4} text="Your washer arrives at the scheduled time." />
+                    </View>
+
+                    {/* Actions */}
+                    <TouchableOpacity
+                        style={s.primaryBtn}
+                        onPress={() => router.replace({ pathname: '/booking-details', params: { id: bookingId } })}
+                    >
+                        <Ionicons name="eye-outline" size={20} color="#fff" />
+                        <Text style={s.primaryBtnTxt}>Track My Booking</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={s.secondaryBtn}
+                        onPress={() => router.replace('/customer-home' as any)}
+                    >
+                        <Text style={s.secondaryBtnTxt}>Back to Home</Text>
+                    </TouchableOpacity>
+                </Animated.View>
 
                 <View style={{ height: 40 }} />
             </ScrollView>
@@ -191,89 +198,75 @@ export default function BookingConfirmationScreen() {
     );
 }
 
-function DetailRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+function DetailRow({ icon, label, value, sub }: { icon: string; label: string; value: string; sub?: string }) {
     return (
-        <View style={styles.detailRow}>
-            <View style={styles.detailIcon}>
-                <Ionicons name={icon as any} size={16} color="#6b7280" />
+        <View style={s.detailRow}>
+            <View style={s.detailIconWrap}>
+                <Ionicons name={icon as any} size={16} color="#0ca6e8" />
             </View>
             <View style={{ flex: 1 }}>
-                <Text style={styles.detailLabel}>{label}</Text>
-                <Text style={styles.detailValue}>{value}</Text>
+                <Text style={s.detailLbl}>{label}</Text>
+                <Text style={s.detailVal}>{value}</Text>
+                {sub && <Text style={s.detailSub}>{sub}</Text>}
             </View>
         </View>
     );
 }
 
-const styles = StyleSheet.create({
+function NextStep({ n, text }: { n: number; text: string }) {
+    return (
+        <View style={s.nextStepRow}>
+            <View style={s.nextStepDot}><Text style={s.nextStepNum}>{n}</Text></View>
+            <Text style={s.nextStepTxt}>{text}</Text>
+        </View>
+    );
+}
+
+const s = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f8fafc' },
-    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
-    scroll: { padding: 24, paddingTop: 60 },
+    scroll: { padding: 24, alignItems: 'center' },
 
-    successArea: { alignItems: 'center', marginBottom: 24 },
-    successCircle: {
-        width: 96, height: 96, borderRadius: 48,
-        backgroundColor: '#16a34a', justifyContent: 'center', alignItems: 'center',
-        marginBottom: 20,
-        shadowColor: '#16a34a', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 8,
-    },
-    successTitle: { fontSize: 26, fontWeight: '800', color: '#0f172a', marginBottom: 8 },
-    successSubtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center', lineHeight: 22 },
+    iconWrap: { alignItems: 'center', marginTop: 40, marginBottom: 24 },
+    iconCircle: { width: 140, height: 140, borderRadius: 70, justifyContent: 'center', alignItems: 'center' },
 
-    pathBadge: {
-        flexDirection: 'row', alignItems: 'center', gap: 8,
-        alignSelf: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-        borderWidth: 1, marginBottom: 24,
-    },
-    pathBadgeText: { fontSize: 14, fontWeight: '700' },
+    title: { fontSize: 28, fontWeight: '800', color: '#0d1629', textAlign: 'center', marginBottom: 10 },
+    subtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center', lineHeight: 22, marginBottom: 18, paddingHorizontal: 10 },
 
-    detailsCard: {
-        backgroundColor: '#fff', borderRadius: 20, padding: 20, marginBottom: 12,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
-    },
-    detailsCardTitle: { fontSize: 16, fontWeight: '700', color: '#0f172a', marginBottom: 16 },
-    detailRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14, gap: 12 },
-    detailIcon: {
-        width: 32, height: 32, borderRadius: 8, backgroundColor: '#f8fafc',
-        justifyContent: 'center', alignItems: 'center', flexShrink: 0,
-    },
-    detailLabel: { fontSize: 12, color: '#9ca3af', fontWeight: '600', marginBottom: 2 },
-    detailValue: { fontSize: 14, color: '#0f172a', fontWeight: '600', lineHeight: 20 },
+    badgeRow: { alignItems: 'center', marginBottom: 24 },
+    badge: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7 },
+    badgeTxt: { fontSize: 13, fontWeight: '700' },
 
-    priceCard: {
-        backgroundColor: '#fff', borderRadius: 20, padding: 20, marginBottom: 12,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
-    },
-    priceRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-    priceLabel: { fontSize: 14, color: '#6b7280' },
-    priceValue: { fontSize: 14, color: '#374151', fontWeight: '600' },
-    priceDivider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 10 },
-    priceTotalLabel: { fontSize: 16, fontWeight: '700', color: '#0f172a' },
-    priceTotalValue: { fontSize: 22, fontWeight: '800' },
+    loadingCard: { width: '100%', backgroundColor: '#fff', borderRadius: 20, padding: 30, alignItems: 'center', marginBottom: 20 },
 
-    infoCard: {
-        backgroundColor: '#eff6ff', borderRadius: 20, padding: 20, marginBottom: 24,
-        borderWidth: 1, borderColor: '#bfdbfe',
-    },
-    infoTitle: { fontSize: 15, fontWeight: '700', color: '#1e3a8a', marginBottom: 14 },
-    infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 },
-    infoIcon: {
-        width: 32, height: 32, borderRadius: 8, backgroundColor: '#dbeafe',
-        justifyContent: 'center', alignItems: 'center', flexShrink: 0,
-    },
-    infoText: { flex: 1, fontSize: 14, color: '#1e40af', lineHeight: 20, paddingTop: 6 },
+    detailCard: { width: '100%', backgroundColor: '#fff', borderRadius: 20, padding: 20, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10, elevation: 3 },
+    detailCardTitle: { fontSize: 16, fontWeight: '700', color: '#0d1629', marginBottom: 16 },
 
-    primaryBtn: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-        backgroundColor: '#2563eb', borderRadius: 16, paddingVertical: 16, marginBottom: 12,
-    },
-    primaryBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-    secondaryBtn: {
-        borderRadius: 16, paddingVertical: 14, alignItems: 'center',
-        borderWidth: 1.5, borderColor: '#e2e8f0',
-    },
-    secondaryBtnText: { fontSize: 15, fontWeight: '700', color: '#374151' },
+    detailRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 },
+    detailIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#e0f4fd', justifyContent: 'center', alignItems: 'center', marginRight: 12, marginTop: 2 },
+    detailLbl: { fontSize: 12, color: '#9ca3af', fontWeight: '600', marginBottom: 2 },
+    detailVal: { fontSize: 15, fontWeight: '600', color: '#0d1629' },
+    detailSub: { fontSize: 12, color: '#6b7280', marginTop: 2 },
 
-    homeBtn: { backgroundColor: '#2563eb', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
-    homeBtnText: { color: '#fff', fontWeight: '700' },
+    divider: { height: 1, backgroundColor: '#f1f5f9', marginVertical: 14 },
+
+    priceRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+    priceLbl: { fontSize: 14, color: '#6b7280' },
+    priceVal: { fontSize: 14, fontWeight: '600', color: '#374151' },
+    priceTotalLbl: { fontSize: 15, fontWeight: '700', color: '#0d1629' },
+    priceTotalVal: { fontSize: 18, fontWeight: '800', color: '#0ca6e8' },
+
+    notesBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: '#f8fafc', borderRadius: 10, padding: 12 },
+    notesTxt: { flex: 1, fontSize: 13, color: '#6b7280', lineHeight: 18 },
+
+    nextStepsCard: { width: '100%', backgroundColor: '#fff', borderRadius: 20, padding: 20, marginBottom: 20 },
+    nextStepsTitle: { fontSize: 15, fontWeight: '700', color: '#0d1629', marginBottom: 14 },
+    nextStepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
+    nextStepDot: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#0ca6e8', justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0 },
+    nextStepNum: { fontSize: 12, fontWeight: '800', color: '#fff' },
+    nextStepTxt: { flex: 1, fontSize: 14, color: '#374151', lineHeight: 20, paddingTop: 3 },
+
+    primaryBtn: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#0ca6e8', borderRadius: 16, paddingVertical: 18, marginBottom: 12 },
+    primaryBtnTxt: { fontSize: 16, fontWeight: '800', color: '#fff' },
+    secondaryBtn: { width: '100%', alignItems: 'center', paddingVertical: 14 },
+    secondaryBtnTxt: { fontSize: 15, fontWeight: '600', color: '#6b7280' },
 });

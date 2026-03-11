@@ -1,787 +1,399 @@
-import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Linking,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+    ActivityIndicator, Alert, Linking, Platform,
+    ScrollView, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
-import { Header } from '../components/Header';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import { apiFetch } from '../services/apiClient';
 
-interface Booking {
+interface AcceptedBooking {
     id: string;
-    customerId: string;
-    providerId: string;
-    serviceId: string;
-    vehicleId: string;
-    status: 'pending' | 'confirmed' | 'rejected' | 'in_progress' | 'completed' | 'cancelled';
+    status: 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
     scheduledDate: string;
-    scheduledTime: string;
+    scheduledTime: string;        // customer's original requested time
+    washerPreferredTime?: string; // washer's accepted arrival time
     duration: number;
     totalPrice: number;
     currency: string;
-    notes?: string;
     paidWithSubscription: boolean;
-    startedAt?: string;
-    completedAt?: string;
-    service: {
-        name: string;
-        price: number;
-        duration: number;
-    };
-    customer: {
-        displayName: string;
-        phoneNumber: string;
-    };
+    notes?: string;               // customer's special car care instructions
+    priceBreakdown?: { basePrice: number; multiplier: number; totalPrice: number; vehicleType: string };
+    service: { name: string; duration: number; categoryId: string };
     vehicle: {
-        make: string;
-        model: string;
-        year: number;
-        color: string;
-        licensePlate: string;
-        nickname: string;
+        make: string; model: string; year: number; color: string;
+        licensePlate: string; nickname: string; type: string;
     };
     address: {
-        label: string;
-        addressLine1: string;
-        addressLine2?: string;
-        city: string;
-        country: string;
-        location?: {
-            latitude: number;
-            longitude: number;
-        };
+        label: string; addressLine1: string; addressLine2?: string;
+        city: string; postalCode?: string; country: string;
+        location?: { latitude: number; longitude: number };
     };
+    customer?: { displayName: string; phone?: string };
+    createdAt: any;
 }
 
-export default function WasherBookingDetailsScreen() {
-    const router = useRouter();
-    const params = useLocalSearchParams();
-    const bookingId = params.id as string;
+function fmt(t: string) {
+    const [h, m] = t.split(':').map(Number);
+    return `${h > 12 ? h - 12 : h === 0 ? 12 : h}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+}
+function formatDate(d: string) {
+    return new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric',
+    });
+}
 
-    const [booking, setBooking] = useState<Booking | null>(null);
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
+    confirmed: { label: 'Confirmed', color: '#0ca6e8', bg: '#e0f4fd', icon: 'checkmark-circle' },
+    in_progress: { label: 'In Progress', color: '#f59e0b', bg: '#fffbeb', icon: 'construct' },
+    completed: { label: 'Completed', color: '#16a34a', bg: '#dcfce7', icon: 'checkmark-done-circle' },
+    cancelled: { label: 'Cancelled', color: '#ef4444', bg: '#fef2f2', icon: 'close-circle' },
+};
+
+const VEHICLE_TYPE_ICONS: Record<string, string> = {
+    SUV: '🚙', Van: '🚐', Truck: '🛻',
+    Sedan: '🚗', Hatchback: '🚗', Coupe: '🚗', Convertible: '🚗', Wagon: '🚗',
+};
+
+export default function WasherBookingDetailsScreen() {
+    const { id: bookingId } = useLocalSearchParams<{ id: string }>();
+    const [booking, setBooking] = useState<AcceptedBooking | null>(null);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
 
     useEffect(() => {
-        if (!bookingId) {
-            Alert.alert('Error', 'Booking not found');
-            router.back();
-            return;
-        }
+        if (!bookingId) { router.back(); return; }
         loadBooking();
     }, []);
 
     const loadBooking = async () => {
         try {
             setLoading(true);
-            const token = await AsyncStorage.getItem('idToken');
-
-            const response = await fetch(
-                `http://192.168.1.5:5001/washxpress-19b94/us-central1/api/provider/bookings/${bookingId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-            const data = await response.json();
-
-            if (data.success) {
-                setBooking(data.data.booking);
-            } else {
-                Alert.alert('Error', 'Booking not found');
-                router.back();
-            }
-        } catch (error) {
-            console.error('Load booking error:', error);
-            Alert.alert('Error', 'Failed to load booking');
-        } finally {
-            setLoading(false);
-        }
+            const res = await apiFetch(`/bookings/${bookingId}`, {}, 'provider');
+            if (res.success) setBooking(res.data.booking);
+            else { Alert.alert('Error', 'Booking not found'); router.back(); }
+        } catch { Alert.alert('Error', 'Failed to load booking'); }
+        finally { setLoading(false); }
     };
 
-    const handleStartService = async () => {
+    const handleStartService = () => {
         Alert.alert(
             'Start Service?',
-            'This will notify the customer that you have arrived and started the service.',
+            "Confirm you've arrived and are starting the wash. The customer will be notified.",
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Start Service',
+                    text: 'Start Now',
                     onPress: async () => {
+                        setActionLoading(true);
                         try {
-                            setActionLoading(true);
-                            const token = await AsyncStorage.getItem('idToken');
-
-                            const response = await fetch(
-                                `http://192.168.1.5:5001/washxpress-19b94/us-central1/api/provider/bookings/${bookingId}/start`,
-                                {
-                                    method: 'PATCH',
-                                    headers: {
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                }
-                            );
-
-                            const data = await response.json();
-
-                            if (data.success) {
-                                Alert.alert('Success', 'Service started!');
+                            const res = await apiFetch(`/bookings/${bookingId}/start`, { method: 'PATCH' }, 'provider');
+                            if (res.success) {
                                 await loadBooking();
-                            } else {
-                                Alert.alert('Error', data.message || 'Failed to start service');
-                            }
-                        } catch (error) {
-                            console.error('Start service error:', error);
-                            Alert.alert('Error', 'Failed to start service');
-                        } finally {
-                            setActionLoading(false);
-                        }
+                                Alert.alert('Service Started! 🚿', 'The customer has been notified you have arrived.');
+                            } else Alert.alert('Error', res.message || 'Failed to start service');
+                        } catch (e: any) { Alert.alert('Error', e.message); }
+                        finally { setActionLoading(false); }
                     },
                 },
             ]
         );
     };
 
-    const handleCompleteService = async () => {
+    const handleCompleteService = () => {
         Alert.alert(
             'Complete Service?',
-            'Mark this service as completed. The customer will be able to rate you.',
+            'Confirm the wash is done. The customer will be asked to review.',
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Complete',
+                    text: 'Mark Complete',
                     onPress: async () => {
+                        setActionLoading(true);
                         try {
-                            setActionLoading(true);
-                            const token = await AsyncStorage.getItem('idToken');
-
-                            const response = await fetch(
-                                `http://192.168.1.5:5001/washxpress-19b94/us-central1/api/provider/bookings/${bookingId}/complete`,
-                                {
-                                    method: 'PATCH',
-                                    headers: {
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                }
-                            );
-
-                            const data = await response.json();
-
-                            if (data.success) {
-                                Alert.alert('Success! 🎉', 'Service completed. Great job!', [
-                                    {
-                                        text: 'OK',
-                                        onPress: () => {
-                                            router.replace('/washer-home' as Href);
-                                        },
-                                    },
-                                ]);
-                            } else {
-                                Alert.alert('Error', data.message || 'Failed to complete service');
-                            }
-                        } catch (error) {
-                            console.error('Complete service error:', error);
-                            Alert.alert('Error', 'Failed to complete service');
-                        } finally {
-                            setActionLoading(false);
-                        }
+                            const res = await apiFetch(`/bookings/${bookingId}/complete`, { method: 'PATCH' }, 'provider');
+                            if (res.success) {
+                                await loadBooking();
+                                Alert.alert('Job Complete! 🎉', "Great work! Your earnings have been updated.");
+                            } else Alert.alert('Error', res.message || 'Failed to complete service');
+                        } catch (e: any) { Alert.alert('Error', e.message); }
+                        finally { setActionLoading(false); }
                     },
                 },
             ]
         );
     };
 
-    const handleCallCustomer = () => {
-        if (!booking) return;
-
-        Alert.alert(
-            'Call Customer',
-            `Call ${booking.customer.displayName}?`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Call',
-                    onPress: () => {
-                        Linking.openURL(`tel:${booking.customer.phoneNumber}`);
-                    },
-                },
-            ]
-        );
-    };
-
-    const handleNavigate = () => {
-        if (!booking?.address.location) {
-            Alert.alert('Location Unavailable', 'Address coordinates not available');
-            return;
-        }
-
+    const openNavigation = () => {
+        if (!booking?.address.location) { Alert.alert('No coordinates', 'Coordinates unavailable for this address.'); return; }
         const { latitude, longitude } = booking.address.location;
         const url = Platform.OS === 'ios'
             ? `maps://app?daddr=${latitude},${longitude}`
             : `google.navigation:q=${latitude},${longitude}`;
-
         Linking.openURL(url);
     };
 
-    const getStatusColor = (status: string) => {
-        const colors: { [key: string]: string } = {
-            pending: '#FFA500',
-            confirmed: '#4CAF50',
-            rejected: '#F44336',
-            in_progress: '#2196F3',
-            completed: '#9E9E9E',
-            cancelled: '#757575',
-        };
-        return colors[status] || '#999';
-    };
+    if (loading) return (
+        <View style={s.center}><ActivityIndicator size="large" color="#0ca6e8" /></View>
+    );
+    if (!booking) return (
+        <View style={s.center}><Text style={{ color: '#ef4444' }}>Booking not found</Text></View>
+    );
 
-    const getStatusText = (status: string) => {
-        const texts: { [key: string]: string } = {
-            pending: 'Pending',
-            confirmed: 'Confirmed',
-            rejected: 'Rejected',
-            in_progress: 'In Progress',
-            completed: 'Completed',
-            cancelled: 'Cancelled',
-        };
-        return texts[status] || status;
-    };
-
-    if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
-                <Text style={styles.loadingText}>Loading booking...</Text>
-            </View>
-        );
-    }
-
-    if (!booking) {
-        return (
-            <View style={styles.loadingContainer}>
-                <Text style={styles.errorText}>Booking not found</Text>
-            </View>
-        );
-    }
+    const statusCfg = STATUS_CONFIG[booking.status] || STATUS_CONFIG.confirmed;
+    const vehicleIcon = VEHICLE_TYPE_ICONS[booking.vehicle.type] || '🚗';
+    const hasSpecialNotes = !!booking.notes?.trim();
+    const timeChanged = booking.washerPreferredTime && booking.washerPreferredTime !== booking.scheduledTime;
 
     return (
-        <View style={styles.container}>
+        <View style={s.container}>
             {/* Header */}
-            <Header
-                title="Booking Details"
-                rightElement={
-                    <TouchableOpacity onPress={loadBooking}>
-                        <Ionicons name="refresh" size={24} color="#000" />
-                    </TouchableOpacity>
-                }
-            />
+            <View style={s.header}>
+                <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
+                    <Ionicons name="arrow-back" size={24} color="#0d1629" />
+                </TouchableOpacity>
+                <Text style={s.headerTitle}>Job Details</Text>
+                <View style={[s.statusPill, { backgroundColor: statusCfg.bg }]}>
+                    <Ionicons name={statusCfg.icon as any} size={14} color={statusCfg.color} />
+                    <Text style={[s.statusPillTxt, { color: statusCfg.color }]}>{statusCfg.label}</Text>
+                </View>
+            </View>
 
-            <ScrollView style={styles.content}>
-                {/* Status Banner */}
-                <View style={[styles.statusBanner, { backgroundColor: getStatusColor(booking.status) }]}>
-                    <Ionicons
-                        name={
-                            booking.status === 'confirmed'
-                                ? 'checkmark-circle'
-                                : booking.status === 'in_progress'
-                                    ? 'hourglass'
-                                    : booking.status === 'completed'
-                                        ? 'checkmark-done-circle'
-                                        : 'alert-circle'
-                        }
-                        size={24}
-                        color="#FFF"
-                    />
-                    <Text style={styles.statusText}>{getStatusText(booking.status)}</Text>
+            <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
+                {/* Earnings banner */}
+                <View style={s.earningsBanner}>
+                    <View>
+                        <Text style={s.earningsLabel}>Earnings for this Job</Text>
+                        <Text style={s.earningsValue}>
+                            {booking.paidWithSubscription
+                                ? 'Subscription Job'
+                                : `LKR ${booking.totalPrice.toLocaleString()}`}
+                        </Text>
+                    </View>
+                    <View style={s.durationPill}>
+                        <Ionicons name="time-outline" size={15} color="#0ca6e8" />
+                        <Text style={s.durationTxt}>~{booking.duration} min</Text>
+                    </View>
                 </View>
 
-                {/* Earnings Card */}
-                <View style={styles.earningsCard}>
-                    <Text style={styles.earningsLabel}>You'll Earn</Text>
-                    <Text style={styles.earningsAmount}>
-                        {booking.paidWithSubscription ? (
-                            <Text style={{ color: '#4CAF50' }}>PAID (Subscription)</Text>
-                        ) : (
-                            `${booking.currency} ${booking.totalPrice.toLocaleString()}`
+                {/* ── Schedule ── */}
+                <View style={s.card}>
+                    <CardTitle icon="calendar" title="Schedule" />
+
+                    <View style={s.scheduleGrid}>
+                        <ScheduleItem label="Date" value={formatDate(booking.scheduledDate)} />
+                        <ScheduleItem label="Service" value={booking.service.name} />
+                    </View>
+
+                    {/* Time display — show both if different */}
+                    <View style={s.timeBlock}>
+                        <Text style={s.timeLbl}>Your Arrival Time</Text>
+                        <Text style={s.timeVal}>{fmt(booking.washerPreferredTime || booking.scheduledTime)}</Text>
+                        {timeChanged && (
+                            <View style={s.timeChangedRow}>
+                                <Ionicons name="swap-horizontal-outline" size={13} color="#6b7280" />
+                                <Text style={s.timeChangedTxt}>Customer requested {fmt(booking.scheduledTime)} · you adjusted to {fmt(booking.washerPreferredTime!)}</Text>
+                            </View>
                         )}
-                    </Text>
-                    <Text style={styles.earningsDuration}>~{booking.duration} minutes</Text>
+                    </View>
                 </View>
 
-                {/* Customer Info */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Customer</Text>
-                    <View style={styles.customerCard}>
-                        <View style={styles.customerAvatar}>
-                            <Ionicons name="person" size={32} color="#007AFF" />
+                {/* ── Vehicle & Car Care Notes ── */}
+                <View style={s.card}>
+                    <CardTitle icon="car-sport" title="Vehicle" />
+
+                    <View style={s.vehicleRow}>
+                        <Text style={s.vehicleEmoji}>{vehicleIcon}</Text>
+                        <View style={{ flex: 1, marginLeft: 14 }}>
+                            <Text style={s.vehicleName}>{booking.vehicle.nickname || `${booking.vehicle.make} ${booking.vehicle.model}`}</Text>
+                            <Text style={s.vehicleDetails}>{booking.vehicle.make} {booking.vehicle.model} · {booking.vehicle.year} · {booking.vehicle.color}</Text>
+                            <Text style={s.vehiclePlate}>{booking.vehicle.licensePlate}</Text>
                         </View>
-                        <View style={styles.customerInfo}>
-                            <Text style={styles.customerName}>{booking.customer.displayName}</Text>
-                            <Text style={styles.customerPhone}>{booking.customer.phoneNumber}</Text>
+                        <View style={s.vehicleTypePill}>
+                            <Text style={s.vehicleTypeTxt}>{booking.vehicle.type}</Text>
                         </View>
-                        <TouchableOpacity style={styles.callButton} onPress={handleCallCustomer}>
-                            <Ionicons name="call" size={24} color="#007AFF" />
+                    </View>
+
+                    {booking.priceBreakdown && booking.priceBreakdown.multiplier > 1.0 && (
+                        <View style={s.multiplierRow}>
+                            <Ionicons name="information-circle-outline" size={14} color="#0ca6e8" />
+                            <Text style={s.multiplierTxt}>
+                                {booking.vehicle.type} vehicle — {Math.round((booking.priceBreakdown.multiplier - 1) * 100)}% size surcharge applied
+                            </Text>
+                        </View>
+                    )}
+
+                    {/* Special instructions — prominent */}
+                    {hasSpecialNotes ? (
+                        <View style={s.specialNotesBox}>
+                            <View style={s.specialNotesHeader}>
+                                <Ionicons name="warning" size={18} color="#d97706" />
+                                <Text style={s.specialNotesTitle}>⚠️ Special Car Care Instructions</Text>
+                            </View>
+                            <Text style={s.specialNotesTxt}>{booking.notes}</Text>
+                        </View>
+                    ) : (
+                        <View style={s.noNotesRow}>
+                            <Ionicons name="checkmark-circle-outline" size={16} color="#16a34a" />
+                            <Text style={s.noNotesTxt}>No special instructions from customer</Text>
+                        </View>
+                    )}
+                </View>
+
+                {/* ── Location ── */}
+                <View style={s.card}>
+                    <CardTitle icon="location" title="Service Location" />
+                    <Text style={s.addressLabel}>{booking.address.label}</Text>
+                    <Text style={s.addressLine}>{booking.address.addressLine1}</Text>
+                    {booking.address.addressLine2 && <Text style={s.addressLine}>{booking.address.addressLine2}</Text>}
+                    <Text style={s.addressLine}>{booking.address.city}{booking.address.postalCode ? `, ${booking.address.postalCode}` : ''}</Text>
+
+                    {booking.address.location && (
+                        <TouchableOpacity style={s.navBtn} onPress={openNavigation}>
+                            <Ionicons name="navigate" size={16} color="#fff" />
+                            <Text style={s.navBtnTxt}>Open in Maps</Text>
                         </TouchableOpacity>
-                    </View>
+                    )}
                 </View>
 
-                {/* Service Details */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Service</Text>
-                    <View style={styles.detailCard}>
-                        <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Service</Text>
-                            <Text style={styles.detailValue}>{booking.service.name}</Text>
-                        </View>
-                        <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Duration</Text>
-                            <Text style={styles.detailValue}>~{booking.duration} min</Text>
-                        </View>
-                        <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Price</Text>
-                            <Text style={styles.detailValue}>
-                                {booking.paidWithSubscription ? 'Subscription' : `${booking.currency} ${booking.totalPrice}`}
-                            </Text>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Schedule */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Schedule</Text>
-                    <View style={styles.scheduleCard}>
-                        <View style={styles.scheduleItem}>
-                            <Ionicons name="calendar" size={24} color="#007AFF" />
-                            <View style={styles.scheduleText}>
-                                <Text style={styles.scheduleLabel}>Date</Text>
-                                <Text style={styles.scheduleValue}>{booking.scheduledDate}</Text>
-                            </View>
-                        </View>
-                        <View style={styles.scheduleItem}>
-                            <Ionicons name="time" size={24} color="#007AFF" />
-                            <View style={styles.scheduleText}>
-                                <Text style={styles.scheduleLabel}>Time</Text>
-                                <Text style={styles.scheduleValue}>{booking.scheduledTime}</Text>
-                            </View>
-                        </View>
-                        {booking.startedAt && (
-                            <View style={styles.scheduleItem}>
-                                <Ionicons name="play-circle" size={24} color="#4CAF50" />
-                                <View style={styles.scheduleText}>
-                                    <Text style={styles.scheduleLabel}>Started At</Text>
-                                    <Text style={styles.scheduleValue}>
-                                        {new Date(booking.startedAt).toLocaleTimeString([], {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        })}
-                                    </Text>
-                                </View>
-                            </View>
-                        )}
-                        {booking.completedAt && (
-                            <View style={styles.scheduleItem}>
-                                <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-                                <View style={styles.scheduleText}>
-                                    <Text style={styles.scheduleLabel}>Completed At</Text>
-                                    <Text style={styles.scheduleValue}>
-                                        {new Date(booking.completedAt).toLocaleTimeString([], {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        })}
-                                    </Text>
-                                </View>
-                            </View>
-                        )}
-                    </View>
-                </View>
-
-                {/* Vehicle */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Vehicle</Text>
-                    <View style={styles.vehicleCard}>
-                        <Ionicons name="car-sport" size={48} color="#007AFF" />
-                        <View style={styles.vehicleInfo}>
-                            <Text style={styles.vehicleName}>{booking.vehicle.nickname}</Text>
-                            <Text style={styles.vehicleModel}>
-                                {booking.vehicle.make} {booking.vehicle.model} {booking.vehicle.year}
-                            </Text>
-                            <Text style={styles.vehicleColor}>
-                                {booking.vehicle.color} • {booking.vehicle.licensePlate}
-                            </Text>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Location */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Location</Text>
-                    <View style={styles.locationCard}>
-                        <View style={styles.locationInfo}>
-                            <Ionicons name="location" size={32} color="#FF3B30" />
-                            <View style={styles.locationText}>
-                                <Text style={styles.locationLabel}>{booking.address.label}</Text>
-                                <Text style={styles.locationAddress}>{booking.address.addressLine1}</Text>
-                                {booking.address.addressLine2 && (
-                                    <Text style={styles.locationAddress}>{booking.address.addressLine2}</Text>
-                                )}
-                                <Text style={styles.locationAddress}>
-                                    {booking.address.city}, {booking.address.country}
-                                </Text>
-                            </View>
-                        </View>
-
-                        {booking.address.location && (
-                            <TouchableOpacity style={styles.navigationButton} onPress={handleNavigate}>
-                                <Ionicons name="navigate" size={20} color="#007AFF" />
-                                <Text style={styles.navigationText}>Get Directions</Text>
+                {/* ── Customer ── */}
+                {booking.customer && (
+                    <View style={s.card}>
+                        <CardTitle icon="person-circle" title="Customer" />
+                        <Text style={s.customerName}>{booking.customer.displayName}</Text>
+                        {booking.customer.phone && (
+                            <TouchableOpacity
+                                style={s.callBtn}
+                                onPress={() => Linking.openURL(`tel:${booking.customer!.phone}`)}
+                            >
+                                <Ionicons name="call-outline" size={16} color="#0ca6e8" />
+                                <Text style={s.callBtnTxt}>Call Customer</Text>
                             </TouchableOpacity>
                         )}
                     </View>
-                </View>
-
-                {/* Customer Notes */}
-                {booking.notes && (
-                    <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Customer Notes</Text>
-                        <View style={styles.notesCard}>
-                            <Ionicons name="information-circle" size={24} color="#007AFF" />
-                            <Text style={styles.notesText}>{booking.notes}</Text>
-                        </View>
-                    </View>
                 )}
 
-                <View style={{ height: 120 }} />
-            </ScrollView>
-
-            {/* Action Buttons */}
-            {booking.status === 'confirmed' && (
-                <View style={styles.footer}>
+                {/* ── Action Buttons ── */}
+                {booking.status === 'confirmed' && (
                     <TouchableOpacity
-                        style={[styles.actionButton, styles.startButton, actionLoading && styles.buttonDisabled]}
+                        style={[s.actionBtn, s.startBtn]}
                         onPress={handleStartService}
                         disabled={actionLoading}
                     >
-                        {actionLoading ? (
-                            <ActivityIndicator color="#FFF" />
-                        ) : (
-                            <>
-                                <Ionicons name="play-circle" size={24} color="#FFF" />
-                                <Text style={styles.actionButtonText}>Start Service</Text>
-                            </>
-                        )}
+                        {actionLoading
+                            ? <ActivityIndicator color="#fff" />
+                            : <><Ionicons name="play-circle" size={22} color="#fff" /><Text style={s.actionBtnTxt}>I've Arrived — Start Service</Text></>
+                        }
                     </TouchableOpacity>
-                </View>
-            )}
+                )}
 
-            {booking.status === 'in_progress' && (
-                <View style={styles.footer}>
+                {booking.status === 'in_progress' && (
                     <TouchableOpacity
-                        style={[styles.actionButton, styles.completeButton, actionLoading && styles.buttonDisabled]}
+                        style={[s.actionBtn, s.completeBtn]}
                         onPress={handleCompleteService}
                         disabled={actionLoading}
                     >
-                        {actionLoading ? (
-                            <ActivityIndicator color="#FFF" />
-                        ) : (
-                            <>
-                                <Ionicons name="checkmark-circle" size={24} color="#FFF" />
-                                <Text style={styles.actionButtonText}>Complete Service</Text>
-                            </>
-                        )}
+                        {actionLoading
+                            ? <ActivityIndicator color="#fff" />
+                            : <><Ionicons name="checkmark-done-circle" size={22} color="#fff" /><Text style={s.actionBtnTxt}>Mark Service Complete</Text></>
+                        }
                     </TouchableOpacity>
-                </View>
-            )}
+                )}
+
+                {booking.status === 'completed' && (
+                    <View style={s.completedBanner}>
+                        <Ionicons name="trophy" size={28} color="#16a34a" />
+                        <Text style={s.completedTxt}>Great job! This service is complete.</Text>
+                    </View>
+                )}
+
+                <View style={{ height: 40 }} />
+            </ScrollView>
         </View>
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F5F5',
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F5F5F5',
-    },
-    loadingText: {
-        marginTop: 12,
-        fontSize: 16,
-        color: '#666',
-    },
-    errorText: {
-        fontSize: 16,
-        color: '#666',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingTop: 60,
-        paddingBottom: 16,
-        paddingHorizontal: 20,
-        backgroundColor: '#FFF',
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#000',
-    },
-    content: {
-        flex: 1,
-    },
-    statusBanner: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-    },
-    statusText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#FFF',
-        marginLeft: 12,
-    },
-    earningsCard: {
-        backgroundColor: '#4CAF50',
-        margin: 20,
-        marginBottom: 12,
-        borderRadius: 12,
-        padding: 24,
-        alignItems: 'center',
-    },
-    earningsLabel: {
-        fontSize: 14,
-        color: '#E8F5E9',
-        marginBottom: 8,
-    },
-    earningsAmount: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#FFF',
-        marginBottom: 4,
-    },
-    earningsDuration: {
-        fontSize: 14,
-        color: '#E8F5E9',
-    },
-    section: {
-        marginHorizontal: 20,
-        marginBottom: 12,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#000',
-        marginBottom: 12,
-    },
-    customerCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: 16,
-    },
-    customerAvatar: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: '#F0F8FF',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    customerInfo: {
-        flex: 1,
-        marginLeft: 16,
-    },
-    customerName: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#000',
-    },
-    customerPhone: {
-        fontSize: 14,
-        color: '#666',
-        marginTop: 4,
-    },
-    callButton: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: '#F0F8FF',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    detailCard: {
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: 16,
-    },
-    detailRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    detailLabel: {
-        fontSize: 14,
-        color: '#666',
-    },
-    detailValue: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#000',
-    },
-    scheduleCard: {
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: 16,
-    },
-    scheduleItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
-    },
-    scheduleText: {
-        marginLeft: 16,
-    },
-    scheduleLabel: {
-        fontSize: 12,
-        color: '#999',
-    },
-    scheduleValue: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#000',
-        marginTop: 4,
-    },
-    vehicleCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: 20,
-    },
-    vehicleInfo: {
-        flex: 1,
-        marginLeft: 16,
-    },
-    vehicleName: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#000',
-        marginBottom: 4,
-    },
-    vehicleModel: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 4,
-    },
-    vehicleColor: {
-        fontSize: 14,
-        color: '#007AFF',
-        fontWeight: '500',
-    },
-    locationCard: {
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: 20,
-    },
-    locationInfo: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: 16,
-    },
-    locationText: {
-        flex: 1,
-        marginLeft: 16,
-    },
-    locationLabel: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#000',
-        marginBottom: 6,
-    },
-    locationAddress: {
-        fontSize: 14,
-        color: '#666',
-        marginTop: 2,
-    },
-    navigationButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#F0F8FF',
-        paddingVertical: 12,
-        borderRadius: 8,
-    },
-    navigationText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#007AFF',
-        marginLeft: 8,
-    },
-    notesCard: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: 16,
-    },
-    notesText: {
-        flex: 1,
-        fontSize: 14,
-        color: '#666',
-        lineHeight: 20,
-        marginLeft: 12,
-    },
-    footer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#FFF',
-        padding: 20,
-        paddingBottom: 40,
-        borderTopWidth: 1,
-        borderTopColor: '#E0E0E0',
-    },
-    actionButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 16,
-        borderRadius: 12,
-    },
-    startButton: {
-        backgroundColor: '#2196F3',
-    },
-    completeButton: {
-        backgroundColor: '#4CAF50',
-    },
-    actionButtonText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#FFF',
-        marginLeft: 8,
-    },
-    buttonDisabled: {
-        opacity: 0.6,
-    },
+function CardTitle({ icon, title }: { icon: string; title: string }) {
+    return (
+        <View style={s.cardTitleRow}>
+            <Ionicons name={icon as any} size={18} color="#0ca6e8" />
+            <Text style={s.cardTitle}>{title}</Text>
+        </View>
+    );
+}
+
+function ScheduleItem({ label, value }: { label: string; value: string }) {
+    return (
+        <View style={s.scheduleItem}>
+            <Text style={s.scheduleLbl}>{label}</Text>
+            <Text style={s.scheduleVal}>{value}</Text>
+        </View>
+    );
+}
+
+const s = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#f8fafc' },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+    backBtn: { width: 40, height: 40, justifyContent: 'center' },
+    headerTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
+    statusPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+    statusPillTxt: { fontSize: 12, fontWeight: '700' },
+    scroll: { padding: 20, paddingBottom: 40 },
+
+    earningsBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0d1629', borderRadius: 18, padding: 20, marginBottom: 14 },
+    earningsLabel: { fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: '600', marginBottom: 4 },
+    earningsValue: { fontSize: 24, fontWeight: '800', color: '#fff' },
+    durationPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(12,166,232,0.2)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
+    durationTxt: { fontSize: 14, fontWeight: '700', color: '#0ca6e8' },
+
+    card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+    cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
+    cardTitle: { fontSize: 16, fontWeight: '700', color: '#0d1629' },
+
+    scheduleGrid: { flexDirection: 'row', gap: 12, marginBottom: 14 },
+    scheduleItem: { flex: 1, backgroundColor: '#f8fafc', borderRadius: 12, padding: 12 },
+    scheduleLbl: { fontSize: 11, color: '#9ca3af', fontWeight: '600', marginBottom: 4 },
+    scheduleVal: { fontSize: 14, fontWeight: '700', color: '#0d1629' },
+
+    timeBlock: { backgroundColor: '#e0f4fd', borderRadius: 14, padding: 14 },
+    timeLbl: { fontSize: 12, color: '#0ca6e8', fontWeight: '600', marginBottom: 4 },
+    timeVal: { fontSize: 24, fontWeight: '800', color: '#0d1629' },
+    timeChangedRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 8 },
+    timeChangedTxt: { flex: 1, fontSize: 12, color: '#6b7280', lineHeight: 17 },
+
+    vehicleRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 },
+    vehicleEmoji: { fontSize: 36, marginTop: 2 },
+    vehicleName: { fontSize: 16, fontWeight: '700', color: '#0d1629' },
+    vehicleDetails: { fontSize: 13, color: '#6b7280', marginTop: 2 },
+    vehiclePlate: { fontSize: 13, color: '#0ca6e8', fontWeight: '600', marginTop: 2 },
+    vehicleTypePill: { backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
+    vehicleTypeTxt: { fontSize: 12, fontWeight: '700', color: '#374151' },
+
+    multiplierRow: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#e0f4fd', borderRadius: 10, padding: 10, marginBottom: 14 },
+    multiplierTxt: { fontSize: 13, color: '#0ca6e8', flex: 1 },
+
+    specialNotesBox: { backgroundColor: '#fffbeb', borderRadius: 14, padding: 16, borderWidth: 1.5, borderColor: '#fde68a' },
+    specialNotesHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+    specialNotesTitle: { fontSize: 14, fontWeight: '800', color: '#92400e' },
+    specialNotesTxt: { fontSize: 15, color: '#78350f', lineHeight: 22 },
+    noNotesRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f0fdf4', borderRadius: 10, padding: 12 },
+    noNotesTxt: { fontSize: 13, color: '#16a34a', fontWeight: '600' },
+
+    addressLabel: { fontSize: 15, fontWeight: '700', color: '#0d1629', marginBottom: 4 },
+    addressLine: { fontSize: 14, color: '#6b7280', marginBottom: 2 },
+    navBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#0ca6e8', borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10, alignSelf: 'flex-start', marginTop: 12 },
+    navBtnTxt: { fontSize: 14, fontWeight: '700', color: '#fff' },
+
+    customerName: { fontSize: 16, fontWeight: '600', color: '#0d1629', marginBottom: 10 },
+    callBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: '#bae6fd', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, alignSelf: 'flex-start' },
+    callBtnTxt: { fontSize: 14, fontWeight: '600', color: '#0ca6e8' },
+
+    actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 18, marginBottom: 12 },
+    startBtn: { backgroundColor: '#f59e0b' },
+    completeBtn: { backgroundColor: '#16a34a' },
+    actionBtnTxt: { fontSize: 16, fontWeight: '800', color: '#fff' },
+    completedBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: '#dcfce7', borderRadius: 16, padding: 20 },
+    completedTxt: { fontSize: 16, fontWeight: '700', color: '#16a34a' },
 });
