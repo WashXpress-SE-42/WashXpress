@@ -187,30 +187,177 @@ export default function CustomerHomeScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hello,</Text>
-          <Text style={styles.userName}>{user?.displayName || 'User'}</Text>
-        </View>
-        <TouchableOpacity onPress={() => router.push('/profile' as Href)}>
-          <View style={styles.profilePic}>
-            {user?.photoURL ? (
-              <Image source={{ uri: user.photoURL }} style={styles.profileImage} />
-            ) : (
-              <Ionicons name="person" size={24} color="#666" />
-            )}
+    <View style={styles.outerContainer}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greeting}>Hello,</Text>
+            <Text style={styles.userName}>{user?.displayName || 'User'}</Text>
           </View>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity onPress={() => router.push('/profile' as Href)}>
+            <View style={styles.profilePic}>
+              {user?.photoURL ? (
+                <Image source={{ uri: user.photoURL }} style={styles.profileImage} />
+              ) : (
+                <Ionicons name="person" size={24} color="#666" />
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
 
-      {/* Quick Actions */}
+        {/* My Vehicles */}
+        {vehicles.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>My Vehicles</Text>
+              <TouchableOpacity onPress={() => router.push('/vehicle-list' as Href)}>
+                <Text style={styles.seeAll}>See All</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {vehicles.map((vehicle) => (
+                <TouchableOpacity
+                  key={vehicle.id}
+                  style={styles.vehicleCard}
+                  onPress={() => router.push(`/vehicle-details?id=${vehicle.id}` as Href)}
+                >
+                  <Ionicons name="car-sport" size={40} color="#007AFF" />
+                  <Text style={styles.vehicleName}>{vehicle.nickname}</Text>
+                  <Text style={styles.vehicleModel}>
+                    {vehicle.make} {vehicle.model}
+                  </Text>
+                  <Text style={styles.vehiclePlate}>{vehicle.licensePlate}</Text>
+                </TouchableOpacity>
+              ))}
+
+              <TouchableOpacity
+                style={[styles.vehicleCard, styles.addVehicleCard]}
+                onPress={() => router.push('/add-vehicle' as Href)}
+              >
+                <Ionicons name="add-circle" size={40} color="#007AFF" />
+                <Text style={styles.addVehicleText}>Add Vehicle</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Active Bookings */}
+        {activeBookings.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Active Bookings</Text>
+              <TouchableOpacity onPress={() => router.push('/booking-list' as Href)}>
+                <Text style={styles.seeAll}>See All</Text>
+              </TouchableOpacity>
+            </View>
+
+            {activeBookings.map((booking) => (
+              <TouchableOpacity
+                key={booking.id}
+                style={styles.bookingCard}
+                onPress={() => router.push(`/booking-details?id=${booking.id}` as Href)}
+              >
+                <View style={styles.bookingHeader}>
+                  <View>
+                    <Text style={styles.bookingService}>{booking.service.name}</Text>
+                    <Text style={styles.bookingProvider}>
+                      {booking.provider.displayName}
+                    </Text>
+                  </View>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) }]}>
+                    <Text style={styles.statusText}>
+                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.bookingFooter}>
+                  <Ionicons name="calendar-outline" size={16} color="#666" />
+                  <Text style={styles.bookingDate}>
+                    {booking.scheduledDate} at {booking.scheduledTime}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Service Carousel */}
+        <View style={styles.carouselContainer}>
+          <Text style={styles.sectionTitle}>Our Services</Text>
+          <Animated.FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={DATA}
+            keyExtractor={(item: CarouselServiceItem) => item.id}
+            snapToInterval={ITEM_SIZE}
+            contentContainerStyle={{
+              alignItems: 'center',
+              paddingHorizontal: EMPTY_ITEM_SIZE
+            }}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            initialScrollIndex={Math.floor(DATA.length / 2)}
+            getItemLayout={(_, index) => ({
+              length: ITEM_SIZE,
+              offset: ITEM_SIZE * index,
+              index,
+            })}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: scrollX as any } } }],
+              { useNativeDriver: true }
+            )}
+            scrollEventThrottle={16}
+            renderItem={({ item, index }: { item: CarouselServiceItem, index: number }) => {
+              if (!item.name) {
+                return <View style={{ width: EMPTY_ITEM_SIZE }} />;
+              }
+
+              const inputRange = [
+                (index - 1) * ITEM_SIZE,
+                index * ITEM_SIZE,
+                (index + 1) * ITEM_SIZE,
+              ];
+
+              const scale = (scrollX as any).interpolate({
+                inputRange,
+                outputRange: [0.9, 1, 0.9],
+                extrapolate: 'clamp',
+              });
+
+              const opacity = (scrollX as any).interpolate({
+                inputRange,
+                outputRange: [0.6, 1, 0.6],
+                extrapolate: 'clamp',
+              });
+
+              return (
+                <Animated.View style={{ width: ITEM_SIZE, transform: [{ scale }], opacity }}>
+                  <TouchableOpacity
+                    style={styles.serviceItem}
+                    onPress={() => router.push(item.route as Href)}
+                    activeOpacity={0.9}
+                  >
+                    <Image source={item.icon} style={styles.carouselImage} />
+                    <View style={styles.carouselOverlay}>
+                      <Text style={styles.carouselLabel}>{item.name}</Text>
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            }}
+          />
+        </View>
+      </ScrollView>
+
+      {/* Quick Actions — Fixed Bottom Bar */}
       <View style={styles.quickActions}>
         <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/service-browse' as Href)}>
           <Ionicons name="search" size={24} color="#007AFF" />
@@ -232,159 +379,15 @@ export default function CustomerHomeScreen() {
           <Text style={styles.actionText}>My Plan</Text>
         </TouchableOpacity>
       </View>
-      {/* My Vehicles */}
-      {vehicles.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>My Vehicles</Text>
-            <TouchableOpacity onPress={() => router.push('/vehicle-list' as Href)}>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {vehicles.map((vehicle) => (
-              <TouchableOpacity
-                key={vehicle.id}
-                style={styles.vehicleCard}
-                onPress={() => router.push(`/vehicle-details?id=${vehicle.id}` as Href)}
-              >
-                <Ionicons name="car-sport" size={40} color="#007AFF" />
-                <Text style={styles.vehicleName}>{vehicle.nickname}</Text>
-                <Text style={styles.vehicleModel}>
-                  {vehicle.make} {vehicle.model}
-                </Text>
-                <Text style={styles.vehiclePlate}>{vehicle.licensePlate}</Text>
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity
-              style={[styles.vehicleCard, styles.addVehicleCard]}
-              onPress={() => router.push('/add-vehicle' as Href)}
-            >
-              <Ionicons name="add-circle" size={40} color="#007AFF" />
-              <Text style={styles.addVehicleText}>Add Vehicle</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Active Bookings */}
-      {activeBookings.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Active Bookings</Text>
-            <TouchableOpacity onPress={() => router.push('/booking-list' as Href)}>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
-          </View>
-
-          {activeBookings.map((booking) => (
-            <TouchableOpacity
-              key={booking.id}
-              style={styles.bookingCard}
-              onPress={() => router.push(`/booking-details?id=${booking.id}` as Href)}
-            >
-              <View style={styles.bookingHeader}>
-                <View>
-                  <Text style={styles.bookingService}>{booking.service.name}</Text>
-                  <Text style={styles.bookingProvider}>
-                    {booking.provider.displayName}
-                  </Text>
-                </View>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) }]}>
-                  <Text style={styles.statusText}>
-                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.bookingFooter}>
-                <Ionicons name="calendar-outline" size={16} color="#666" />
-                <Text style={styles.bookingDate}>
-                  {booking.scheduledDate} at {booking.scheduledTime}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      {/* Service Carousel */}
-      <View style={styles.carouselContainer}>
-        <Text style={styles.sectionTitle}>Our Services</Text>
-        <Animated.FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={DATA}
-          keyExtractor={(item: CarouselServiceItem) => item.id}
-          snapToInterval={ITEM_SIZE}
-          contentContainerStyle={{
-            alignItems: 'center',
-            paddingHorizontal: EMPTY_ITEM_SIZE
-          }}
-          snapToAlignment="start"
-          decelerationRate="fast"
-          initialScrollIndex={Math.floor(DATA.length / 2)}
-          getItemLayout={(_, index) => ({
-            length: ITEM_SIZE,
-            offset: ITEM_SIZE * index,
-            index,
-          })}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { x: scrollX as any } } }],
-            { useNativeDriver: true }
-          )}
-          scrollEventThrottle={16}
-          renderItem={({ item, index }: { item: CarouselServiceItem, index: number }) => {
-            if (!item.name) {
-              return <View style={{ width: EMPTY_ITEM_SIZE }} />;
-            }
-
-            const inputRange = [
-              (index - 1) * ITEM_SIZE,
-              index * ITEM_SIZE,
-              (index + 1) * ITEM_SIZE,
-            ];
-
-            const scale = (scrollX as any).interpolate({
-              inputRange,
-              outputRange: [0.9, 1, 0.9],
-              extrapolate: 'clamp',
-            });
-
-            const opacity = (scrollX as any).interpolate({
-              inputRange,
-              outputRange: [0.6, 1, 0.6],
-              extrapolate: 'clamp',
-            });
-
-            return (
-              <Animated.View style={{ width: ITEM_SIZE, transform: [{ scale }], opacity }}>
-                <TouchableOpacity
-                  style={styles.serviceItem}
-                  onPress={() => router.push(item.route as Href)}
-                  activeOpacity={0.9}
-                >
-                  <Image source={item.icon} style={styles.carouselImage} />
-                  <View style={styles.carouselOverlay}>
-                    <Text style={styles.carouselLabel}>{item.name}</Text>
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            );
-          }}
-        />
-      </View>
-
-
-      {/* Service Categories section ends above */}
-
-      <View style={{ height: 40 }} />
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
@@ -434,9 +437,17 @@ const styles = StyleSheet.create({
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    padding: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    paddingBottom: 28,
     backgroundColor: '#FFF',
-    marginTop: 2,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
   },
   actionButton: {
     alignItems: 'center',

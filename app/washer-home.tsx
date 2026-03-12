@@ -260,6 +260,7 @@ export default function WasherHomeScreen() {
 
             <ScrollView
                 style={styles.content}
+                contentContainerStyle={{ paddingBottom: 100 }}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             >
                 {/* Current Job Banner */}
@@ -482,47 +483,43 @@ export default function WasherHomeScreen() {
                     </View>
                 )}
 
-                {/* Quick Actions */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Quick Actions</Text>
-
-                    <View style={styles.quickActionsGrid}>
-                        <TouchableOpacity
-                            style={styles.quickActionCard}
-                            onPress={() => router.push('/washer-bookings' as any)}
-                        >
-                            <Ionicons name="calendar-outline" size={32} color="#007AFF" />
-                            <Text style={styles.quickActionText}>My Bookings</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.quickActionCard}
-                            onPress={() => router.push('/washer-earnings' as any)}
-                        >
-                            <Ionicons name="stats-chart-outline" size={32} color="#007AFF" />
-                            <Text style={styles.quickActionText}>Earnings</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.quickActionCard}
-                            onPress={() => router.push('/washer-reviews' as any)}
-                        >
-                            <Ionicons name="star-outline" size={32} color="#007AFF" />
-                            <Text style={styles.quickActionText}>Reviews</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.quickActionCard}
-                            onPress={() => router.push('/profile' as any)}
-                        >
-                            <Ionicons name="person-outline" size={32} color="#007AFF" />
-                            <Text style={styles.quickActionText}>Profile</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                <View style={{ height: 40 }} />
+                <View style={{ height: 20 }} />
             </ScrollView>
+
+            {/* Quick Actions — Fixed Bottom Bar */}
+            <View style={styles.quickActionsBar}>
+                <TouchableOpacity
+                    style={styles.quickActionItem}
+                    onPress={() => router.push('/washer-bookings' as any)}
+                >
+                    <Ionicons name="calendar-outline" size={24} color="#007AFF" />
+                    <Text style={styles.quickActionLabel}>Bookings</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.quickActionItem}
+                    onPress={() => router.push('/washer-earnings' as any)}
+                >
+                    <Ionicons name="stats-chart-outline" size={24} color="#007AFF" />
+                    <Text style={styles.quickActionLabel}>Earnings</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.quickActionItem}
+                    onPress={() => router.push('/washer-reviews' as any)}
+                >
+                    <Ionicons name="star-outline" size={24} color="#007AFF" />
+                    <Text style={styles.quickActionLabel}>Reviews</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.quickActionItem}
+                    onPress={() => router.push('/profile' as any)}
+                >
+                    <Ionicons name="person-outline" size={24} color="#007AFF" />
+                    <Text style={styles.quickActionLabel}>Profile</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -917,25 +914,29 @@ const styles = StyleSheet.create({
         marginLeft: 12,
     },
 
-    // Quick Actions
-    quickActionsGrid: {
+    // Quick Actions — Bottom Bar
+    quickActionsBar: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-    },
-    quickActionCard: {
-        width: '48%',
+        justifyContent: 'space-around',
+        paddingVertical: 12,
+        paddingHorizontal: 10,
+        paddingBottom: 28,
         backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: 20,
-        alignItems: 'center',
-        marginBottom: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#E0E0E0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 8,
     },
-    quickActionText: {
-        fontSize: 14,
-        color: '#000',
-        marginTop: 12,
-        fontWeight: '500',
+    quickActionItem: {
+        alignItems: 'center',
+    },
+    quickActionLabel: {
+        fontSize: 12,
+        color: '#666',
+        marginTop: 6,
     },
 
     // Logout
