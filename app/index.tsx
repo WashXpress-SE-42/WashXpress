@@ -38,41 +38,55 @@ export default function Index() {
         }
 
         const userType = await SecureStore.getItemAsync('userType');
-        if (!userType) { setDestination('/login'); return; }
+        if (!userType) {
+          setDestination('/login');
+          return;
+        }
 
-        if (userType === 'customer') { setDestination('/customer-home'); return; }
+        if (userType === 'customer') {
+          setDestination('/customer-home');
+          return;
+        }
 
         if (userType === 'provider') {
-  try {
-    console.log(`[Index] 🔍 Checking washer status for UID: ${user.uid}`);
-    const data = await apiFetch('/auth/washer/profile', {}, 'provider');
-    
-    // Support both flattened and nested structures
-    const providerData = data.provider || (data.data && data.data.provider);
-    
-    if (data.success && providerData) {
-      const isVerified = providerData.isVerified === true;
-      const status = providerData.washerStatus || providerData.status;
-      
-      console.log(`[Index] ✅ Profile Found: isVerified=${isVerified}, status=${status}`);
-      
-      if (isVerified) {
-        setDestination('/washer-home');
-      } else {
-        console.warn(`[Index] ⏳ Washer is not yet verified. redirecting to pending.`);
-        setDestination('/washer-pending');
-      }
-    } else {
-      console.warn(`[Index] ⚠️  Provider fetch succeeded but no data found. defaulting to pending.`, data);
-      setDestination('/washer-pending');
-    }
-  } catch (error: any) {
-    console.error(`[Index] ❌ Provider profile fetch failed:`, error.message);
-    setDestination('/washer-home');
-  }
-  return;
-}
+          try {
+            console.log(`[Index] 🔍 Checking washer status for UID: ${user.uid}`);
+            const data = await apiFetch('/auth/washer/profile', {}, 'provider');
 
+            // Support both flattened and nested response shapes
+            const providerData = data.provider || (data.data && data.data.provider);
+
+            if (data.success && providerData) {
+              const isVerified = providerData.isVerified === true;
+              const status = providerData.washerStatus || providerData.status;
+
+              console.log(`[Index] ✅ Profile Found: isVerified=${isVerified}, status=${status}`);
+
+              if (isVerified) {
+                setDestination('/washer-home');
+              } else {
+                console.warn(`[Index] ⏳ Washer is not yet verified. redirecting to pending.`);
+                setDestination('/washer-pending');
+              }
+            } else {
+              console.warn(
+                `[Index] ⚠️ Provider fetch succeeded but no data found. defaulting to pending.`,
+                data
+              );
+              setDestination('/washer-pending');
+            }
+          } catch (error: any) {
+            console.error(`[Index] ❌ Provider profile fetch failed:`, error?.message);
+            // Backend doesn't recognize this provider (e.g. "User not found") — require re-login
+            await SecureStore.deleteItemAsync('accessToken');
+            await SecureStore.deleteItemAsync('userType');
+            await SecureStore.deleteItemAsync('provider');
+            setDestination('/login');
+          }
+          return;
+        }
+
+        // Fallback for any unsupported userType
         setDestination('/login');
       } catch {
         setDestination('/login');

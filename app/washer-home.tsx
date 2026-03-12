@@ -1,129 +1,161 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    View,
-    Text,
-    ScrollView,
-    TouchableOpacity,
-    StyleSheet,
-    SafeAreaView,
-    StatusBar,
-    ActivityIndicator,
+    View, Text, ScrollView, TouchableOpacity, StyleSheet,
+    SafeAreaView, StatusBar, ActivityIndicator, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
+import { apiFetch } from '../services/apiClient';
 
-// ── Types ────────────────────────────────────────────────
-type Job = {
+// ── Types ─────────────────────────────────────────────────────────────────────
+type BookingDoc = {
     id: string;
-    name: string;
-    vehicle: string;
-    service: string;
-    address: string;
-    date: string;
-    time: string;
-    amount: string;
-    distance: string;
-    priority: string;
+    customerName: string | null;
+    vehicle: {
+        make: string;
+        model: string;
+        year?: number;
+        type?: string;
+        color: string;
+        licensePlate: string;
+    };
+    service: {
+        name: string;
+        categoryId: string;
+        duration: number;
+    };
+    address: {
+        addressLine1: string;
+        city: string;
+    };
+    scheduledDate: string;
+    scheduledTime: string;
+    totalPrice: number;
+    currency: string;
+    paidWithSubscription: boolean;
+    notes?: string | null;
 };
 
-// ── Helpers ──────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(dateStr: string) {
+    if (!dateStr) return '—';
     const today = new Date();
     const date = new Date(dateStr);
     if (date.toDateString() === today.toDateString()) return 'Today';
     if (date.toDateString() === new Date(today.getTime() + 86400000).toDateString()) return 'Tomorrow';
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-function PriorityBadge({ priority }: { priority: string }) {
-    const map: any = {
-        VIP: { bg: '#f3e8ff', text: '#7c3aed' },
-        Priority: { bg: '#dbeafe', text: '#1d4ed8' },
-        Standard: { bg: '#f3f4f6', text: '#6b7280' },
-    };
-    const s = map[priority] || map.Standard;
-    return (
-        <View style={[badgeStyles.badge, { backgroundColor: s.bg }]}>
-            <Text style={[badgeStyles.text, { color: s.text }]}>{priority}</Text>
-        </View>
-    );
+function formatTime(timeStr: string) {
+    if (!timeStr) return '—';
+    const [h, m] = timeStr.split(':').map(Number);
+    const suffix = h >= 12 ? 'PM' : 'AM';
+    const hour = h % 12 || 12;
+    return `${hour}:${m.toString().padStart(2, '0')} ${suffix}`;
 }
 
-const badgeStyles = StyleSheet.create({
-    badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, marginLeft: 6 },
-    text: { fontSize: 11, fontWeight: '600' },
-});
+function formatPrice(price: number, currency: string, paidWithSubscription: boolean) {
+    if (paidWithSubscription) return 'Subscription';
+    return `${currency || 'LKR'} ${(price || 0).toLocaleString()}`;
+}
 
-// ── Main Component ───────────────────────────────────────
+const CATEGORY_EMOJI: Record<string, string> = {
+    'exterior-wash':  '🚿',
+    'interior-clean': '🧹',
+    'tire-cleaning':  '⚙️',
+    'full-detail':    '✨',
+};
+
+const TYPE_ICONS: Record<string, string> = {
+    SUV: '🚙', Van: '🚐', Truck: '🛻',
+    Sedan: '🚗', Hatchback: '🚗', Coupe: '🚗',
+    Convertible: '🚗', Wagon: '🚗',
+};
+
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function WasherHome() {
     const router = useRouter();
     const { user } = useAuth();
     const { data: profile, isLoading: profileLoading } = useProfile();
     const [activeTab, setActiveTab] = useState('home');
-    const [jobs, setJobs] = useState<Job[]>([]);
+    const [bookings, setBookings] = useState<BookingDoc[]>([]);
     const [loading, setLoading] = useState(true);
     const [accepting, setAccepting] = useState<string | null>(null);
 
-    // ── Fetch pending bookings from Firestore ────────────
+    // ── Live Firestore listener on pending bookings ───────────────────────────
     useEffect(() => {
         const q = query(
             collection(db, 'bookings'),
             where('status', '==', 'pending')
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const fetched: Job[] = snapshot.docs.map((d) => {
-                const data = d.data();
-                return {
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const fetched: BookingDoc[] = snapshot.docs.map((d) => ({
                     id: d.id,
-                    name: data.customerName ?? 'Unknown',
-                    vehicle: `${data.vehicleMake ?? ''} ${data.vehicleModel ?? ''} • ${data.vehicleColor ?? ''} • ${data.licensePlate ?? ''}`,
-                    service: data.serviceType ?? 'Service',
-                    address: data.address ?? 'No address',
-                    date: data.date ?? '',
-                    time: data.time ?? '',
-                    amount: `$${data.price ?? '0'}`,
-                    distance: `${data.distance ?? '?'} miles`,
-                    priority: data.priority ?? 'Standard',
-                };
-            });
-            setJobs(fetched);
-            setLoading(false);
-        }, (error) => {
-            console.error('Firestore error:', error);
-            setLoading(false);
-        });
+                    ...(d.data() as Omit<BookingDoc, 'id'>),
+                }));
+
+                // Sort soonest scheduled date/time first
+                fetched.sort((a, b) => {
+                    if (a.scheduledDate !== b.scheduledDate)
+                        return a.scheduledDate > b.scheduledDate ? 1 : -1;
+                    return a.scheduledTime > b.scheduledTime ? 1 : -1;
+                });
+
+                setBookings(fetched);
+                setLoading(false);
+            },
+            (error) => {
+                console.error('Firestore listener error:', error);
+                setLoading(false);
+            }
+        );
 
         return () => unsubscribe();
     }, []);
 
-    // ── Accept Job ───────────────────────────────────────
-    const handleAcceptJob = async (jobId: string) => {
+    // ── Quick-accept directly from home card ─────────────────────────────────
+    const handleAcceptJob = useCallback(async (bookingId: string) => {
         try {
-            setAccepting(jobId);
-            await updateDoc(doc(db, 'bookings', jobId), {
-                status: 'accepted',
-                // TODO: add washerId when auth is implemented
-            });
-            // TODO: router.push(`/washer-booking-details?id=${jobId}`);
-        } catch (error) {
-            console.error('Failed to accept job:', error);
+            setAccepting(bookingId);
+            await apiFetch(
+                `/bookings/${bookingId}/accept`,
+                {
+                    method: 'PATCH',
+                    body: JSON.stringify({ preferredTime: null }),
+                },
+                'provider'
+            );
+            router.push({ pathname: '/washer-booking-details', params: { id: bookingId } } as any);
+        } catch (error: any) {
+            const msg = error?.message || '';
+            if (msg.toLowerCase().includes('already claimed') || msg.includes('ALREADY_CLAIMED')) {
+                Alert.alert('Too slow! 😅', 'Another washer grabbed this job first.');
+            } else {
+                Alert.alert('Error', msg || 'Failed to accept job');
+            }
         } finally {
             setAccepting(null);
         }
-    };
+    }, [router]);
+
+    // ── View full job details before deciding ────────────────────────────────
+    const handleViewJob = useCallback((bookingId: string) => {
+        router.push({ pathname: '/washer-job-request', params: { id: bookingId } } as any);
+    }, [router]);
 
     const getUserName = () => {
         if (profileLoading) return '...';
         if (profile?.displayName) return profile.displayName;
         if (user?.displayName) return user.displayName;
-        if (profile?.firstName || profile?.lastName) {
+        if (profile?.firstName || profile?.lastName)
             return `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
-        }
         return 'Washer';
     };
 
@@ -138,13 +170,14 @@ export default function WasherHome() {
                 {/* ── Header ── */}
                 <View style={styles.header}>
                     <View style={styles.headerTop}>
-                        <View style={styles.headerGreeting}>
-                            <View>
-                                <Text style={styles.welcomeText}>Welcome back,</Text>
-                                <Text style={styles.providerName}>{getUserName()}</Text>
-                            </View>
+                        <View>
+                            <Text style={styles.welcomeText}>Welcome back,</Text>
+                            <Text style={styles.providerName}>{getUserName()}</Text>
                         </View>
-                        <TouchableOpacity style={styles.profileBtn} onPress={() => router.push('/profile' as any)}>
+                        <TouchableOpacity
+                            style={styles.profileBtn}
+                            onPress={() => router.push('/profile' as any)}
+                        >
                             <Ionicons name="person-outline" size={22} color="#fff" />
                         </TouchableOpacity>
                     </View>
@@ -156,26 +189,25 @@ export default function WasherHome() {
                                 <Ionicons name="cash-outline" size={16} color="#16a34a" />
                                 <Text style={styles.earningsLabel}>  This Month's Earnings</Text>
                             </View>
-                            <Text style={styles.earningsAmount}>$1,245</Text>
+                            <Text style={styles.earningsAmount}>LKR 0</Text>
                             <View style={styles.trendRow}>
                                 <Ionicons name="trending-up-outline" size={14} color="#16a34a" />
-                                <Text style={styles.trendText}>  +12% from last month</Text>
+                                <Text style={styles.trendText}>  Tap to view earnings</Text>
                             </View>
                         </View>
                         <View style={styles.earningsRight}>
-                            <Text style={styles.jobsDoneCount}>28</Text>
+                            <Text style={styles.jobsDoneCount}>0</Text>
                             <Text style={styles.jobsDoneLabel}>Jobs Done</Text>
                         </View>
-                        <Text style={styles.earningsTap}>Tap to view detailed statistics →</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* ── Stats Grid ── */}
                 <View style={styles.statsGrid}>
                     {[
-                        { icon: 'star', color: '#f59e0b', value: '4.8', label: 'Rating' },
-                        { icon: 'calendar-outline', color: '#3b82f6', value: '3', label: 'Today' },
-                        { icon: 'checkmark-circle-outline', color: '#16a34a', value: '28', label: 'Completed' },
+                        { icon: 'star',                    color: '#f59e0b', value: '—',                       label: 'Rating'    },
+                        { icon: 'calendar-outline',        color: '#3b82f6', value: String(bookings.length),   label: 'Available' },
+                        { icon: 'checkmark-circle-outline', color: '#16a34a', value: '0',                      label: 'Completed' },
                     ].map((stat) => (
                         <View key={stat.label} style={styles.statCard}>
                             <Ionicons name={stat.icon as any} size={22} color={stat.color} />
@@ -189,9 +221,10 @@ export default function WasherHome() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Available Jobs</Text>
-                        {!loading && (
+                        {!loading && bookings.length > 0 && (
                             <View style={styles.newBadge}>
-                                <Text style={styles.newBadgeText}>{jobs.length} New</Text>
+                                <View style={styles.pulseDot} />
+                                <Text style={styles.newBadgeText}>{bookings.length} Live</Text>
                             </View>
                         )}
                     </View>
@@ -201,73 +234,33 @@ export default function WasherHome() {
                             <ActivityIndicator size="large" color="#16a34a" />
                             <Text style={styles.loadingText}>Fetching available jobs...</Text>
                         </View>
-                    ) : jobs.length === 0 ? (
+                    ) : bookings.length === 0 ? (
                         <View style={styles.emptyBox}>
                             <Ionicons name="car-outline" size={48} color="#d1d5db" />
                             <Text style={styles.emptyTitle}>No Jobs Available</Text>
-                            <Text style={styles.emptySubtitle}>Check back soon for new bookings</Text>
+                            <Text style={styles.emptySubtitle}>New bookings appear here in real time</Text>
                         </View>
                     ) : (
-                        jobs.map((job) => (
-                            <View key={job.id} style={styles.jobCard}>
-                                <View style={styles.jobCardHeader}>
-                                    <View style={styles.jobCardLeft}>
-                                        <View style={styles.jobNameRow}>
-                                            <Text style={styles.jobName}>{job.name}</Text>
-                                            <PriorityBadge priority={job.priority} />
-                                        </View>
-                                        <Text style={styles.jobVehicle}>{job.vehicle}</Text>
-                                    </View>
-                                    <View style={styles.jobCardRight}>
-                                        <Text style={styles.jobAmount}>{job.amount}</Text>
-                                        <Text style={styles.jobDistance}>{job.distance}</Text>
-                                    </View>
-                                </View>
-
-                                <View style={styles.serviceBox}>
-                                    <Ionicons name="car-sport-outline" size={14} color="#2563eb" />
-                                    <Text style={styles.serviceText}>  {job.service}</Text>
-                                </View>
-
-                                <View style={styles.jobDetails}>
-                                    <View style={styles.detailRow}>
-                                        <Ionicons name="location-outline" size={14} color="#6b7280" />
-                                        <Text style={styles.detailText}>{job.address}</Text>
-                                    </View>
-                                    <View style={styles.detailRow}>
-                                        <Ionicons name="calendar-outline" size={14} color="#6b7280" />
-                                        <Text style={styles.detailText}>{formatDate(job.date)}</Text>
-                                        <Ionicons name="time-outline" size={14} color="#6b7280" style={{ marginLeft: 10 }} />
-                                        <Text style={styles.detailText}>{job.time}</Text>
-                                    </View>
-                                </View>
-
-                                <TouchableOpacity
-                                    style={[styles.acceptBtn, accepting === job.id && styles.acceptBtnDisabled]}
-                                    activeOpacity={0.8}
-                                    onPress={() => handleAcceptJob(job.id)}
-                                    disabled={accepting === job.id}
-                                >
-                                    {accepting === job.id ? (
-                                        <ActivityIndicator color="#fff" size="small" />
-                                    ) : (
-                                        <Text style={styles.acceptBtnText}>Accept Job</Text>
-                                    )}
-                                </TouchableOpacity>
-                            </View>
+                        bookings.map((booking) => (
+                            <JobCard
+                                key={booking.id}
+                                booking={booking}
+                                accepting={accepting}
+                                onAccept={handleAcceptJob}
+                                onView={handleViewJob}
+                            />
                         ))
                     )}
 
-                    {/* Pro Tip */}
-                    {!loading && jobs.length > 0 && (
+                    {!loading && bookings.length > 0 && (
                         <View style={styles.proTipCard}>
                             <View style={styles.proTipIcon}>
-                                <Ionicons name="star" size={22} color="#d97706" />
+                                <Ionicons name="flash" size={20} color="#d97706" />
                             </View>
                             <View style={styles.proTipContent}>
-                                <Text style={styles.proTipTitle}>Pro Tip</Text>
+                                <Text style={styles.proTipTitle}>Race Mode Active</Text>
                                 <Text style={styles.proTipBody}>
-                                    Jobs with Priority or VIP badges pay 15–30% more! Accept them quickly before they're taken.
+                                    First washer to accept wins the job. Tap "View Details" to review first, or "Accept" to claim instantly.
                                 </Text>
                             </View>
                         </View>
@@ -278,25 +271,20 @@ export default function WasherHome() {
             {/* ── Bottom Navigation ── */}
             <View style={styles.bottomNav}>
                 {[
-                    { key: 'home', icon: 'home-outline', label: 'Home' },
-                    { key: 'jobs', icon: 'briefcase-outline', label: 'My Jobs' },
-                    { key: 'earnings', icon: 'cash-outline', label: 'Earnings' },
-                    { key: 'shop', icon: 'cart-outline', label: 'Shop' },
-                    { key: 'profile', icon: 'person-outline', label: 'Profile' },
+                    { key: 'home',     icon: 'home-outline',     label: 'Home'     },
+                    { key: 'jobs',     icon: 'briefcase-outline', label: 'My Jobs'  },
+                    { key: 'earnings', icon: 'cash-outline',      label: 'Earnings' },
+                    { key: 'shop',     icon: 'cart-outline',      label: 'Shop'     },
+                    { key: 'profile',  icon: 'person-outline',    label: 'Profile'  },
                 ].map((tab) => (
                     <TouchableOpacity
                         key={tab.key}
                         style={styles.navItem}
                         onPress={() => {
-                            if (tab.key === 'shop') {
-                                router.push('/marketplace' as any);   // ← links to marketplace
-                            } else if (tab.key === 'profile') {
-                                router.push('/profile' as any);
-                            } else if (tab.key === 'jobs') {
-                                router.push('/myjobs' as any);
-                              }else {
-                                setActiveTab(tab.key);
-                            }
+                            if (tab.key === 'shop')         router.push('/marketplace' as any);
+                            else if (tab.key === 'profile') router.push('/profile' as any);
+                            else if (tab.key === 'jobs')    router.push('/myjobs' as any);
+                            else                            setActiveTab(tab.key);
                         }}
                     >
                         <Ionicons
@@ -314,6 +302,117 @@ export default function WasherHome() {
     );
 }
 
+// ── Job Card ──────────────────────────────────────────────────────────────────
+function JobCard({
+    booking,
+    accepting,
+    onAccept,
+    onView,
+}: {
+    booking: BookingDoc;
+    accepting: string | null;
+    onAccept: (id: string) => void;
+    onView: (id: string) => void;
+}) {
+    const isAccepting = accepting === booking.id;
+    const vehicleEmoji = TYPE_ICONS[booking.vehicle?.type || ''] || '🚗';
+    const serviceEmoji = CATEGORY_EMOJI[booking.service?.categoryId || ''] || '🚿';
+    const addressStr = booking.address
+        ? `${booking.address.addressLine1}, ${booking.address.city}`
+        : 'No address';
+
+    return (
+        <View style={styles.jobCard}>
+            {/* Header */}
+            <View style={styles.jobCardHeader}>
+                <View style={styles.jobCardLeft}>
+                    <Text style={styles.jobName}>{booking.customerName || 'Customer'}</Text>
+                    <View style={styles.vehicleRow}>
+                        <Text style={styles.vehicleEmoji}>{vehicleEmoji}</Text>
+                        <Text style={styles.jobVehicle}>
+                            {booking.vehicle?.make} {booking.vehicle?.model}
+                            {booking.vehicle?.year ? ` · ${booking.vehicle.year}` : ''}
+                        </Text>
+                    </View>
+                    <Text style={styles.vehiclePlate}>
+                        {booking.vehicle?.color} · {booking.vehicle?.licensePlate}
+                    </Text>
+                </View>
+                <View style={styles.jobCardRight}>
+                    <Text style={[
+                        styles.jobAmount,
+                        booking.paidWithSubscription && styles.jobAmountSub,
+                    ]}>
+                        {formatPrice(booking.totalPrice, booking.currency, booking.paidWithSubscription)}
+                    </Text>
+                    {booking.service?.duration > 0 && (
+                        <View style={styles.durationPill}>
+                            <Ionicons name="time-outline" size={11} color="#6b7280" />
+                            <Text style={styles.durationText}>{booking.service.duration} min</Text>
+                        </View>
+                    )}
+                </View>
+            </View>
+
+            {/* Service */}
+            <View style={styles.serviceBox}>
+                <Text style={styles.serviceEmoji}>{serviceEmoji}</Text>
+                <Text style={styles.serviceText}>{booking.service?.name || 'Service'}</Text>
+            </View>
+
+            {/* Details */}
+            <View style={styles.jobDetails}>
+                <View style={styles.detailRow}>
+                    <Ionicons name="location-outline" size={14} color="#6b7280" />
+                    <Text style={styles.detailText} numberOfLines={1}>{addressStr}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                    <Ionicons name="calendar-outline" size={14} color="#6b7280" />
+                    <Text style={styles.detailText}>{formatDate(booking.scheduledDate)}</Text>
+                    <Ionicons name="time-outline" size={14} color="#6b7280" style={{ marginLeft: 12 }} />
+                    <Text style={styles.detailText}>{formatTime(booking.scheduledTime)}</Text>
+                </View>
+            </View>
+
+            {/* Special instructions warning */}
+            {!!booking.notes && (
+                <View style={styles.notesIndicator}>
+                    <Ionicons name="warning-outline" size={13} color="#d97706" />
+                    <Text style={styles.notesIndicatorText}>Customer has special instructions</Text>
+                </View>
+            )}
+
+            {/* Actions */}
+            <View style={styles.jobActions}>
+                <TouchableOpacity
+                    style={styles.viewBtn}
+                    onPress={() => onView(booking.id)}
+                    disabled={isAccepting}
+                >
+                    <Text style={styles.viewBtnText}>View Details</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.acceptBtn, isAccepting && styles.acceptBtnDisabled]}
+                    activeOpacity={0.8}
+                    onPress={() => onAccept(booking.id)}
+                    disabled={isAccepting}
+                >
+                    {isAccepting ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                        <>
+                            <Ionicons name="flash" size={15} color="#fff" />
+                            <Text style={styles.acceptBtnText}>Accept</Text>
+                        </>
+                    )}
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
     safe:              { flex: 1, backgroundColor: '#0d1629' },
     scroll:            { flex: 1 },
@@ -350,7 +449,8 @@ const styles = StyleSheet.create({
     section:           { paddingHorizontal: 16, marginTop: 16 },
     sectionHeader:     { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
     sectionTitle:      { fontSize: 18, fontWeight: '700', color: '#fff' },
-    newBadge:          { marginLeft: 10, backgroundColor: 'rgba(37,99,235,0.2)', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 },
+    newBadge:          { marginLeft: 10, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(37,99,235,0.2)', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 },
+    pulseDot:          { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22c55e' },
     newBadgeText:      { color: '#60a5fa', fontSize: 12, fontWeight: '600' },
 
     // Loading / Empty
@@ -361,25 +461,37 @@ const styles = StyleSheet.create({
     emptySubtitle:     { fontSize: 13, color: '#64748b', marginTop: 4 },
 
     // Job Card
-    jobCard:           { backgroundColor: '#1e2d4a', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2 },
-    jobCardHeader:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+    jobCard:           { backgroundColor: '#1e2d4a', borderRadius: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2, overflow: 'hidden' },
+    jobCardHeader:     { flexDirection: 'row', padding: 16, paddingBottom: 10 },
     jobCardLeft:       { flex: 1 },
-    jobNameRow:        { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-    jobName:           { fontSize: 16, fontWeight: '700', color: '#fff' },
-    jobVehicle:        { fontSize: 13, color: '#64748b' },
-    jobCardRight:      { alignItems: 'flex-end' },
+    jobName:           { fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 4 },
+    vehicleRow:        { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+    vehicleEmoji:      { fontSize: 16 },
+    jobVehicle:        { fontSize: 13, color: '#94a3b8', fontWeight: '500' },
+    vehiclePlate:      { fontSize: 12, color: '#64748b' },
+    jobCardRight:      { alignItems: 'flex-end', gap: 6 },
     jobAmount:         { fontSize: 20, fontWeight: '800', color: '#2563eb' },
-    jobDistance:       { fontSize: 12, color: '#64748b', marginTop: 2 },
-    serviceBox:        { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(37,99,235,0.15)', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10, marginBottom: 10, alignSelf: 'flex-start' },
-    serviceText:       { fontSize: 13, color: '#60a5fa', fontWeight: '600' },
-    jobDetails:        { gap: 6, marginBottom: 14 },
-    detailRow:         { flexDirection: 'row', alignItems: 'center' },
-    detailText:        { fontSize: 13, color: '#94a3b8', marginLeft: 6 },
+    jobAmountSub:      { color: '#60a5fa', fontSize: 13 },
+    durationPill:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+    durationText:      { fontSize: 11, color: '#64748b', fontWeight: '500' },
 
-    // Accept Button
-    acceptBtn:         { backgroundColor: '#2563eb', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
+    serviceBox:        { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(37,99,235,0.15)', marginHorizontal: 16, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10 },
+    serviceEmoji:      { fontSize: 15 },
+    serviceText:       { fontSize: 13, fontWeight: '600', color: '#60a5fa' },
+
+    jobDetails:        { paddingHorizontal: 16, gap: 6, marginBottom: 10 },
+    detailRow:         { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    detailText:        { fontSize: 13, color: '#94a3b8' },
+
+    notesIndicator:    { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(234,179,8,0.08)', marginHorizontal: 16, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(234,179,8,0.2)' },
+    notesIndicatorText: { fontSize: 12, color: '#fbbf24', fontWeight: '600' },
+
+    jobActions:        { flexDirection: 'row', gap: 10, padding: 16, paddingTop: 4 },
+    viewBtn:           { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.12)', alignItems: 'center' },
+    viewBtnText:       { fontSize: 14, fontWeight: '700', color: '#94a3b8' },
+    acceptBtn:         { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 12, backgroundColor: '#2563eb' },
     acceptBtnDisabled: { backgroundColor: '#1e40af' },
-    acceptBtnText:     { color: '#fff', fontSize: 15, fontWeight: '700' },
+    acceptBtnText:     { fontSize: 14, fontWeight: '800', color: '#fff' },
 
     // Pro Tip Card
     proTipCard:        { flexDirection: 'row', backgroundColor: 'rgba(234,179,8,0.08)', borderWidth: 1, borderColor: 'rgba(234,179,8,0.2)', borderRadius: 16, padding: 16, marginTop: 4, marginBottom: 16, alignItems: 'flex-start' },

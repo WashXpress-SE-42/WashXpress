@@ -74,6 +74,17 @@ interface Booking {
   };
 }
 
+interface Subscription {
+  id: string;
+  planId: string;
+  planName: string;
+  status: string;
+  remainingWashes: number;
+  remainingInteriorCleans: number;
+  remainingTireCleans: number;
+  remainingFullDetails: number;
+}
+
 interface CarouselServiceItem {
   id: string;
   name?: string;
@@ -94,6 +105,7 @@ export default function CustomerHomeScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [activeBookings, setActiveBookings] = useState<Booking[]>([]);
+  const [activeSubscription, setActiveSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const scrollX = React.useRef(new Animated.Value(0)).current;
@@ -145,6 +157,7 @@ export default function CustomerHomeScreen() {
       await Promise.all([
         loadVehicles(),
         loadActiveBookings(),
+        loadActiveSubscription(),
       ]);
     } catch (error: any) {
       console.error('Load data error:', error);
@@ -177,6 +190,17 @@ export default function CustomerHomeScreen() {
       }
     } catch (error) {
       console.error('Load bookings error:', error);
+    }
+  };
+
+  const loadActiveSubscription = async () => {
+    try {
+      const data = await apiFetch('/subscriptions?status=active', {}, 'customer');
+      if (data.success && data.data.subscriptions && data.data.subscriptions.length > 0) {
+        setActiveSubscription(data.data.subscriptions[0]);
+      }
+    } catch (error) {
+      console.error('Load subscription error:', error);
     }
   };
 
@@ -272,6 +296,102 @@ export default function CustomerHomeScreen() {
             </ScrollView>
           </View>
         )}
+
+        {/* Active Subscription Allowances */}
+        {activeSubscription && (
+            (activeSubscription.remainingWashes > 0 || 
+             activeSubscription.remainingInteriorCleans > 0 || 
+             activeSubscription.remainingTireCleans > 0 || 
+             activeSubscription.remainingFullDetails > 0) && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Available in Plan</Text>
+              <TouchableOpacity onPress={() => router.push('/my-subscription' as Href)}>
+                <Text style={styles.seeAll}>Manage Plan</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.subscriptionCard}>
+              {activeSubscription.remainingWashes > 0 && (
+                <View style={styles.allowanceRow}>
+                  <View style={styles.allowanceInfo}>
+                    <View style={styles.allowanceIconWrapper}>
+                      <Ionicons name="water-outline" size={20} color="#0ca6e8" />
+                    </View>
+                    <View style={styles.allowanceTextContainer}>
+                      <Text style={styles.allowanceName}>Exterior Wash</Text>
+                      <Text style={styles.allowanceCount}>{activeSubscription.remainingWashes} remaining</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.allowanceOrderBtn}
+                    onPress={() => router.push('/service-browse?category=exterior-wash' as Href)}
+                  >
+                    <Text style={styles.allowanceOrderBtnText}>Order</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {activeSubscription.remainingInteriorCleans > 0 && (
+                <View style={styles.allowanceRow}>
+                  <View style={styles.allowanceInfo}>
+                    <View style={styles.allowanceIconWrapper}>
+                      <Ionicons name="sparkles-outline" size={20} color="#7c3aed" />
+                    </View>
+                    <View style={styles.allowanceTextContainer}>
+                      <Text style={styles.allowanceName}>Interior Clean</Text>
+                      <Text style={styles.allowanceCount}>{activeSubscription.remainingInteriorCleans} remaining</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.allowanceOrderBtn}
+                    onPress={() => router.push('/service-browse?category=interior-clean' as Href)}
+                  >
+                    <Text style={styles.allowanceOrderBtnText}>Order</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {activeSubscription.remainingTireCleans > 0 && (
+                <View style={styles.allowanceRow}>
+                  <View style={styles.allowanceInfo}>
+                    <View style={styles.allowanceIconWrapper}>
+                      <Ionicons name="disc-outline" size={20} color="#d97706" />
+                    </View>
+                    <View style={styles.allowanceTextContainer}>
+                      <Text style={styles.allowanceName}>Tire Cleaning</Text>
+                      <Text style={styles.allowanceCount}>{activeSubscription.remainingTireCleans} remaining</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.allowanceOrderBtn}
+                    onPress={() => router.push('/service-browse?category=tire-cleaning' as Href)}
+                  >
+                    <Text style={styles.allowanceOrderBtnText}>Order</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {activeSubscription.remainingFullDetails > 0 && (
+                <View style={[styles.allowanceRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                  <View style={styles.allowanceInfo}>
+                    <View style={styles.allowanceIconWrapper}>
+                      <Ionicons name="star-outline" size={20} color="#059669" />
+                    </View>
+                    <View style={styles.allowanceTextContainer}>
+                      <Text style={styles.allowanceName}>Full Detail</Text>
+                      <Text style={styles.allowanceCount}>{activeSubscription.remainingFullDetails} remaining</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    style={[styles.allowanceOrderBtn, { backgroundColor: '#059669' }]}
+                    onPress={() => router.push('/service-browse?category=full-detail' as Href)}
+                  >
+                    <Text style={[styles.allowanceOrderBtnText, { color: '#FFF' }]}>Order</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+          )
+        )}
+
 
         {/* Active Bookings */}
         {activeBookings.length > 0 && (
@@ -633,4 +753,62 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: '600',
   },
+  subscriptionCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  allowanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  allowanceInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  allowanceIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  allowanceTextContainer: {
+    flex: 1,
+  },
+  allowanceName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0d1629',
+    marginBottom: 2,
+  },
+  allowanceCount: {
+    fontSize: 13,
+    color: '#64748b',
+  },
+  allowanceOrderBtn: {
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginLeft: 12,
+  },
+  allowanceOrderBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0ca6e8',
+  },
+
 });

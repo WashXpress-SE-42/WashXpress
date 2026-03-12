@@ -13,7 +13,8 @@ import {
 
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { signin } from '../services/authService';
+import * as SecureStore from 'expo-secure-store';
+import { signin, getProfileFromFirebase, updateProfileInFirebase } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import SubscriptionAgreementModal from '../components/SubscriptionAgreementModal';
 
@@ -43,7 +44,25 @@ export default function LoginScreen() {
       }
       console.log('✅ Login successful:', result);
 
-      // Show agreement modal instead of navigating immediately
+      // Try checking if agreement was already accepted in Firestore
+      if (result.user?.uid) {
+         try {
+             const profile = await getProfileFromFirebase(result.user.uid, selectedRole);
+             if (profile?.agreement) {
+                 // Already agreed. Route directly.
+                 if (selectedRole === 'customer') {
+                   router.replace('/customer-home' as any);
+                 } else {
+                   router.replace('/washer-home' as any);
+                 }
+                 return;
+             }
+         } catch (e) {
+             console.warn('Could not fetch agreement status, falling back to prompt.', e);
+         }
+      }
+
+      // Show agreement modal if agreement is not true
       setShowAgreement(true);
     } catch (error: any) {
       console.error('❌ Login error:', error);
@@ -53,8 +72,22 @@ export default function LoginScreen() {
     }
   };
 
-  const handleAgreeAndContinue = () => {
+  const handleAgreeAndContinue = async () => {
     setShowAgreement(false);
+
+    try {
+      // Save agreement to Firestore
+      const userStr = await SecureStore.getItemAsync(selectedRole);
+      if (userStr) {
+          const u = JSON.parse(userStr);
+          if (u.uid) {
+              await updateProfileInFirebase(u.uid, selectedRole, { agreement: true });
+          }
+      }
+    } catch (e) {
+      console.error('Failed to save agreement status to Firestore:', e);
+    }
+
     // Navigate based on role
     if (selectedRole === 'customer') {
       router.replace('/customer-home' as any);

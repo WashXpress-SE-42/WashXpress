@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../services/apiClient';
 
 interface JobRequest {
@@ -44,6 +45,7 @@ const VEHICLE_TYPE_ICONS: Record<string, string> = {
 
 export default function WasherJobRequestScreen() {
     const { id: requestId } = useLocalSearchParams<{ id: string }>();
+    const { logout } = useAuth();
     const [request, setRequest] = useState<JobRequest | null>(null);
     const [loading, setLoading] = useState(true);
     const [accepting, setAccepting] = useState(false);
@@ -72,7 +74,20 @@ export default function WasherJobRequestScreen() {
             } else {
                 Alert.alert('Error', 'Job not found'); router.back();
             }
-        } catch { Alert.alert('Error', 'Failed to load job details'); }
+        } catch (e: any) {
+            const msg = e?.message ?? '';
+            const isUserNotFound = /user not found/i.test(msg);
+            if (isUserNotFound) {
+                Alert.alert(
+                    'Account Not Found',
+                    'Your washer account is not set up in our system. Please sign out and sign in again as a washer, or complete your registration.',
+                    [{ text: 'Sign Out', onPress: async () => { await logout(); router.replace('/login'); } }, { text: 'Go Back', onPress: () => router.back() }]
+                );
+            } else {
+                Alert.alert('Error', msg || 'Failed to load job details');
+                router.back();
+            }
+        }
         finally { setLoading(false); }
     };
 
