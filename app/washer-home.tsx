@@ -272,7 +272,9 @@ export default function WasherHome() {
                         key={tab.key}
                         style={styles.navItem}
                         onPress={() => {
-                            if (tab.key === 'profile') {
+                            if (tab.key === 'shop') {
+                                router.push('/marketplace' as any);   // ← links to marketplace
+                            } else if (tab.key === 'profile') {
                                 router.push('/profile' as any);
                             } else {
                                 setActiveTab(tab.key);

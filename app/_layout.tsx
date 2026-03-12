@@ -21,6 +21,7 @@ export default function RootLayout() {
           <Stack.Screen name="login" />
           <Stack.Screen name="signup" />
           <Stack.Screen name="washer-signup" />
+          <Stack.Screen name="marketplace" options={{ headerShown: false }} />
           <Stack.Screen name="home" />
           <Stack.Screen name="washer-job-request" options={{ headerShown: false }} />
           <Stack.Screen name="washer-booking-details" options={{ headerShown: false }} />
