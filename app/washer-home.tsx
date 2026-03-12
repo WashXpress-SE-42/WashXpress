@@ -292,7 +292,9 @@ export default function WasherHome() {
                                 router.push('/marketplace' as any);   // ← links to marketplace
                             } else if (tab.key === 'profile') {
                                 router.push('/profile' as any);
-                            } else {
+                            } else if (tab.key === 'jobs') {
+                                router.push('/myjobs' as any);
+                              }else {
                                 setActiveTab(tab.key);
                             }
                         }}
