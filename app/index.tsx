@@ -3,9 +3,8 @@ import { User, onAuthStateChanged } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { auth } from '../firebaseConfig';
-import { apiFetch } from '../services/apiClient';
 import { Redirect } from 'expo-router';
-import { useTheme } from '../context/ThemeContext';
+import { apiFetch } from '../services/apiClient';
 
 type Destination =
   | '/login'
@@ -16,13 +15,19 @@ type Destination =
 export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
   const [destination, setDestination] = useState<Destination | null>(null);
-  const { colors } = useTheme();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log('🔍 Checking auth state...');
+
+        // Wait for Firebase Auth to initialize
         const user = await new Promise<User | null>((resolve) => {
-          const timeout = setTimeout(() => resolve(null), 5000);
+          const timeout = setTimeout(() => {
+            console.warn('⏳ Auth check timed out after 5s');
+            resolve(null);
+          }, 5000);
+
           const unsubscribe = onAuthStateChanged(auth, (u) => {
             clearTimeout(timeout);
             unsubscribe();
@@ -31,6 +36,7 @@ export default function Index() {
         });
 
         if (!user) {
+          console.log('❌ No Firebase user found');
           await Promise.all([
             SecureStore.deleteItemAsync('accessToken'),
             SecureStore.deleteItemAsync('userType'),
@@ -39,8 +45,11 @@ export default function Index() {
           return;
         }
 
+        console.log('✅ Firebase user found:', user.email);
         const userType = await SecureStore.getItemAsync('userType');
+
         if (!userType) {
+          console.log('⚠️ No userType in storage');
           setDestination('/login');
           return;
         }
@@ -51,63 +60,42 @@ export default function Index() {
         }
 
         if (userType === 'provider') {
+          // Check if washer is verified before routing to home
           try {
-            console.log(`[Index] 🔍 Checking washer status for UID: ${user.uid}`);
-            const data = await apiFetch('/auth/washer/profile', {}, 'provider');
-
-            // Support both flattened and nested response shapes
-            const providerData = data.provider || (data.data && data.data.provider);
-
-            if (data.success && providerData) {
-              const isVerified = providerData.isVerified === true;
-              const status = providerData.washerStatus || providerData.status;
-
-              console.log(`[Index] ✅ Profile Found: isVerified=${isVerified}, status=${status}`);
-
-              if (isVerified) {
-                setDestination('/washer-home');
-              } else {
-                console.warn(`[Index] ⏳ Washer is not yet verified. redirecting to pending.`);
-                setDestination('/washer-pending');
-              }
+            const data = await apiFetch('/auth/profile', {}, 'provider');
+            if (data.success && data.data?.provider?.isVerified) {
+              setDestination('/washer-home');
             } else {
-              console.warn(
-                `[Index] ⚠️ Provider fetch succeeded but no data found. defaulting to pending.`,
-                data
-              );
               setDestination('/washer-pending');
             }
-          } catch (error: any) {
-            console.error(`[Index] ❌ Provider profile fetch failed:`, error);
-            // Backend doesn't recognize this provider or network failed
-            await Promise.all([
-              SecureStore.deleteItemAsync('accessToken'),
-              SecureStore.deleteItemAsync('userType'),
-              SecureStore.deleteItemAsync('provider'),
-            ]);
-            setDestination('/login');
+          } catch (profileError) {
+            console.warn('⚠️ Could not fetch washer profile, routing to pending:', profileError);
+            // Default to pending on error — safer than sending unverified washer to home
+            setDestination('/washer-pending');
           }
           return;
         }
 
-        // Fallback for any unsupported userType
+        // Unknown userType
         setDestination('/login');
-      } catch {
+      } catch (error) {
+        console.error('Auth check error:', error);
         setDestination('/login');
       } finally {
         setIsLoading(false);
       }
     };
+
     checkAuth();
   }, []);
 
   if (isLoading || !destination) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.accent} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
   }
 
-  return <Redirect href={destination as any} />;
+  return <Redirect href={destination} />;
 }
