@@ -131,7 +131,7 @@ export default function SignupScreen() {
       // Store auth so apiFetch works for subsequent calls
       setAuthToken(result.token);
       setRegisteredUser(result.user);
-      await setAuth(result.token, 'customer', result.user);
+    
 
       // 2️⃣ Add vehicle with the correct backend field names
       await apiFetch('/vehicles', {
@@ -198,6 +198,9 @@ export default function SignupScreen() {
         [{ text: 'Continue', onPress: () => router.replace('/customer-home' as any) }]
       );
     } finally {
+      if (authToken && registeredUser) {
+        await setAuth(authToken, 'customer', registeredUser);
+      }
       setLoading(false);
     }
   };

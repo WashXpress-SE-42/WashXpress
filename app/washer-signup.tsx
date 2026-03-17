@@ -153,8 +153,7 @@ export default function WasherSignupScreen() {
         {/* Header */}
         <Header
           title={`Washer Registration (Step ${step}/3)`}
-          showBackButton
-          onBackPress={handleBack}
+          showBack
         />
 
         {/* Progress */}
