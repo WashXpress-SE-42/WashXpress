@@ -11,6 +11,7 @@ import {
   Animated,
   Dimensions,
   Image,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -18,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = width * 0.72;
@@ -102,6 +104,7 @@ const REAL_SERVICES: CarouselServiceItem[] = [
 
 export default function CustomerHomeScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [activeBookings, setActiveBookings] = useState<Booking[]>([]);
@@ -139,9 +142,14 @@ export default function CustomerHomeScreen() {
         try {
           const profile = await getProfileFromFirebase(parsedUser.uid, 'customer');
           if (profile) {
+            // Extract first name from displayName if firstName is empty
+            const profileFirstName = profile.firstName || 
+                                   (profile.displayName ? profile.displayName.split(' ')[0] : '') || 
+                                   (parsedUser.displayName ? parsedUser.displayName.split(' ')[0] : '');
+            
             const updatedUser = {
               ...parsedUser,
-              firstName: profile.firstName,
+              firstName: profileFirstName,
               lastName: profile.lastName,
               displayName: profile.displayName || parsedUser.displayName,
               photoURL: profile.photoURL || parsedUser.photoURL,
@@ -216,45 +224,50 @@ export default function CustomerHomeScreen() {
   };
 
   const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      'pending': '#FFA500',
-      'confirmed': '#4CAF50',
-      'in_progress': '#2196F3',
-      'completed': '#9E9E9E',
+    const statusColors: { [key: string]: string } = {
+      'pending': colors.warning || '#FFA500',
+      'confirmed': colors.success || '#4CAF50',
+      'in_progress': colors.accent || '#2196F3',
+      'completed': colors.textSecondary || '#9E9E9E',
     };
-    return colors[status] || '#999';
+    return statusColors[status] || colors.textSecondary;
   };
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading...</Text>
       </View>
     );
   }
 
+  // Determine greeting name
+  const greetingName = user?.firstName || 
+                      (user?.displayName ? user.displayName.split(' ')[0] : '') || 
+                      'User';
+
   return (
-    <View style={styles.outerContainer}>
+    <View style={[styles.outerContainer, { backgroundColor: colors.background }]}>
       <ScrollView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
           <View>
-            <Text style={styles.greeting}>Hello,</Text>
-            <Text style={styles.userName}>{user?.displayName || 'Hello'}</Text>
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>Hello,</Text>
+            <Text style={[styles.userName, { color: colors.textPrimary }]}>{greetingName}</Text>
           </View>
           <TouchableOpacity onPress={() => router.push('/profile' as Href)}>
-            <View style={styles.profilePic}>
+            <View style={[styles.profilePic, { backgroundColor: colors.background }]}>
               {user?.photoURL ? (
                 <Image source={{ uri: user.photoURL }} style={styles.profileImage} />
               ) : (
-                <Ionicons name="person" size={24} color="#666" />
+                <Ionicons name="person" size={24} color={colors.textSecondary} />
               )}
             </View>
           </TouchableOpacity>
@@ -264,9 +277,9 @@ export default function CustomerHomeScreen() {
         {vehicles.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>My Vehicles</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>My Vehicles</Text>
               <TouchableOpacity onPress={() => router.push('/vehicle-list' as Href)}>
-                <Text style={styles.seeAll}>See All</Text>
+                <Text style={[styles.seeAll, { color: colors.accent }]}>See All</Text>
               </TouchableOpacity>
             </View>
 
@@ -274,24 +287,24 @@ export default function CustomerHomeScreen() {
               {vehicles.map((vehicle) => (
                 <TouchableOpacity
                   key={vehicle.id}
-                  style={styles.vehicleCard}
+                  style={[styles.vehicleCard, { backgroundColor: colors.cardBackground }]}
                   onPress={() => router.push(`/vehicle-details?id=${vehicle.id}` as Href)}
                 >
-                  <Ionicons name="car-sport" size={40} color="#007AFF" />
-                  <Text style={styles.vehicleName}>{vehicle.nickname}</Text>
-                  <Text style={styles.vehicleModel}>
+                  <Ionicons name="car-sport" size={28} color={colors.accent} />
+                  <Text style={[styles.vehicleName, { color: colors.textPrimary }]}>{vehicle.nickname}</Text>
+                  <Text style={[styles.vehicleModel, { color: colors.textSecondary }]}>
                     {vehicle.make} {vehicle.model}
                   </Text>
-                  <Text style={styles.vehiclePlate}>{vehicle.licensePlate}</Text>
+                  <Text style={[styles.vehiclePlate, { color: colors.accent }]}>{vehicle.licensePlate}</Text>
                 </TouchableOpacity>
               ))}
 
               <TouchableOpacity
-                style={[styles.vehicleCard, styles.addVehicleCard]}
+                style={[styles.vehicleCard, styles.addVehicleCard, { borderColor: colors.accent }]}
                 onPress={() => router.push('/add-vehicle' as Href)}
               >
-                <Ionicons name="add-circle" size={40} color="#007AFF" />
-                <Text style={styles.addVehicleText}>Add Vehicle</Text>
+                <Ionicons name="add-circle" size={28} color={colors.accent} />
+                <Text style={[styles.addVehicleText, { color: colors.accent }]}>Add Vehicle</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -305,78 +318,78 @@ export default function CustomerHomeScreen() {
              activeSubscription.remainingFullDetails > 0) && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Available in Plan</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Available in Plan</Text>
               <TouchableOpacity onPress={() => router.push('/my-subscription' as Href)}>
-                <Text style={styles.seeAll}>Manage Plan</Text>
+                <Text style={[styles.seeAll, { color: colors.accent }]}>Manage Plan</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.subscriptionCard}>
+            <View style={[styles.subscriptionCard, { backgroundColor: colors.cardBackground }]}>
               {activeSubscription.remainingWashes > 0 && (
-                <View style={styles.allowanceRow}>
+                <View style={[styles.allowanceRow, { borderBottomColor: colors.divider }]}>
                   <View style={styles.allowanceInfo}>
-                    <View style={styles.allowanceIconWrapper}>
+                    <View style={[styles.allowanceIconWrapper, { backgroundColor: colors.background }]}>
                       <Ionicons name="water-outline" size={20} color="#0ca6e8" />
                     </View>
                     <View style={styles.allowanceTextContainer}>
-                      <Text style={styles.allowanceName}>Exterior Wash</Text>
-                      <Text style={styles.allowanceCount}>{activeSubscription.remainingWashes} remaining</Text>
+                      <Text style={[styles.allowanceName, { color: colors.textPrimary }]}>Exterior Wash</Text>
+                      <Text style={[styles.allowanceCount, { color: colors.textSecondary }]}>{activeSubscription.remainingWashes} remaining</Text>
                     </View>
                   </View>
                   <TouchableOpacity 
-                    style={styles.allowanceOrderBtn}
+                    style={[styles.allowanceOrderBtn, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)' }]}
                     onPress={() => router.push('/service-browse?category=exterior-wash' as Href)}
                   >
-                    <Text style={styles.allowanceOrderBtnText}>Order</Text>
+                    <Text style={[styles.allowanceOrderBtnText, { color: colors.accent }]}>Order</Text>
                   </TouchableOpacity>
                 </View>
               )}
               {activeSubscription.remainingInteriorCleans > 0 && (
-                <View style={styles.allowanceRow}>
+                <View style={[styles.allowanceRow, { borderBottomColor: colors.divider }]}>
                   <View style={styles.allowanceInfo}>
-                    <View style={styles.allowanceIconWrapper}>
+                    <View style={[styles.allowanceIconWrapper, { backgroundColor: colors.background }]}>
                       <Ionicons name="sparkles-outline" size={20} color="#7c3aed" />
                     </View>
                     <View style={styles.allowanceTextContainer}>
-                      <Text style={styles.allowanceName}>Interior Clean</Text>
-                      <Text style={styles.allowanceCount}>{activeSubscription.remainingInteriorCleans} remaining</Text>
+                      <Text style={[styles.allowanceName, { color: colors.textPrimary }]}>Interior Clean</Text>
+                      <Text style={[styles.allowanceCount, { color: colors.textSecondary }]}>{activeSubscription.remainingInteriorCleans} remaining</Text>
                     </View>
                   </View>
                   <TouchableOpacity 
-                    style={styles.allowanceOrderBtn}
+                    style={[styles.allowanceOrderBtn, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)' }]}
                     onPress={() => router.push('/service-browse?category=interior-clean' as Href)}
                   >
-                    <Text style={styles.allowanceOrderBtnText}>Order</Text>
+                    <Text style={[styles.allowanceOrderBtnText, { color: colors.accent }]}>Order</Text>
                   </TouchableOpacity>
                 </View>
               )}
               {activeSubscription.remainingTireCleans > 0 && (
-                <View style={styles.allowanceRow}>
+                <View style={[styles.allowanceRow, { borderBottomColor: colors.divider }]}>
                   <View style={styles.allowanceInfo}>
-                    <View style={styles.allowanceIconWrapper}>
+                    <View style={[styles.allowanceIconWrapper, { backgroundColor: colors.background }]}>
                       <Ionicons name="disc-outline" size={20} color="#d97706" />
                     </View>
                     <View style={styles.allowanceTextContainer}>
-                      <Text style={styles.allowanceName}>Tire Cleaning</Text>
-                      <Text style={styles.allowanceCount}>{activeSubscription.remainingTireCleans} remaining</Text>
+                      <Text style={[styles.allowanceName, { color: colors.textPrimary }]}>Tire Cleaning</Text>
+                      <Text style={[styles.allowanceCount, { color: colors.textSecondary }]}>{activeSubscription.remainingTireCleans} remaining</Text>
                     </View>
                   </View>
                   <TouchableOpacity 
-                    style={styles.allowanceOrderBtn}
+                    style={[styles.allowanceOrderBtn, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)' }]}
                     onPress={() => router.push('/service-browse?category=tire-cleaning' as Href)}
                   >
-                    <Text style={styles.allowanceOrderBtnText}>Order</Text>
+                    <Text style={[styles.allowanceOrderBtnText, { color: colors.accent }]}>Order</Text>
                   </TouchableOpacity>
                 </View>
               )}
               {activeSubscription.remainingFullDetails > 0 && (
                 <View style={[styles.allowanceRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
                   <View style={styles.allowanceInfo}>
-                    <View style={styles.allowanceIconWrapper}>
+                    <View style={[styles.allowanceIconWrapper, { backgroundColor: colors.background }]}>
                       <Ionicons name="star-outline" size={20} color="#059669" />
                     </View>
                     <View style={styles.allowanceTextContainer}>
-                      <Text style={styles.allowanceName}>Full Detail</Text>
-                      <Text style={styles.allowanceCount}>{activeSubscription.remainingFullDetails} remaining</Text>
+                      <Text style={[styles.allowanceName, { color: colors.textPrimary }]}>Full Detail</Text>
+                      <Text style={[styles.allowanceCount, { color: colors.textSecondary }]}>{activeSubscription.remainingFullDetails} remaining</Text>
                     </View>
                   </View>
                   <TouchableOpacity 
@@ -397,22 +410,22 @@ export default function CustomerHomeScreen() {
         {activeBookings.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Active Bookings</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Active Bookings</Text>
               <TouchableOpacity onPress={() => router.push('/booking-list' as Href)}>
-                <Text style={styles.seeAll}>See All</Text>
+                <Text style={[styles.seeAll, { color: colors.accent }]}>See All</Text>
               </TouchableOpacity>
             </View>
 
             {activeBookings.map((booking) => (
               <TouchableOpacity
                 key={booking.id}
-                style={styles.bookingCard}
+                style={[styles.bookingCard, { backgroundColor: colors.cardBackground }]}
                 onPress={() => router.push(`/booking-details?id=${booking.id}` as Href)}
               >
                 <View style={styles.bookingHeader}>
                   <View>
-                    <Text style={styles.bookingService}>{booking.service.name}</Text>
-                    <Text style={styles.bookingProvider}>
+                    <Text style={[styles.bookingService, { color: colors.textPrimary }]}>{booking.service.name}</Text>
+                    <Text style={[styles.bookingProvider, { color: colors.textSecondary }]}>
                       {booking.provider.displayName}
                     </Text>
                   </View>
@@ -423,8 +436,8 @@ export default function CustomerHomeScreen() {
                   </View>
                 </View>
                 <View style={styles.bookingFooter}>
-                  <Ionicons name="calendar-outline" size={16} color="#666" />
-                  <Text style={styles.bookingDate}>
+                  <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.bookingDate, { color: colors.textSecondary }]}>
                     {booking.scheduledDate} at {booking.scheduledTime}
                   </Text>
                 </View>
@@ -435,7 +448,7 @@ export default function CustomerHomeScreen() {
 
         {/* Service Carousel */}
         <View style={styles.carouselContainer}>
-          <Text style={styles.sectionTitle}>Our Services</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary, paddingHorizontal: 20 }]}>Our Services</Text>
           <Animated.FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -472,20 +485,20 @@ export default function CustomerHomeScreen() {
 
               const scale = (scrollX as any).interpolate({
                 inputRange,
-                outputRange: [0.9, 1, 0.9],
+                outputRange: [0.92, 1, 0.92],
                 extrapolate: 'clamp',
               });
 
               const opacity = (scrollX as any).interpolate({
                 inputRange,
-                outputRange: [0.6, 1, 0.6],
+                outputRange: [0.7, 1, 0.7],
                 extrapolate: 'clamp',
               });
 
               return (
                 <Animated.View style={{ width: ITEM_SIZE, transform: [{ scale }], opacity }}>
                   <TouchableOpacity
-                    style={styles.serviceItem}
+                    style={[styles.serviceItem, { backgroundColor: colors.cardBackground }]}
                     onPress={() => router.push(item.route as Href)}
                     activeOpacity={0.9}
                   >
@@ -502,25 +515,25 @@ export default function CustomerHomeScreen() {
       </ScrollView>
 
       {/* Quick Actions — Fixed Bottom Bar */}
-      <View style={styles.quickActions}>
+      <View style={[styles.quickActions, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
         <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/service-browse' as Href)}>
-          <Ionicons name="search" size={24} color="#007AFF" />
-          <Text style={styles.actionText}>Find Service</Text>
+          <Ionicons name="search" size={24} color={colors.accent} />
+          <Text style={[styles.actionText, { color: colors.textSecondary }]}>Browse</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/vehicle-list' as Href)}>
-          <Ionicons name="car-sport" size={24} color="#007AFF" />
-          <Text style={styles.actionText}>My Fleet</Text>
+          <Ionicons name="car-sport" size={24} color={colors.accent} />
+          <Text style={[styles.actionText, { color: colors.textSecondary }]}>Vehicles</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/booking-list' as Href)}>
-          <Ionicons name="calendar" size={24} color="#007AFF" />
-          <Text style={styles.actionText}>Bookings</Text>
+          <Ionicons name="calendar" size={24} color={colors.accent} />
+          <Text style={[styles.actionText, { color: colors.textSecondary }]}>Bookings</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/my-subscription' as Href)}>
-          <Ionicons name="ribbon" size={24} color="#007AFF" />
-          <Text style={styles.actionText}>My Plan</Text>
+        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/profile' as Href)}>
+          <Ionicons name="person" size={24} color={colors.accent} />
+          <Text style={[styles.actionText, { color: colors.textSecondary }]}>Account</Text>
         </TouchableOpacity>
       </View>
     </View>

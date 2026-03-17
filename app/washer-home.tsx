@@ -10,6 +10,7 @@ import { db } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { apiFetch } from '../services/apiClient';
+import { useTheme } from '../context/ThemeContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type BookingDoc = {
@@ -81,6 +82,7 @@ export default function WasherHome() {
     const router = useRouter();
     const { user } = useAuth();
     const { data: profile, isLoading: profileLoading } = useProfile();
+    const { colors, isDark } = useTheme();
     const [activeTab, setActiveTab] = useState('home');
     const [bookings, setBookings] = useState<BookingDoc[]>([]);
     const [loading, setLoading] = useState(true);
@@ -159,45 +161,50 @@ export default function WasherHome() {
         return 'Washer';
     };
 
+    const isDarkTheme = isDark;
+
     return (
-        <SafeAreaView style={styles.safe}>
-            <StatusBar barStyle="light-content" backgroundColor="#16a34a" />
+        <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
             <ScrollView
-                style={styles.scroll}
+                style={[styles.scroll, { backgroundColor: colors.background }]}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
                 {/* ── Header ── */}
-                <View style={styles.header}>
+                <View style={[styles.header, { backgroundColor: colors.cardBackground }]}>
                     <View style={styles.headerTop}>
                         <View>
-                            <Text style={styles.welcomeText}>Welcome back,</Text>
-                            <Text style={styles.providerName}>{getUserName()}</Text>
+                            <Text style={[styles.welcomeText, { color: colors.textSecondary }]}>Welcome back,</Text>
+                            <Text style={[styles.providerName, { color: colors.textPrimary }]}>{getUserName()}</Text>
                         </View>
                         <TouchableOpacity
-                            style={styles.profileBtn}
+                            style={[styles.profileBtn, { backgroundColor: colors.background }]}
                             onPress={() => router.push('/profile' as any)}
                         >
-                            <Ionicons name="person-outline" size={22} color="#fff" />
+                            <Ionicons name="person-outline" size={22} color={colors.accent} />
                         </TouchableOpacity>
                     </View>
 
                     {/* Earnings Card */}
-                    <TouchableOpacity style={styles.earningsCard} activeOpacity={0.85}>
+                    <TouchableOpacity 
+                        style={[styles.earningsCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#fff', borderColor: colors.border }]} 
+                        activeOpacity={0.85}
+                    >
                         <View style={styles.earningsLeft}>
                             <View style={styles.earningsLabelRow}>
-                                <Ionicons name="cash-outline" size={16} color="#16a34a" />
-                                <Text style={styles.earningsLabel}>  This Month's Earnings</Text>
+                                <Ionicons name="cash-outline" size={16} color={colors.success || '#16a34a'} />
+                                <Text style={[styles.earningsLabel, { color: colors.textSecondary }]}>  This Month's Earnings</Text>
                             </View>
-                            <Text style={styles.earningsAmount}>LKR 0</Text>
+                            <Text style={[styles.earningsAmount, { color: colors.textPrimary }]}>LKR 0</Text>
                             <View style={styles.trendRow}>
-                                <Ionicons name="trending-up-outline" size={14} color="#16a34a" />
-                                <Text style={styles.trendText}>  Tap to view earnings</Text>
+                                <Ionicons name="trending-up-outline" size={14} color={colors.success || '#16a34a'} />
+                                <Text style={[styles.trendText, { color: colors.success || '#16a34a' }]}>  Tap to view earnings</Text>
                             </View>
                         </View>
                         <View style={styles.earningsRight}>
-                            <Text style={styles.jobsDoneCount}>0</Text>
-                            <Text style={styles.jobsDoneLabel}>Jobs Done</Text>
+                            <Text style={[styles.jobsDoneCount, { color: colors.accent }]}>0</Text>
+                            <Text style={[styles.jobsDoneLabel, { color: colors.textSecondary }]}>Jobs Done</Text>
                         </View>
                     </TouchableOpacity>
                 </View>
@@ -206,39 +213,39 @@ export default function WasherHome() {
                 <View style={styles.statsGrid}>
                     {[
                         { icon: 'star',                    color: '#f59e0b', value: '—',                       label: 'Rating'    },
-                        { icon: 'calendar-outline',        color: '#3b82f6', value: String(bookings.length),   label: 'Available' },
-                        { icon: 'checkmark-circle-outline', color: '#16a34a', value: '0',                      label: 'Completed' },
+                        { icon: 'calendar-outline',        color: colors.accent, value: String(bookings.length),   label: 'Available' },
+                        { icon: 'checkmark-circle-outline', color: colors.success || '#16a34a', value: '0',                      label: 'Completed' },
                     ].map((stat) => (
-                        <View key={stat.label} style={styles.statCard}>
+                        <View key={stat.label} style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
                             <Ionicons name={stat.icon as any} size={22} color={stat.color} />
-                            <Text style={styles.statValue}>{stat.value}</Text>
-                            <Text style={styles.statLabel}>{stat.label}</Text>
+                            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+                            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
                         </View>
                     ))}
                 </View>
 
                 {/* ── Available Jobs ── */}
-                <View style={styles.section}>
+                <View style={[styles.section, { backgroundColor: colors.background }]}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Available Jobs</Text>
+                        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Available Jobs</Text>
                         {!loading && bookings.length > 0 && (
-                            <View style={styles.newBadge}>
+                            <View style={[styles.newBadge, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)' }]}>
                                 <View style={styles.pulseDot} />
-                                <Text style={styles.newBadgeText}>{bookings.length} Live</Text>
+                                <Text style={[styles.newBadgeText, { color: colors.accent }]}>{bookings.length} Live</Text>
                             </View>
                         )}
                     </View>
 
                     {loading ? (
                         <View style={styles.loadingBox}>
-                            <ActivityIndicator size="large" color="#16a34a" />
-                            <Text style={styles.loadingText}>Fetching available jobs...</Text>
+                            <ActivityIndicator size="large" color={colors.accent} />
+                            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Fetching available jobs...</Text>
                         </View>
                     ) : bookings.length === 0 ? (
                         <View style={styles.emptyBox}>
-                            <Ionicons name="car-outline" size={48} color="#d1d5db" />
-                            <Text style={styles.emptyTitle}>No Jobs Available</Text>
-                            <Text style={styles.emptySubtitle}>New bookings appear here in real time</Text>
+                            <Ionicons name="car-outline" size={48} color={colors.divider} />
+                            <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No Jobs Available</Text>
+                            <Text style={[styles.emptySubtitle, { color: colors.textSecondary, opacity: 0.7 }]}>New bookings appear here in real time</Text>
                         </View>
                     ) : (
                         bookings.map((booking) => (
@@ -248,18 +255,19 @@ export default function WasherHome() {
                                 accepting={accepting}
                                 onAccept={handleAcceptJob}
                                 onView={handleViewJob}
+                                colors={colors}
                             />
                         ))
                     )}
 
                     {!loading && bookings.length > 0 && (
-                        <View style={styles.proTipCard}>
-                            <View style={styles.proTipIcon}>
-                                <Ionicons name="flash" size={20} color="#d97706" />
+                        <View style={[styles.proTipCard, { backgroundColor: isDark ? 'rgba(234, 179, 8, 0.1)' : 'rgba(234, 179, 8, 0.05)', borderColor: `${colors.warning}40` }]}>
+                            <View style={[styles.proTipIcon, { backgroundColor: `${colors.warning}20` }]}>
+                                <Ionicons name="flash" size={20} color={colors.warning} />
                             </View>
                             <View style={styles.proTipContent}>
-                                <Text style={styles.proTipTitle}>Race Mode Active</Text>
-                                <Text style={styles.proTipBody}>
+                                <Text style={[styles.proTipTitle, { color: colors.warning }]}>Race Mode Active</Text>
+                                <Text style={[styles.proTipBody, { color: colors.textSecondary }]}>
                                     First washer to accept wins the job. Tap "View Details" to review first, or "Accept" to claim instantly.
                                 </Text>
                             </View>
@@ -269,7 +277,7 @@ export default function WasherHome() {
             </ScrollView>
 
             {/* ── Bottom Navigation ── */}
-            <View style={styles.bottomNav}>
+            <View style={[styles.bottomNav, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
                 {[
                     { key: 'home',     icon: 'home-outline',     label: 'Home'     },
                     { key: 'jobs',     icon: 'briefcase-outline', label: 'My Jobs'  },
@@ -290,9 +298,13 @@ export default function WasherHome() {
                         <Ionicons
                             name={tab.icon as any}
                             size={22}
-                            color={activeTab === tab.key ? '#16a34a' : '#9ca3af'}
+                            color={activeTab === tab.key ? colors.accent : colors.textSecondary}
                         />
-                        <Text style={[styles.navLabel, activeTab === tab.key && styles.navLabelActive]}>
+                        <Text style={[
+                            styles.navLabel, 
+                            { color: colors.textSecondary },
+                            activeTab === tab.key && [styles.navLabelActive, { color: colors.accent }]
+                        ]}>
                             {tab.label}
                         </Text>
                     </TouchableOpacity>
@@ -308,11 +320,13 @@ function JobCard({
     accepting,
     onAccept,
     onView,
+    colors,
 }: {
     booking: BookingDoc;
     accepting: string | null;
     onAccept: (id: string) => void;
     onView: (id: string) => void;
+    colors: any;
 }) {
     const isAccepting = accepting === booking.id;
     const vehicleEmoji = TYPE_ICONS[booking.vehicle?.type || ''] || '🚗';
@@ -322,78 +336,79 @@ function JobCard({
         : 'No address';
 
     return (
-        <View style={styles.jobCard}>
+        <View style={[styles.jobCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             {/* Header */}
             <View style={styles.jobCardHeader}>
                 <View style={styles.jobCardLeft}>
-                    <Text style={styles.jobName}>{booking.customerName || 'Customer'}</Text>
+                    <Text style={[styles.jobName, { color: colors.textPrimary }]}>{booking.customerName || 'Customer'}</Text>
                     <View style={styles.vehicleRow}>
                         <Text style={styles.vehicleEmoji}>{vehicleEmoji}</Text>
-                        <Text style={styles.jobVehicle}>
+                        <Text style={[styles.jobVehicle, { color: colors.textSecondary }]}>
                             {booking.vehicle?.make} {booking.vehicle?.model}
                             {booking.vehicle?.year ? ` · ${booking.vehicle.year}` : ''}
                         </Text>
                     </View>
-                    <Text style={styles.vehiclePlate}>
+                    <Text style={[styles.vehiclePlate, { color: colors.textSecondary, opacity: 0.7 }]}>
                         {booking.vehicle?.color} · {booking.vehicle?.licensePlate}
                     </Text>
                 </View>
                 <View style={styles.jobCardRight}>
                     <Text style={[
                         styles.jobAmount,
-                        booking.paidWithSubscription && styles.jobAmountSub,
+                        { color: colors.accent },
+                        booking.paidWithSubscription && [styles.jobAmountSub, { color: colors.accent }]
                     ]}>
                         {formatPrice(booking.totalPrice, booking.currency, booking.paidWithSubscription)}
                     </Text>
                     {booking.service?.duration > 0 && (
-                        <View style={styles.durationPill}>
-                            <Ionicons name="time-outline" size={11} color="#6b7280" />
-                            <Text style={styles.durationText}>{booking.service.duration} min</Text>
+                        <View style={[styles.durationPill, { backgroundColor: colors.background }]}>
+                            <Ionicons name="time-outline" size={11} color={colors.textSecondary} />
+                            <Text style={[styles.durationText, { color: colors.textSecondary }]}>{booking.service.duration} min</Text>
                         </View>
                     )}
                 </View>
             </View>
 
             {/* Service */}
-            <View style={styles.serviceBox}>
+            <View style={[styles.serviceBox, { backgroundColor: `${colors.accent}15` }]}>
                 <Text style={styles.serviceEmoji}>{serviceEmoji}</Text>
-                <Text style={styles.serviceText}>{booking.service?.name || 'Service'}</Text>
+                <Text style={[styles.serviceText, { color: colors.accent }]}>{booking.service?.name || 'Service'}</Text>
             </View>
 
             {/* Details */}
             <View style={styles.jobDetails}>
                 <View style={styles.detailRow}>
-                    <Ionicons name="location-outline" size={14} color="#6b7280" />
-                    <Text style={styles.detailText} numberOfLines={1}>{addressStr}</Text>
+                    <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
+                    <Text style={[styles.detailText, { color: colors.textSecondary }]} numberOfLines={1}>{addressStr}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                    <Ionicons name="calendar-outline" size={14} color="#6b7280" />
-                    <Text style={styles.detailText}>{formatDate(booking.scheduledDate)}</Text>
-                    <Ionicons name="time-outline" size={14} color="#6b7280" style={{ marginLeft: 12 }} />
-                    <Text style={styles.detailText}>{formatTime(booking.scheduledTime)}</Text>
+                    <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
+                    <Text style={[styles.detailText, { color: colors.textSecondary }]}>{formatDate(booking.scheduledDate)}</Text>
+                    <Ionicons name="time-outline" size={14} color={colors.textSecondary} style={{ marginLeft: 12 }} />
+                    <Text style={[styles.detailText, { color: colors.textSecondary }]}>{formatTime(booking.scheduledTime)}</Text>
                 </View>
             </View>
 
             {/* Special instructions warning */}
             {!!booking.notes && (
-                <View style={styles.notesIndicator}>
-                    <Ionicons name="warning-outline" size={13} color="#d97706" />
-                    <Text style={styles.notesIndicatorText}>Customer has special instructions</Text>
+                <View style={[styles.notesIndicator, { backgroundColor: `${colors.warning}15`, borderColor: `${colors.warning}30` }]}>
+                    <Ionicons name="warning-outline" size={13} color={colors.warning} />
+                    <Text style={[styles.notesIndicatorText, { color: colors.warning }]}>Customer has special instructions</Text>
                 </View>
             )}
 
             {/* Actions */}
             <View style={styles.jobActions}>
                 <TouchableOpacity
-                    style={styles.viewBtn}
+                    style={[styles.viewBtn, { borderColor: colors.divider }]}
                     onPress={() => onView(booking.id)}
                     disabled={isAccepting}
                 >
-                    <Text style={styles.viewBtnText}>View Details</Text>
+                    <Text style={[styles.viewBtnText, { color: colors.textPrimary }]}>View Details</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.acceptBtn, isAccepting && styles.acceptBtnDisabled]}
+                    style={[styles.acceptBtn, { backgroundColor: colors.accent }, isAccepting && styles.acceptBtnDisabled]}
                     activeOpacity={0.8}
                     onPress={() => onAccept(booking.id)}
                     disabled={isAccepting}
@@ -414,95 +429,95 @@ function JobCard({
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-    safe:              { flex: 1, backgroundColor: '#0d1629' },
+    safe:              { flex: 1 },
     scroll:            { flex: 1 },
     scrollContent:     { paddingBottom: 90 },
 
     // Header
-    header:            { backgroundColor: '#0d1629', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 30 },
+    header:            { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 30 },
     headerTop:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
     headerGreeting:    { flex: 1 },
-    welcomeText:       { color: '#93c5fd', fontSize: 14, marginBottom: 2 },
-    providerName:      { color: '#fff', fontSize: 24, fontWeight: '700' },
-    profileBtn:        { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' },
+    welcomeText:       { fontSize: 14, marginBottom: 2 },
+    providerName:      { fontSize: 24, fontWeight: '700' },
+    profileBtn:        { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
 
     // Earnings Card
-    earningsCard:      { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 16, padding: 16, flexDirection: 'row', flexWrap: 'wrap', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+    earningsCard:      { borderRadius: 16, padding: 16, flexDirection: 'row', flexWrap: 'wrap', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4, borderWidth: 1 },
     earningsLeft:      { flex: 1 },
     earningsLabelRow:  { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-    earningsLabel:     { fontSize: 12, color: '#93c5fd', fontWeight: '500' },
-    earningsAmount:    { fontSize: 28, fontWeight: '800', color: '#fff', marginBottom: 4 },
+    earningsLabel:     { fontSize: 12, fontWeight: '500' },
+    earningsAmount:    { fontSize: 28, fontWeight: '800', marginBottom: 4 },
     trendRow:          { flexDirection: 'row', alignItems: 'center' },
-    trendText:         { fontSize: 12, color: '#4ade80', fontWeight: '500' },
+    trendText:         { fontSize: 12, fontWeight: '500' },
     earningsRight:     { alignItems: 'center', justifyContent: 'center', paddingLeft: 16 },
-    jobsDoneCount:     { fontSize: 32, fontWeight: '800', color: '#2563eb' },
-    jobsDoneLabel:     { fontSize: 12, color: '#93c5fd', fontWeight: '500' },
-    earningsTap:       { width: '100%', textAlign: 'center', marginTop: 10, fontSize: 12, color: '#64748b' },
+    jobsDoneCount:     { fontSize: 32, fontWeight: '800' },
+    jobsDoneLabel:     { fontSize: 12, fontWeight: '500' },
+    earningsTap:       { width: '100%', textAlign: 'center', marginTop: 10, fontSize: 12 },
 
     // Stats Grid
     statsGrid:         { flexDirection: 'row', paddingHorizontal: 16, marginTop: -20, gap: 10, marginBottom: 8 },
-    statCard:          { flex: 1, backgroundColor: '#1e2d4a', borderRadius: 16, padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
-    statValue:         { fontSize: 20, fontWeight: '700', color: '#fff', marginTop: 6 },
-    statLabel:         { fontSize: 11, color: '#64748b', marginTop: 2 },
+    statCard:          { flex: 1, borderRadius: 16, padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2, borderWidth: 1 },
+    statValue:         { fontSize: 20, fontWeight: '700', marginTop: 6 },
+    statLabel:         { fontSize: 11, marginTop: 2 },
 
     // Section
     section:           { paddingHorizontal: 16, marginTop: 16 },
     sectionHeader:     { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-    sectionTitle:      { fontSize: 18, fontWeight: '700', color: '#fff' },
-    newBadge:          { marginLeft: 10, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(37,99,235,0.2)', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 },
+    sectionTitle:      { fontSize: 18, fontWeight: '700' },
+    newBadge:          { marginLeft: 10, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 },
     pulseDot:          { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22c55e' },
-    newBadgeText:      { color: '#60a5fa', fontSize: 12, fontWeight: '600' },
+    newBadgeText:      { fontSize: 12, fontWeight: '600' },
 
     // Loading / Empty
     loadingBox:        { alignItems: 'center', paddingVertical: 40 },
-    loadingText:       { marginTop: 12, color: '#64748b', fontSize: 14 },
+    loadingText:       { marginTop: 12, fontSize: 14 },
     emptyBox:          { alignItems: 'center', paddingVertical: 40 },
-    emptyTitle:        { fontSize: 16, fontWeight: '600', color: '#94a3b8', marginTop: 12 },
-    emptySubtitle:     { fontSize: 13, color: '#64748b', marginTop: 4 },
+    emptyTitle:        { fontSize: 16, fontWeight: '600', marginTop: 12 },
+    emptySubtitle:     { fontSize: 13, marginTop: 4 },
 
     // Job Card
-    jobCard:           { backgroundColor: '#1e2d4a', borderRadius: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2, overflow: 'hidden' },
+    jobCard:           { borderRadius: 16, marginBottom: 12, borderWidth: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2, overflow: 'hidden' },
     jobCardHeader:     { flexDirection: 'row', padding: 16, paddingBottom: 10 },
     jobCardLeft:       { flex: 1 },
-    jobName:           { fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 4 },
+    jobName:           { fontSize: 16, fontWeight: '700', marginBottom: 4 },
     vehicleRow:        { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
     vehicleEmoji:      { fontSize: 16 },
-    jobVehicle:        { fontSize: 13, color: '#94a3b8', fontWeight: '500' },
-    vehiclePlate:      { fontSize: 12, color: '#64748b' },
+    jobVehicle:        { fontSize: 13, fontWeight: '500' },
+    vehiclePlate:      { fontSize: 12 },
     jobCardRight:      { alignItems: 'flex-end', gap: 6 },
-    jobAmount:         { fontSize: 20, fontWeight: '800', color: '#2563eb' },
-    jobAmountSub:      { color: '#60a5fa', fontSize: 13 },
-    durationPill:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-    durationText:      { fontSize: 11, color: '#64748b', fontWeight: '500' },
+    jobAmount:         { fontSize: 20, fontWeight: '800' },
+    jobAmountSub:      { fontSize: 13 },
+    durationPill:      { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+    durationText:      { fontSize: 11, fontWeight: '500' },
 
-    serviceBox:        { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(37,99,235,0.15)', marginHorizontal: 16, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10 },
+    serviceBox:        { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10 },
     serviceEmoji:      { fontSize: 15 },
-    serviceText:       { fontSize: 13, fontWeight: '600', color: '#60a5fa' },
+    serviceText:       { fontSize: 13, fontWeight: '600' },
 
     jobDetails:        { paddingHorizontal: 16, gap: 6, marginBottom: 10 },
     detailRow:         { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    detailText:        { fontSize: 13, color: '#94a3b8' },
+    detailText:        { fontSize: 13 },
 
-    notesIndicator:    { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(234,179,8,0.08)', marginHorizontal: 16, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(234,179,8,0.2)' },
-    notesIndicatorText: { fontSize: 12, color: '#fbbf24', fontWeight: '600' },
+    notesIndicator:    { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10, borderWidth: 1 },
+    notesIndicatorText: { fontSize: 12, fontWeight: '600' },
 
     jobActions:        { flexDirection: 'row', gap: 10, padding: 16, paddingTop: 4 },
-    viewBtn:           { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.12)', alignItems: 'center' },
-    viewBtnText:       { fontSize: 14, fontWeight: '700', color: '#94a3b8' },
-    acceptBtn:         { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 12, backgroundColor: '#2563eb' },
-    acceptBtnDisabled: { backgroundColor: '#1e40af' },
+    viewBtn:           { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1.5, alignItems: 'center' },
+    viewBtnText:       { fontSize: 14, fontWeight: '700' },
+    acceptBtn:         { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 12 },
+    acceptBtnDisabled: { opacity: 0.6 },
     acceptBtnText:     { fontSize: 14, fontWeight: '800', color: '#fff' },
 
     // Pro Tip Card
-    proTipCard:        { flexDirection: 'row', backgroundColor: 'rgba(234,179,8,0.08)', borderWidth: 1, borderColor: 'rgba(234,179,8,0.2)', borderRadius: 16, padding: 16, marginTop: 4, marginBottom: 16, alignItems: 'flex-start' },
-    proTipIcon:        { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(234,179,8,0.1)', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+    proTipCard:        { flexDirection: 'row', borderWidth: 1, borderRadius: 16, padding: 16, marginTop: 4, marginBottom: 16, alignItems: 'flex-start' },
+    proTipIcon:        { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
     proTipContent:     { flex: 1 },
-    proTipTitle:       { fontSize: 15, fontWeight: '700', color: '#fbbf24', marginBottom: 4 },
-    proTipBody:        { fontSize: 13, color: '#d97706', lineHeight: 19 },
+    proTipTitle:       { fontSize: 15, fontWeight: '700', marginBottom: 4 },
+    proTipBody:        { fontSize: 13, lineHeight: 19 },
 
     // Bottom Nav
-    bottomNav:         { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#0d1629', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', flexDirection: 'row', paddingBottom: 20, paddingTop: 10, shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 10 },
+    bottomNav:         { position: 'absolute', bottom: 0, left: 0, right: 0, borderTopWidth: 1, flexDirection: 'row', paddingBottom: 20, paddingTop: 10, shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 10 },
     navItem:           { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    navLabel:          { fontSize: 10, color: '#64748b', marginTop: 3, fontWeight: '500' },
-    navLabelActive:    { color: '#2563eb', fontWeight: '600' },
+    navLabel:          { fontSize: 10, marginTop: 3, fontWeight: '500' },
+    navLabelActive:    { fontWeight: '600' },
 });

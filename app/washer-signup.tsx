@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Header } from '../components/Header';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const PROVIDER_API_URL = process.env.EXPO_PUBLIC_PROVIDER_API_URL || 'http://localhost:3001/api/provider';
 
@@ -32,6 +33,7 @@ export default function WasherSignupScreen() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const { setAuth } = useAuth();
+  const { colors, isDark } = useTheme();
 
   // Step 1 — Personal Info
   const [firstName, setFirstName] = useState('');
@@ -143,80 +145,84 @@ export default function WasherSignupScreen() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[s.container, { backgroundColor: colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
         <Header
           title={`Washer Registration (Step ${step}/3)`}
+          showBackButton
+          onBackPress={handleBack}
         />
 
         {/* Progress */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${((step - 1) / 2) * 100}%` }]} />
+        <View style={[s.progressContainer, { backgroundColor: colors.cardBackground }]}>
+          <View style={[s.progressTrack, { backgroundColor: colors.divider }]}>
+            <View style={[s.progressFill, { width: `${((step - 1) / 2) * 100}%`, backgroundColor: colors.accent }]} />
           </View>
-          <View style={styles.stepDotsRow}>
+          <View style={s.stepDotsRow}>
             {stepLabels.map((label, i) => (
-              <View key={label} style={styles.stepDotWrapper}>
+              <View key={label} style={s.stepDotWrapper}>
                 <View style={[
-                  styles.stepDot,
-                  i + 1 <= step && styles.stepDotActive,
-                  i + 1 < step && styles.stepDotDone,
+                  s.stepDot,
+                  { backgroundColor: colors.divider },
+                  i + 1 <= step && [s.stepDotActive, { backgroundColor: colors.accent }],
+                  i + 1 < step && [s.stepDotDone, { backgroundColor: colors.success || '#16a34a' }],
                 ]}>
                   {i + 1 < step
                     ? <Ionicons name="checkmark" size={12} color="#fff" />
-                    : <Text style={[styles.stepDotText, i + 1 <= step && styles.stepDotTextActive]}>{i + 1}</Text>
+                    : <Text style={[s.stepDotText, { color: colors.textSecondary }, i + 1 <= step && s.stepDotTextActive]}>{i + 1}</Text>
                   }
                 </View>
-                <Text style={[styles.stepLabel, i + 1 === step && styles.stepLabelActive]}>{label}</Text>
+                <Text style={[s.stepLabel, { color: colors.textSecondary }, i + 1 === step && [s.stepLabelActive, { color: colors.accent }]]}>{label}</Text>
               </View>
             ))}
           </View>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
 
           {/* ── STEP 1: Personal Info ── */}
           {step === 1 && (
-            <View style={styles.formContainer}>
-              <Text style={styles.sectionTitle}>Personal Information</Text>
+            <View style={s.formContainer}>
+              <Text style={[s.sectionTitle, { color: colors.textPrimary }]}>Personal Information</Text>
 
-              <View style={styles.row}>
-                <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.label}>First Name *</Text>
-                  <View style={styles.inputContainer}>
-                    <TextInput style={styles.input} placeholder="John" value={firstName} onChangeText={setFirstName} autoCapitalize="words" />
+              <View style={s.row}>
+                <View style={[s.inputGroup, { flex: 1, marginRight: 8 }]}>
+                  <Text style={[s.label, { color: colors.textPrimary }]}>First Name *</Text>
+                  <View style={[s.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                    <TextInput style={[s.input, { color: colors.textPrimary }]} placeholder="John" placeholderTextColor={colors.textSecondary} value={firstName} onChangeText={setFirstName} autoCapitalize="words" />
                   </View>
                 </View>
-                <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-                  <Text style={styles.label}>Last Name *</Text>
-                  <View style={styles.inputContainer}>
-                    <TextInput style={styles.input} placeholder="Doe" value={lastName} onChangeText={setLastName} autoCapitalize="words" />
+                <View style={[s.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                  <Text style={[s.label, { color: colors.textPrimary }]}>Last Name *</Text>
+                  <View style={[s.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                    <TextInput style={[s.input, { color: colors.textPrimary }]} placeholder="Doe" placeholderTextColor={colors.textSecondary} value={lastName} onChangeText={setLastName} autoCapitalize="words" />
                   </View>
                 </View>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email Address *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="mail-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                  <TextInput style={styles.input} placeholder="john@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
+              <View style={s.inputGroup}>
+                <Text style={[s.label, { color: colors.textPrimary }]}>Email Address *</Text>
+                <View style={[s.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={s.inputIcon} />
+                  <TextInput style={[s.input, { color: colors.textPrimary }]} placeholder="john@example.com" placeholderTextColor={colors.textSecondary} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
                 </View>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Phone Number *</Text>
-                <View style={styles.phoneInputContainer}>
-                  <View style={styles.phonePrefix}>
-                    <Text style={styles.phonePrefixText}>+94</Text>
+              <View style={s.inputGroup}>
+                <Text style={[s.label, { color: colors.textPrimary }]}>Phone Number *</Text>
+                <View style={[s.phoneInputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <View style={[s.phonePrefix, { backgroundColor: isDark ? colors.background : '#f3f4f6' }]}>
+                    <Text style={[s.phonePrefixText, { color: colors.textPrimary }]}>+94</Text>
                   </View>
-                  <View style={styles.phoneDivider} />
+                  <View style={[s.phoneDivider, { backgroundColor: colors.border }]} />
                   <TextInput
-                    style={styles.phoneInput}
+                    style={[s.phoneInput, { color: colors.textPrimary }]}
                     placeholder="771234567"
+                    placeholderTextColor={colors.textSecondary}
                     value={phone}
                     onChangeText={(t) => {
                       const cleaned = t.replace(/[^0-9]/g, '');
@@ -226,27 +232,27 @@ export default function WasherSignupScreen() {
                     maxLength={10}
                   />
                 </View>
-                <Text style={styles.hint}>Enter 9 or 10 digits (0 prefix optional)</Text>
+                <Text style={[s.hint, { color: colors.textSecondary }]}>Enter 9 or 10 digits (0 prefix optional)</Text>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Password *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="lock-closed-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                  <TextInput style={styles.input} placeholder="Create a secure password" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} autoCapitalize="none" />
-                  <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color="#9ca3af" />
+              <View style={s.inputGroup}>
+                <Text style={[s.label, { color: colors.textPrimary }]}>Password *</Text>
+                <View style={[s.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={s.inputIcon} />
+                  <TextInput style={[s.input, { color: colors.textPrimary }]} placeholder="Create a secure password" placeholderTextColor={colors.textSecondary} value={password} onChangeText={setPassword} secureTextEntry={!showPassword} autoCapitalize="none" />
+                  <TouchableOpacity style={s.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
+                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.hint}>Minimum 6 characters</Text>
+                <Text style={[s.hint, { color: colors.textSecondary }]}>Minimum 6 characters</Text>
               </View>
 
               <TouchableOpacity
-                style={[styles.button, !isStep1Valid && styles.buttonDisabled]}
+                style={[s.button, { backgroundColor: colors.accent }, !isStep1Valid && s.buttonDisabled]}
                 onPress={() => setStep(2)}
                 disabled={!isStep1Valid}
               >
-                <Text style={styles.buttonText}>Continue</Text>
+                <Text style={s.buttonText}>Continue</Text>
                 <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
               </TouchableOpacity>
             </View>
@@ -254,39 +260,47 @@ export default function WasherSignupScreen() {
 
           {/* ── STEP 2: Experience & Certification ── */}
           {step === 2 && (
-            <View style={styles.formContainer}>
-              <Text style={styles.sectionTitle}>Experience & Certification</Text>
-              <Text style={styles.sectionSubtitle}>
+            <View style={s.formContainer}>
+              <Text style={[s.sectionTitle, { color: colors.textPrimary }]}>Experience & Certification</Text>
+              <Text style={[s.sectionSubtitle, { color: colors.textSecondary }]}>
                 Tell us about your car washing experience so we can place you on the right certification path.
               </Text>
 
               {/* Experience Toggle */}
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Do you have professional car washing experience? *</Text>
-                <View style={styles.experienceToggle}>
+              <View style={s.inputGroup}>
+                <Text style={[s.label, { color: colors.textPrimary }]}>Do you have professional car washing experience? *</Text>
+                <View style={s.experienceToggle}>
                   <TouchableOpacity
-                    style={[styles.experienceOption, hasExperience === true && styles.experienceOptionActive]}
+                    style={[
+                      s.experienceOption, 
+                      { borderColor: colors.border, backgroundColor: colors.cardBackground },
+                      hasExperience === true && [s.experienceOptionActive, { borderColor: colors.success || '#16a34a', backgroundColor: isDark ? 'rgba(22, 163, 74, 0.1)' : '#f0fdf4' }]
+                    ]}
                     onPress={() => { setHasExperience(true); setCertificationPath(null); }}
                   >
-                    <Ionicons name="checkmark-circle" size={24} color={hasExperience === true ? '#16a34a' : '#9ca3af'} />
+                    <Ionicons name="checkmark-circle" size={24} color={hasExperience === true ? (colors.success || '#16a34a') : colors.textSecondary} />
                     <View style={{ flex: 1, marginLeft: 12 }}>
-                      <Text style={[styles.experienceOptionTitle, hasExperience === true && styles.experienceOptionTitleActive]}>
+                      <Text style={[s.experienceOptionTitle, { color: colors.textPrimary }, hasExperience === true && [s.experienceOptionTitleActive, { color: colors.success || '#16a34a' }]]}>
                         Yes, I have experience
                       </Text>
-                      <Text style={styles.experienceOptionDesc}>I've worked at a car wash or detailing center</Text>
+                      <Text style={[s.experienceOptionDesc, { color: colors.textSecondary }]}>I've worked at a car wash or detailing center</Text>
                     </View>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.experienceOption, hasExperience === false && styles.experienceOptionActiveRed]}
+                    style={[
+                      s.experienceOption, 
+                      { borderColor: colors.border, backgroundColor: colors.cardBackground },
+                      hasExperience === false && [s.experienceOptionActiveRed, { borderColor: colors.accent, backgroundColor: isDark ? 'rgba(12, 166, 232, 0.1)' : '#eff6ff' }]
+                    ]}
                     onPress={() => { setHasExperience(false); setCurrentWorkplace(''); setYearsOfExperience(''); }}
                   >
-                    <Ionicons name="school" size={24} color={hasExperience === false ? '#2563eb' : '#9ca3af'} />
+                    <Ionicons name="school" size={24} color={hasExperience === false ? colors.accent : colors.textSecondary} />
                     <View style={{ flex: 1, marginLeft: 12 }}>
-                      <Text style={[styles.experienceOptionTitle, hasExperience === false && styles.experienceOptionTitleBlue]}>
+                      <Text style={[s.experienceOptionTitle, { color: colors.textPrimary }, hasExperience === false && [s.experienceOptionTitleBlue, { color: colors.accent }]]}>
                         No, I'm new to this
                       </Text>
-                      <Text style={styles.experienceOptionDesc}>I'll go through WashXpress certification</Text>
+                      <Text style={[s.experienceOptionDesc, { color: colors.textSecondary }]}>I'll go through WashXpress certification</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -294,19 +308,20 @@ export default function WasherSignupScreen() {
 
               {/* If experienced — show workplace fields */}
               {hasExperience === true && (
-                <View style={styles.conditionalSection}>
-                  <View style={styles.conditionalHeader}>
-                    <Ionicons name="briefcase" size={18} color="#16a34a" />
-                    <Text style={styles.conditionalTitle}>Professional Experience</Text>
+                <View style={[s.conditionalSection, { backgroundColor: isDark ? colors.cardBackground : '#f8fafc', borderColor: colors.border }]}>
+                  <View style={s.conditionalHeader}>
+                    <Ionicons name="briefcase" size={18} color={colors.success || '#16a34a'} />
+                    <Text style={[s.conditionalTitle, { color: colors.textPrimary }]}>Professional Experience</Text>
                   </View>
 
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Current / Most Recent Workplace *</Text>
-                    <View style={styles.inputContainer}>
-                      <Ionicons name="business-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
+                  <View style={s.inputGroup}>
+                    <Text style={[s.label, { color: colors.textPrimary }]}>Current / Most Recent Workplace *</Text>
+                    <View style={[s.inputContainer, { borderColor: colors.border, backgroundColor: colors.background }]}>
+                      <Ionicons name="business-outline" size={20} color={colors.textSecondary} style={s.inputIcon} />
                       <TextInput
-                        style={styles.input}
+                        style={[s.input, { color: colors.textPrimary }]}
                         placeholder="e.g., Sparkle Car Wash, Colombo"
+                        placeholderTextColor={colors.textSecondary}
                         value={currentWorkplace}
                         onChangeText={setCurrentWorkplace}
                         autoCapitalize="words"
@@ -314,25 +329,26 @@ export default function WasherSignupScreen() {
                     </View>
                   </View>
 
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Years of Experience *</Text>
-                    <View style={styles.inputContainer}>
-                      <Ionicons name="time-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
+                  <View style={s.inputGroup}>
+                    <Text style={[s.label, { color: colors.textPrimary }]}>Years of Experience *</Text>
+                    <View style={[s.inputContainer, { borderColor: colors.border, backgroundColor: colors.background }]}>
+                      <Ionicons name="time-outline" size={20} color={colors.textSecondary} style={s.inputIcon} />
                       <TextInput
-                        style={styles.input}
+                        style={[s.input, { color: colors.textPrimary }]}
                         placeholder="e.g., 3"
+                        placeholderTextColor={colors.textSecondary}
                         value={yearsOfExperience}
                         onChangeText={(t) => setYearsOfExperience(t.replace(/[^0-9]/g, ''))}
                         keyboardType="numeric"
                         maxLength={2}
                       />
-                      <Text style={{ color: '#6b7280', paddingRight: 4 }}>years</Text>
+                      <Text style={{ color: colors.textSecondary, paddingRight: 4 }}>years</Text>
                     </View>
                   </View>
 
-                  <View style={styles.infoBox}>
-                    <Ionicons name="information-circle-outline" size={18} color="#2563eb" />
-                    <Text style={styles.infoBoxText}>
+                  <View style={[s.infoBox, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)', borderColor: colors.border }]}>
+                    <Ionicons name="information-circle-outline" size={18} color={colors.accent} />
+                    <Text style={[s.infoBoxText, { color: colors.accent }]}>
                       Our admin team will review your experience and contact you for verification before activation.
                     </Text>
                   </View>
@@ -341,63 +357,71 @@ export default function WasherSignupScreen() {
 
               {/* If no experience — show certification path */}
               {hasExperience === false && (
-                <View style={styles.conditionalSection}>
-                  <View style={styles.conditionalHeader}>
-                    <Ionicons name="school" size={18} color="#2563eb" />
-                    <Text style={styles.conditionalTitle}>Choose Your Certification Path</Text>
+                <View style={[s.conditionalSection, { backgroundColor: isDark ? colors.cardBackground : '#f8fafc', borderColor: colors.border }]}>
+                  <View style={s.conditionalHeader}>
+                    <Ionicons name="school" size={18} color={colors.accent} />
+                    <Text style={[s.conditionalTitle, { color: colors.textPrimary }]}>Choose Your Certification Path</Text>
                   </View>
 
                   <TouchableOpacity
-                    style={[styles.certCard, certificationPath === 'field_certification' && styles.certCardActive]}
+                    style={[
+                      s.certCard, 
+                      { borderColor: colors.border, backgroundColor: colors.background },
+                      certificationPath === 'field_certification' && [s.certCardActive, { borderColor: colors.accent, backgroundColor: isDark ? 'rgba(12, 166, 232, 0.1)' : '#eff6ff' }]
+                    ]}
                     onPress={() => setCertificationPath('field_certification')}
                   >
-                    <View style={styles.certCardHeader}>
-                      <View style={[styles.certIcon, certificationPath === 'field_certification' && styles.certIconActive]}>
-                        <Ionicons name="people" size={24} color={certificationPath === 'field_certification' ? '#fff' : '#6b7280'} />
+                    <View style={s.certCardHeader}>
+                      <View style={[s.certIcon, { backgroundColor: colors.divider }, certificationPath === 'field_certification' && [s.certIconActive, { backgroundColor: colors.accent }]]}>
+                        <Ionicons name="people" size={24} color={certificationPath === 'field_certification' ? '#fff' : colors.textSecondary} />
                       </View>
                       <View style={{ flex: 1, marginLeft: 12 }}>
-                        <Text style={[styles.certTitle, certificationPath === 'field_certification' && styles.certTitleActive]}>
+                        <Text style={[s.certTitle, { color: colors.textPrimary }, certificationPath === 'field_certification' && [s.certTitleActive, { color: colors.accent }]]}>
                           Field Certification
                         </Text>
-                        <Text style={styles.certSubtitle}>Learn on the job with mentors</Text>
+                        <Text style={[s.certSubtitle, { color: colors.textSecondary }]}>Learn on the job with mentors</Text>
                       </View>
                       {certificationPath === 'field_certification' && (
-                        <Ionicons name="checkmark-circle" size={24} color="#2563eb" />
+                        <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
                       )}
                     </View>
-                    <View style={styles.certDetails}>
+                    <View style={s.certDetails}>
                       {['Assigned an experienced washer as your mentor', 'Complete 6 evaluated wash jobs', 'Learn real techniques in the field', 'Flexible schedule'].map((item) => (
-                        <View key={item} style={styles.certDetailRow}>
-                          <Ionicons name="checkmark" size={14} color="#16a34a" />
-                          <Text style={styles.certDetailText}>{item}</Text>
+                        <View key={item} style={s.certDetailRow}>
+                          <Ionicons name="checkmark" size={14} color={colors.success || '#16a34a'} />
+                          <Text style={[s.certDetailText, { color: colors.textPrimary }]}>{item}</Text>
                         </View>
                       ))}
                     </View>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.certCard, certificationPath === 'training_center' && styles.certCardActive]}
+                    style={[
+                      s.certCard, 
+                      { borderColor: colors.border, backgroundColor: colors.background },
+                      certificationPath === 'training_center' && [s.certCardActive, { borderColor: colors.accent, backgroundColor: isDark ? 'rgba(12, 166, 232, 0.1)' : '#eff6ff' }]
+                    ]}
                     onPress={() => setCertificationPath('training_center')}
                   >
-                    <View style={styles.certCardHeader}>
-                      <View style={[styles.certIcon, certificationPath === 'training_center' && styles.certIconActive]}>
-                        <Ionicons name="school" size={24} color={certificationPath === 'training_center' ? '#fff' : '#6b7280'} />
+                    <View style={s.certCardHeader}>
+                      <View style={[s.certIcon, { backgroundColor: colors.divider }, certificationPath === 'training_center' && [s.certIconActive, { backgroundColor: colors.accent }]]}>
+                        <Ionicons name="school" size={24} color={certificationPath === 'training_center' ? '#fff' : colors.textSecondary} />
                       </View>
                       <View style={{ flex: 1, marginLeft: 12 }}>
-                        <Text style={[styles.certTitle, certificationPath === 'training_center' && styles.certTitleActive]}>
+                        <Text style={[s.certTitle, { color: colors.textPrimary }, certificationPath === 'training_center' && [s.certTitleActive, { color: colors.accent }]]}>
                           Training Center
                         </Text>
-                        <Text style={styles.certSubtitle}>Attend structured classroom training</Text>
+                        <Text style={[s.certSubtitle, { color: colors.textSecondary }]}>Attend structured classroom training</Text>
                       </View>
                       {certificationPath === 'training_center' && (
-                        <Ionicons name="checkmark-circle" size={24} color="#2563eb" />
+                        <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
                       )}
                     </View>
-                    <View style={styles.certDetails}>
+                    <View style={s.certDetails}>
                       {['Assigned to a WashXpress training center', 'Structured curriculum & practice sessions', 'Certification exam at the end', 'Best for complete beginners'].map((item) => (
-                        <View key={item} style={styles.certDetailRow}>
-                          <Ionicons name="checkmark" size={14} color="#16a34a" />
-                          <Text style={styles.certDetailText}>{item}</Text>
+                        <View key={item} style={s.certDetailRow}>
+                          <Ionicons name="checkmark" size={14} color={colors.success || '#16a34a'} />
+                          <Text style={[s.certDetailText, { color: colors.textPrimary }]}>{item}</Text>
                         </View>
                       ))}
                     </View>
@@ -406,11 +430,11 @@ export default function WasherSignupScreen() {
               )}
 
               <TouchableOpacity
-                style={[styles.button, !isStep2Valid && styles.buttonDisabled]}
+                style={[s.button, { backgroundColor: colors.accent }, !isStep2Valid && s.buttonDisabled]}
                 onPress={() => setStep(3)}
                 disabled={!isStep2Valid}
               >
-                <Text style={styles.buttonText}>Continue</Text>
+                <Text style={s.buttonText}>Continue</Text>
                 <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
               </TouchableOpacity>
             </View>
@@ -418,27 +442,31 @@ export default function WasherSignupScreen() {
 
           {/* ── STEP 3: Service Areas ── */}
           {step === 3 && (
-            <View style={styles.formContainer}>
-              <Text style={styles.sectionTitle}>Service Areas</Text>
-              <Text style={styles.sectionSubtitle}>
+            <View style={s.formContainer}>
+              <Text style={[s.sectionTitle, { color: colors.textPrimary }]}>Service Areas</Text>
+              <Text style={[s.sectionSubtitle, { color: colors.textSecondary }]}>
                 Select the cities and areas where you're available to work. You can update this later from your profile.
               </Text>
 
-              <View style={styles.areaGrid}>
+              <View style={s.areaGrid}>
                 {SRI_LANKA_AREAS.map((area) => {
                   const selected = selectedAreas.includes(area);
                   return (
                     <TouchableOpacity
                       key={area}
-                      style={[styles.areaChip, selected && styles.areaChipActive]}
+                      style={[
+                        s.areaChip, 
+                        { borderColor: colors.border, backgroundColor: colors.cardBackground },
+                        selected && [s.areaChipActive, { backgroundColor: colors.accent, borderColor: colors.accent }]
+                      ]}
                       onPress={() => toggleArea(area)}
                     >
                       <Ionicons
                         name={selected ? 'location' : 'location-outline'}
                         size={14}
-                        color={selected ? '#fff' : '#6b7280'}
+                        color={selected ? '#fff' : colors.textSecondary}
                       />
-                      <Text style={[styles.areaChipText, selected && styles.areaChipTextActive]}>
+                      <Text style={[s.areaChipText, { color: colors.textSecondary }, selected && s.areaChipTextActive]}>
                         {area}
                       </Text>
                     </TouchableOpacity>
@@ -447,35 +475,35 @@ export default function WasherSignupScreen() {
               </View>
 
               {selectedAreas.length > 0 && (
-                <View style={styles.selectedAreasCard}>
-                  <View style={styles.selectedAreasHeader}>
-                    <Ionicons name="map" size={18} color="#1e40af" />
-                    <Text style={styles.selectedAreasTitle}>
+                <View style={[s.selectedAreasCard, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)', borderColor: colors.border }]}>
+                  <View style={s.selectedAreasHeader}>
+                    <Ionicons name="map" size={18} color={colors.accent} />
+                    <Text style={[s.selectedAreasTitle, { color: colors.accent }]}>
                       {selectedAreas.length} area{selectedAreas.length > 1 ? 's' : ''} selected
                     </Text>
                   </View>
-                  <Text style={styles.selectedAreasText}>{selectedAreas.join(' · ')}</Text>
+                  <Text style={[s.selectedAreasText, { color: colors.textPrimary }]}>{selectedAreas.join(' · ')}</Text>
                 </View>
               )}
 
               {/* Summary card before final submit */}
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryTitle}>Registration Summary</Text>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Name</Text>
-                  <Text style={styles.summaryValue}>{firstName} {lastName}</Text>
+              <View style={[s.summaryCard, { backgroundColor: isDark ? colors.cardBackground : '#f8fafc', borderColor: colors.border }]}>
+                <Text style={[s.summaryTitle, { color: colors.textPrimary }]}>Registration Summary</Text>
+                <View style={[s.summaryRow, { borderBottomColor: colors.divider }]}>
+                  <Text style={[s.summaryLabel, { color: colors.textSecondary }]}>Name</Text>
+                  <Text style={[s.summaryValue, { color: colors.textPrimary }]}>{firstName} {lastName}</Text>
                 </View>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Email</Text>
-                  <Text style={styles.summaryValue}>{email}</Text>
+                <View style={[s.summaryRow, { borderBottomColor: colors.divider }]}>
+                  <Text style={[s.summaryLabel, { color: colors.textSecondary }]}>Email</Text>
+                  <Text style={[s.summaryValue, { color: colors.textPrimary }]}>{email}</Text>
                 </View>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Experience</Text>
-                  <Text style={styles.summaryValue}>{hasExperience ? `${yearsOfExperience} year(s) @ ${currentWorkplace}` : 'New — Certification required'}</Text>
+                <View style={[s.summaryRow, { borderBottomColor: colors.divider }]}>
+                  <Text style={[s.summaryLabel, { color: colors.textSecondary }]}>Experience</Text>
+                  <Text style={[s.summaryValue, { color: colors.textPrimary }]}>{hasExperience ? `${yearsOfExperience} year(s) @ ${currentWorkplace}` : 'New — Certification required'}</Text>
                 </View>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Path</Text>
-                  <Text style={styles.summaryValue}>
+                <View style={[s.summaryRow, { borderBottomColor: colors.divider }]}>
+                  <Text style={[s.summaryLabel, { color: colors.textSecondary }]}>Path</Text>
+                  <Text style={[s.summaryValue, { color: colors.textPrimary }]}>
                     {hasExperience
                       ? 'Experience Review'
                       : certificationPath === 'field_certification'
@@ -486,18 +514,18 @@ export default function WasherSignupScreen() {
               </View>
 
               <TouchableOpacity
-                style={[styles.button, (!isStep3Valid || loading) && styles.buttonDisabled]}
+                style={[s.button, { backgroundColor: colors.accent }, (!isStep3Valid || loading) && s.buttonDisabled]}
                 onPress={handleSubmit}
                 disabled={!isStep3Valid || loading}
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.buttonText}>Submit Application</Text>
+                  <Text style={s.buttonText}>Submit Application</Text>
                 )}
               </TouchableOpacity>
 
-              <Text style={styles.disclaimer}>
+              <Text style={[s.disclaimer, { color: colors.textSecondary }]}>
                 By submitting, you agree to WashXpress Terms of Service and Provider Agreement. Your account will be reviewed before activation.
               </Text>
             </View>
@@ -508,160 +536,141 @@ export default function WasherSignupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+const s = StyleSheet.create({
+  container: { flex: 1 },
 
-  header: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  backButton: { padding: 8, marginLeft: -8 },
-  headerText: { flex: 1 },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#111827' },
-  headerSubtitle: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-
-  progressContainer: { backgroundColor: '#fff', paddingBottom: 16, paddingHorizontal: 24 },
-  progressTrack: { height: 4, backgroundColor: '#e5e7eb', borderRadius: 2, marginBottom: 12 },
-  progressFill: { height: '100%', backgroundColor: '#2563eb', borderRadius: 2 },
+  progressContainer: { paddingBottom: 16, paddingHorizontal: 24 },
+  progressTrack: { height: 4, borderRadius: 2, marginBottom: 12 },
+  progressFill: { height: '100%', borderRadius: 2 },
   stepDotsRow: { flexDirection: 'row', justifyContent: 'space-between' },
   stepDotWrapper: { alignItems: 'center', gap: 4 },
   stepDot: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#e5e7eb', alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-  stepDotActive: { backgroundColor: '#2563eb' },
-  stepDotDone: { backgroundColor: '#16a34a' },
-  stepDotText: { fontSize: 12, fontWeight: '700', color: '#9ca3af' },
+  stepDotActive: {},
+  stepDotDone: {},
+  stepDotText: { fontSize: 12, fontWeight: '700' },
   stepDotTextActive: { color: '#fff' },
-  stepLabel: { fontSize: 11, color: '#9ca3af', fontWeight: '500' },
-  stepLabelActive: { color: '#2563eb', fontWeight: '700' },
+  stepLabel: { fontSize: 11, fontWeight: '500' },
+  stepLabelActive: { fontWeight: '700' },
 
   scrollContent: { padding: 24, paddingBottom: 40 },
   formContainer: { gap: 0 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#111827', marginBottom: 4 },
-  sectionSubtitle: { fontSize: 14, color: '#6b7280', marginBottom: 20, lineHeight: 20 },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 4 },
+  sectionSubtitle: { fontSize: 14, marginBottom: 20, lineHeight: 20 },
 
   row: { flexDirection: 'row' },
   inputGroup: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  label: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
 
   inputContainer: {
     flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#d1d5db', borderRadius: 12,
-    paddingHorizontal: 16, backgroundColor: '#fff',
+    borderWidth: 1, borderRadius: 12,
+    paddingHorizontal: 16,
   },
   inputIcon: { marginRight: 12 },
-  input: { flex: 1, paddingVertical: 12, fontSize: 16, color: '#111827' },
+  input: { flex: 1, paddingVertical: 12, fontSize: 16 },
   eyeIcon: { padding: 4 },
-  hint: { fontSize: 12, color: '#6b7280', marginTop: 4 },
+  hint: { fontSize: 12, marginTop: 4 },
 
   phoneInputContainer: {
     flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#d1d5db', borderRadius: 12,
-    backgroundColor: '#fff', overflow: 'hidden',
+    borderWidth: 1, borderRadius: 12,
+    overflow: 'hidden',
   },
-  phonePrefix: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#f3f4f6' },
-  phonePrefixText: { fontSize: 16, fontWeight: '600', color: '#374151' },
-  phoneDivider: { width: 1, height: 24, backgroundColor: '#d1d5db' },
-  phoneInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16, color: '#111827' },
+  phonePrefix: { paddingHorizontal: 16, paddingVertical: 12 },
+  phonePrefixText: { fontSize: 16, fontWeight: '600' },
+  phoneDivider: { width: 1, height: 24 },
+  phoneInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 12, fontSize: 16 },
 
   // Experience toggle
   experienceToggle: { gap: 12 },
   experienceOption: {
     flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#d1d5db', borderRadius: 16,
-    padding: 16, backgroundColor: '#fff',
+    borderWidth: 1.5, borderRadius: 16,
+    padding: 16,
   },
-  experienceOptionActive: { borderColor: '#16a34a', backgroundColor: '#f0fdf4' },
-  experienceOptionActiveRed: { borderColor: '#2563eb', backgroundColor: '#eff6ff' },
-  experienceOptionTitle: { fontSize: 15, fontWeight: '600', color: '#374151' },
-  experienceOptionTitleActive: { color: '#16a34a' },
-  experienceOptionTitleBlue: { color: '#2563eb' },
-  experienceOptionDesc: { fontSize: 13, color: '#6b7280', marginTop: 2 },
+  experienceOptionActive: {},
+  experienceOptionActiveRed: {},
+  experienceOptionTitle: { fontSize: 15, fontWeight: '600' },
+  experienceOptionTitleActive: {},
+  experienceOptionTitleBlue: {},
+  experienceOptionDesc: { fontSize: 13, marginTop: 2 },
 
   // Conditional sections
   conditionalSection: {
-    backgroundColor: '#f8fafc', borderRadius: 16,
+    borderRadius: 16,
     padding: 16, marginBottom: 16,
-    borderWidth: 1, borderColor: '#e2e8f0',
+    borderWidth: 1,
   },
   conditionalHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  conditionalTitle: { fontSize: 16, fontWeight: '700', color: '#1e293b' },
+  conditionalTitle: { fontSize: 16, fontWeight: '700' },
 
   infoBox: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    backgroundColor: '#eff6ff', borderRadius: 12, padding: 12,
-    borderWidth: 1, borderColor: '#bfdbfe', marginTop: 4,
+    borderRadius: 12, padding: 12,
+    borderWidth: 1, marginTop: 4,
   },
-  infoBoxText: { flex: 1, fontSize: 13, color: '#1d4ed8', lineHeight: 18 },
+  infoBoxText: { flex: 1, fontSize: 13, lineHeight: 18 },
 
   // Certification cards
   certCard: {
-    borderWidth: 1.5, borderColor: '#d1d5db', borderRadius: 16,
-    padding: 16, backgroundColor: '#fff', marginBottom: 12,
+    borderWidth: 1.5, borderRadius: 16,
+    padding: 16, marginBottom: 12,
   },
-  certCardActive: { borderColor: '#2563eb', backgroundColor: '#eff6ff' },
+  certCardActive: {},
   certCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   certIcon: {
     width: 48, height: 48, borderRadius: 12,
-    backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-  certIconActive: { backgroundColor: '#2563eb' },
-  certTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  certTitleActive: { color: '#1d4ed8' },
-  certSubtitle: { fontSize: 13, color: '#6b7280', marginTop: 2 },
+  certIconActive: {},
+  certTitle: { fontSize: 16, fontWeight: '700' },
+  certTitleActive: {},
+  certSubtitle: { fontSize: 13, marginTop: 2 },
   certDetails: { gap: 6 },
   certDetailRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  certDetailText: { fontSize: 13, color: '#374151' },
+  certDetailText: { fontSize: 13 },
 
   // Area grid
   areaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   areaChip: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: 20, borderWidth: 1.5, borderColor: '#d1d5db', backgroundColor: '#fff',
+    borderRadius: 20, borderWidth: 1.5,
   },
-  areaChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
-  areaChipText: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  areaChipActive: {},
+  areaChipText: { fontSize: 13, fontWeight: '600' },
   areaChipTextActive: { color: '#fff' },
 
   selectedAreasCard: {
-    backgroundColor: '#eff6ff', borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: '#bfdbfe', marginBottom: 16,
+    borderRadius: 16, padding: 16,
+    borderWidth: 1, marginBottom: 16,
   },
   selectedAreasHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  selectedAreasTitle: { fontSize: 15, fontWeight: '700', color: '#1e40af' },
-  selectedAreasText: { fontSize: 13, color: '#374151', lineHeight: 20 },
+  selectedAreasTitle: { fontSize: 15, fontWeight: '700' },
+  selectedAreasText: { fontSize: 13, lineHeight: 20 },
 
   // Summary
   summaryCard: {
-    backgroundColor: '#f8fafc', borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 16,
+    borderRadius: 16, padding: 16,
+    borderWidth: 1, marginBottom: 16,
   },
-  summaryTitle: { fontSize: 16, fontWeight: '700', color: '#1e293b', marginBottom: 12 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  summaryLabel: { fontSize: 13, color: '#6b7280' },
-  summaryValue: { fontSize: 13, fontWeight: '600', color: '#1e293b', flex: 1, textAlign: 'right', marginLeft: 16 },
+  summaryTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1 },
+  summaryLabel: { fontSize: 13 },
+  summaryValue: { fontSize: 13, fontWeight: '600', flex: 1, textAlign: 'right', marginLeft: 16 },
 
   button: {
-    backgroundColor: '#2563eb', paddingVertical: 16, borderRadius: 12,
+    paddingVertical: 16, borderRadius: 12,
     alignItems: 'center', marginTop: 8, flexDirection: 'row', justifyContent: 'center',
   },
-  buttonDisabled: { backgroundColor: '#d1d5db' },
+  buttonDisabled: { opacity: 0.5 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 
   disclaimer: {
-    fontSize: 12, color: '#9ca3af', textAlign: 'center',
+    fontSize: 12, textAlign: 'center',
     marginTop: 16, lineHeight: 18,
   },
 });

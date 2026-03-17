@@ -1,4 +1,5 @@
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -14,19 +15,18 @@ interface HeaderProps {
     title: string;
     showBack?: boolean;
     rightElement?: React.ReactNode;
-    theme?: 'light' | 'dark';
+    theme?: 'light' | 'dark'; // Keep for overrides, but default to global
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, showBack = true, rightElement, theme = 'light' }) => {
+export const Header: React.FC<HeaderProps> = ({ title, showBack = true, rightElement, theme: themeOverride }) => {
     const router = useRouter();
     const { userType } = useAuth();
+    const { isDark: globalIsDark, colors } = useTheme();
 
     const handleBack = () => {
         if (router.canGoBack()) {
             router.back();
         } else {
-            // Fallback: If no history, go to the appropriate home screen
-            // This prevents accidental redirect to index -> login
             if (userType === 'provider') {
                 router.replace('/washer-home' as any);
             } else {
@@ -35,20 +35,20 @@ export const Header: React.FC<HeaderProps> = ({ title, showBack = true, rightEle
         }
     };
 
-    const isDark = theme === 'dark';
+    const isDark = themeOverride ? themeOverride === 'dark' : globalIsDark;
 
     return (
-        <View style={[styles.header, isDark && styles.headerDark]}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
             <View style={styles.leftContainer}>
                 {showBack && (
                     <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={28} color={isDark ? "#FFF" : "#2563eb"} />
-                        {Platform.OS === 'ios' && <Text style={[styles.backText, isDark && styles.backTextDark]}>Back</Text>}
+                        <Ionicons name="chevron-back" size={28} color={isDark ? colors.textPrimary : colors.accent} />
+                        {Platform.OS === 'ios' && <Text style={[styles.backText, { color: isDark ? colors.textPrimary : colors.accent }]}>Back</Text>}
                     </TouchableOpacity>
                 )}
             </View>
             <View style={styles.titleContainer}>
-                <Text style={[styles.headerTitle, isDark && styles.headerTitleDark]} numberOfLines={1}>{title}</Text>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>{title}</Text>
             </View>
             <View style={styles.rightContainer}>
                 {rightElement || <View style={{ width: 40 }} />}
@@ -65,14 +65,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: Platform.OS === 'ios' ? 60 : 40,
         paddingBottom: 16,
-        backgroundColor: '#FFF',
         borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
         zIndex: 100,
-    },
-    headerDark: {
-        backgroundColor: '#0d1629',
-        borderBottomColor: 'rgba(255,255,255,0.06)',
     },
     leftContainer: {
         flex: 1,
@@ -93,18 +87,10 @@ const styles = StyleSheet.create({
     },
     backText: {
         fontSize: 17,
-        color: '#2563eb',
         marginLeft: -4,
-    },
-    backTextDark: {
-        color: '#FFF',
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#000',
-    },
-    headerTitleDark: {
-        color: '#FFF',
     },
 });

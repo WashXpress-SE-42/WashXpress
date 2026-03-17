@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { apiFetch } from '../services/apiClient';
+import { useTheme } from '../context/ThemeContext';
 
 const VEHICLE_TYPES = ['Sedan', 'Hatchback', 'SUV', 'Coupe', 'Convertible', 'Wagon', 'Van', 'Truck'];
 const COLORS = ['White', 'Black', 'Silver', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Brown', 'Gold', 'Other'];
@@ -19,6 +20,7 @@ const COLOR_SWATCHES: Record<string, string> = {
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function AddVehicleScreen() {
+    const { colors, isDark } = useTheme();
     const { vehicleId, edit } = useLocalSearchParams<{ vehicleId?: string; edit?: string }>();
     const isEdit = edit === 'true' && !!vehicleId;
 
@@ -95,49 +97,78 @@ export default function AddVehicleScreen() {
     };
 
     if (loading) return (
-        <View style={s.container}>
-            <Header isEdit={isEdit} />
-            <View style={s.center}><ActivityIndicator size="large" color="#0ca6e8" /></View>
+        <View style={[s.container, { backgroundColor: colors.background }]}>
+            <Header isEdit={isEdit} colors={colors} />
+            <View style={s.center}><ActivityIndicator size="large" color={colors.accent} /></View>
         </View>
     );
 
     return (
-        <View style={s.container}>
-            <Header isEdit={isEdit} />
+        <View style={[s.container, { backgroundColor: colors.background }]}>
+            <Header isEdit={isEdit} colors={colors} />
             <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                 <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
                     {/* Make & Model */}
                     <View style={s.row}>
                         <View style={[s.fieldWrap, { flex: 1, marginRight: 8 }]}>
-                            <Text style={s.fieldLabel}>Make <Text style={s.required}>*</Text></Text>
-                            <TextInput style={s.input} placeholder="e.g. Toyota" placeholderTextColor="#9ca3af" value={make} onChangeText={setMake} autoCapitalize="words" />
+                            <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Make <Text style={s.required}>*</Text></Text>
+                            <TextInput
+                                style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
+                                placeholder="e.g. Toyota"
+                                placeholderTextColor={colors.textSecondary}
+                                value={make}
+                                onChangeText={setMake}
+                                autoCapitalize="words"
+                            />
                         </View>
                         <View style={[s.fieldWrap, { flex: 1 }]}>
-                            <Text style={s.fieldLabel}>Model <Text style={s.required}>*</Text></Text>
-                            <TextInput style={s.input} placeholder="e.g. Corolla" placeholderTextColor="#9ca3af" value={model} onChangeText={setModel} autoCapitalize="words" />
+                            <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Model <Text style={s.required}>*</Text></Text>
+                            <TextInput
+                                style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
+                                placeholder="e.g. Corolla"
+                                placeholderTextColor={colors.textSecondary}
+                                value={model}
+                                onChangeText={setModel}
+                                autoCapitalize="words"
+                            />
                         </View>
                     </View>
 
                     {/* Year & Nickname */}
                     <View style={s.row}>
                         <View style={[s.fieldWrap, { flex: 1, marginRight: 8 }]}>
-                            <Text style={s.fieldLabel}>Year <Text style={s.required}>*</Text></Text>
-                            <TextInput style={s.input} placeholder={String(CURRENT_YEAR)} placeholderTextColor="#9ca3af" value={year} onChangeText={setYear} keyboardType="numeric" maxLength={4} />
+                            <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Year <Text style={s.required}>*</Text></Text>
+                            <TextInput
+                                style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
+                                placeholder={String(CURRENT_YEAR)}
+                                placeholderTextColor={colors.textSecondary}
+                                value={year}
+                                onChangeText={setYear}
+                                keyboardType="numeric"
+                                maxLength={4}
+                            />
                         </View>
                         <View style={[s.fieldWrap, { flex: 1 }]}>
-                            <Text style={s.fieldLabel}>Nickname <Text style={s.optional}>(optional)</Text></Text>
-                            <TextInput style={s.input} placeholder="e.g. My Corolla" placeholderTextColor="#9ca3af" value={nickname} onChangeText={setNickname} autoCapitalize="words" />
+                            <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Nickname <Text style={[s.optional, { color: colors.textSecondary }]}>(optional)</Text></Text>
+                            <TextInput
+                                style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
+                                placeholder="e.g. My Corolla"
+                                placeholderTextColor={colors.textSecondary}
+                                value={nickname}
+                                onChangeText={setNickname}
+                                autoCapitalize="words"
+                            />
                         </View>
                     </View>
 
                     {/* License Plate */}
                     <View style={s.fieldWrap}>
-                        <Text style={s.fieldLabel}>License Plate <Text style={s.required}>*</Text></Text>
+                        <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>License Plate <Text style={s.required}>*</Text></Text>
                         <TextInput
-                            style={[s.input, s.plateInput]}
+                            style={[s.input, s.plateInput, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
                             placeholder="e.g. CAR-1234"
-                            placeholderTextColor="#9ca3af"
+                            placeholderTextColor={colors.textSecondary}
                             value={licensePlate}
                             onChangeText={t => setLicensePlate(t.toUpperCase())}
                             autoCapitalize="characters"
@@ -146,21 +177,25 @@ export default function AddVehicleScreen() {
 
                     {/* Vehicle Type */}
                     <View style={s.fieldWrap}>
-                        <Text style={s.fieldLabel}>Vehicle Type <Text style={s.required}>*</Text></Text>
+                        <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Vehicle Type <Text style={s.required}>*</Text></Text>
                         <View style={s.typeGrid}>
                             {VEHICLE_TYPES.map(t => {
                                 const sel = type === t;
                                 return (
-                                    <TouchableOpacity key={t} style={[s.typeChip, sel && s.typeChipSel]} onPress={() => setType(t)}>
-                                        <Text style={[s.typeChipTxt, sel && s.typeChipSelTxt]}>{t}</Text>
+                                    <TouchableOpacity
+                                        key={t}
+                                        style={[s.typeChip, { backgroundColor: colors.cardBackground, borderColor: colors.divider }, sel && { backgroundColor: colors.accent, borderColor: colors.accent }]}
+                                        onPress={() => setType(t)}
+                                    >
+                                        <Text style={[s.typeChipTxt, { color: colors.textSecondary }, sel && { color: '#fff' }]}>{t}</Text>
                                     </TouchableOpacity>
                                 );
                             })}
                         </View>
                         {type && (
-                            <View style={s.typeNotice}>
-                                <Ionicons name="information-circle-outline" size={13} color="#0ca6e8" />
-                                <Text style={s.typeNoticeTxt}>
+                            <View style={[s.typeNotice, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f4fd' }]}>
+                                <Ionicons name="information-circle-outline" size={13} color={colors.accent} />
+                                <Text style={[s.typeNoticeTxt, { color: colors.accent }]}>
                                     {type === 'Sedan' || type === 'Hatchback' || type === 'Coupe'
                                         ? 'Standard pricing applies'
                                         : type === 'Convertible' ? '+10% pricing'
@@ -175,14 +210,18 @@ export default function AddVehicleScreen() {
 
                     {/* Color */}
                     <View style={s.fieldWrap}>
-                        <Text style={s.fieldLabel}>Color <Text style={s.required}>*</Text></Text>
+                        <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Color <Text style={s.required}>*</Text></Text>
                         <View style={s.colorGrid}>
                             {COLORS.map(c => {
                                 const sel = color === c;
                                 return (
-                                    <TouchableOpacity key={c} style={[s.colorChip, sel && s.colorChipSel]} onPress={() => setColor(c)}>
-                                        <View style={[s.colorSwatch, { backgroundColor: COLOR_SWATCHES[c] || '#e5e7eb', borderWidth: c === 'White' ? 1 : 0, borderColor: '#e5e7eb' }]} />
-                                        <Text style={[s.colorChipTxt, sel && s.colorChipSelTxt]}>{c}</Text>
+                                    <TouchableOpacity
+                                        key={c}
+                                        style={[s.colorChip, { backgroundColor: colors.cardBackground, borderColor: colors.divider }, sel && { borderColor: colors.accent, backgroundColor: isDark ? 'rgba(12, 166, 232, 0.1)' : '#f0faff' }]}
+                                        onPress={() => setColor(c)}
+                                    >
+                                        <View style={[s.colorSwatch, { backgroundColor: COLOR_SWATCHES[c] || (isDark ? '#333' : '#e5e7eb'), borderWidth: c === 'White' ? 1 : 0, borderColor: isDark ? '#444' : '#e5e7eb' }]} />
+                                        <Text style={[s.colorChipTxt, { color: colors.textSecondary }, sel && { color: colors.accent }]}>{c}</Text>
                                     </TouchableOpacity>
                                 );
                             })}
@@ -190,7 +229,7 @@ export default function AddVehicleScreen() {
                     </View>
 
                     {/* Save button */}
-                    <TouchableOpacity style={[s.saveBtn, saving && s.saveBtnDisabled]} onPress={handleSave} disabled={saving}>
+                    <TouchableOpacity style={[s.saveBtn, { backgroundColor: colors.accent }, saving && { backgroundColor: isDark ? '#444' : '#d1d5db' }]} onPress={handleSave} disabled={saving}>
                         {saving
                             ? <ActivityIndicator color="#fff" />
                             : <><Ionicons name={isEdit ? 'save-outline' : 'add-circle-outline'} size={20} color="#fff" /><Text style={s.saveBtnTxt}>{isEdit ? 'Save Changes' : 'Add Vehicle'}</Text></>
@@ -204,58 +243,58 @@ export default function AddVehicleScreen() {
     );
 }
 
-function Header({ isEdit }: { isEdit: boolean }) {
+function Header({ isEdit, colors }: { isEdit: boolean, colors: any }) {
     return (
-        <View style={s.header}>
+        <View style={[s.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider }]}>
             <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-                <Ionicons name="arrow-back" size={24} color="#0d1629" />
+                <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
-            <Text style={s.headerTitle}>{isEdit ? 'Edit Vehicle' : 'Add Vehicle'}</Text>
+            <Text style={[s.headerTitle, { color: colors.textPrimary }]}>{isEdit ? 'Edit Vehicle' : 'Add Vehicle'}</Text>
             <View style={{ width: 40 }} />
         </View>
     );
 }
 
 const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8fafc' },
+    container: { flex: 1 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        backgroundColor: '#fff', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
-        borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+        paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
+        borderBottomWidth: 1,
     },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
+    headerTitle: { fontSize: 18, fontWeight: '700' },
     scroll: { padding: 20 },
 
     row: { flexDirection: 'row', marginBottom: 0 },
     fieldWrap: { marginBottom: 20 },
-    fieldLabel: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 },
+    fieldLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
     required: { color: '#ef4444' },
-    optional: { color: '#9ca3af', fontWeight: '400', fontSize: 12 },
+    optional: { fontWeight: '400', fontSize: 12 },
 
     input: {
-        backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0',
-        paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: '#0d1629',
+        borderRadius: 12, borderWidth: 1,
+        paddingHorizontal: 14, paddingVertical: 13, fontSize: 15,
     },
     plateInput: { fontWeight: '700', letterSpacing: 2, fontSize: 16 },
 
     typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    typeChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#e2e8f0' },
-    typeChipSel: { backgroundColor: '#0ca6e8', borderColor: '#0ca6e8' },
-    typeChipTxt: { fontSize: 14, fontWeight: '600', color: '#374151' },
-    typeChipSelTxt: { color: '#fff' },
-    typeNotice: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, backgroundColor: '#e0f4fd', borderRadius: 8, padding: 8 },
-    typeNoticeTxt: { fontSize: 12, color: '#0ca6e8', fontWeight: '600' },
+    typeChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5 },
+    typeChipSel: { },
+    typeChipTxt: { fontSize: 14, fontWeight: '600' },
+    typeChipSelTxt: { },
+    typeNotice: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, borderRadius: 8, padding: 8 },
+    typeNoticeTxt: { fontSize: 12, fontWeight: '600' },
 
     colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    colorChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#e2e8f0' },
-    colorChipSel: { borderColor: '#0ca6e8', backgroundColor: '#f0faff' },
+    colorChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1.5 },
+    colorChipSel: { },
     colorSwatch: { width: 16, height: 16, borderRadius: 8 },
-    colorChipTxt: { fontSize: 13, fontWeight: '600', color: '#374151' },
-    colorChipSelTxt: { color: '#0ca6e8' },
+    colorChipTxt: { fontSize: 13, fontWeight: '600' },
+    colorChipSelTxt: { },
 
-    saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#0ca6e8', borderRadius: 16, paddingVertical: 18, marginTop: 8 },
-    saveBtnDisabled: { backgroundColor: '#d1d5db' },
+    saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 18, marginTop: 8 },
+    saveBtnDisabled: { },
     saveBtnTxt: { fontSize: 16, fontWeight: '800', color: '#fff' },
 });

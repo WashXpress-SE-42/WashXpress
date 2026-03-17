@@ -4,32 +4,35 @@ import { auth } from '../firebaseConfig';
 import { CustomerProfile, getProfileFromFirebase, updateProfileInFirebase } from '../services/authService';
 
 export function useProfile() {
-    const { token, userType, isLoading: authLoading } = useAuth();
-    const currentUser = auth.currentUser;
+    const { user, token, userType, isLoading: authLoading } = useAuth();
+    const uid = user?.uid;
 
-    console.log(`[useProfile] token=${token ? 'EXISTS' : 'NULL'}, userType=${userType}, authLoading=${authLoading}, currentUser=${currentUser?.uid}`);
+    console.log(`[useProfile] uid=${uid || 'NULL'}, token=${token ? 'EXISTS' : 'NULL'}, userType=${userType}, authLoading=${authLoading}`);
 
     return useQuery<CustomerProfile | null, Error>({
-        queryKey: ['profile', currentUser?.uid],
+        queryKey: ['profile', uid],
         queryFn: async () => {
-            console.log(`[useProfile] Fetching profile for UID: ${currentUser?.uid}`);
-            if (!currentUser?.uid || !userType) return null;
-            return await getProfileFromFirebase(currentUser.uid, userType);
+            console.log(`[useProfile] Triggered queryFn for UID: ${uid}`);
+            if (!uid || !userType) {
+                console.log(`[useProfile] Skipping fetch: uid=${uid}, userType=${userType}`);
+                return null;
+            }
+            return await getProfileFromFirebase(uid, userType);
         },
-        // Only run the query if we have a token, and auth has finished loading
-        enabled: !!token && !authLoading && !!currentUser?.uid,
+        // Only run the query if we have a token, auth has finished loading, and we have a UID
+        enabled: !!token && !authLoading && !!uid,
     });
 }
 
 export function useUpdateProfile() {
     const queryClient = useQueryClient();
-    const { userType } = useAuth();
-    const currentUser = auth.currentUser;
+    const { user, userType } = useAuth();
+    const uid = user?.uid;
 
     return useMutation<void, Error, Partial<CustomerProfile>>({
         mutationFn: async (data: Partial<CustomerProfile>) => {
-            if (!currentUser?.uid || !userType) throw new Error("Not authenticated");
-            return await updateProfileInFirebase(currentUser.uid, userType, data);
+            if (!uid || !userType) throw new Error("Not authenticated");
+            return await updateProfileInFirebase(uid, userType, data);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['profile'] });

@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { apiFetch } from '../services/apiClient';
 
 interface JobRequest {
@@ -44,6 +45,7 @@ const VEHICLE_TYPE_ICONS: Record<string, string> = {
 };
 
 export default function WasherJobRequestScreen() {
+    const { colors, isDark } = useTheme();
     const { id: requestId } = useLocalSearchParams<{ id: string }>();
     const { logout } = useAuth();
     const [request, setRequest] = useState<JobRequest | null>(null);
@@ -152,10 +154,10 @@ export default function WasherJobRequestScreen() {
     };
 
     if (loading) return (
-        <View style={s.center}><ActivityIndicator size="large" color="#0ca6e8" /><Text style={s.loadingTxt}>Loading job details...</Text></View>
+        <View style={[s.center, { backgroundColor: colors.background }]}><ActivityIndicator size="large" color={colors.accent} /><Text style={[s.loadingTxt, { color: colors.textSecondary }]}>Loading job details...</Text></View>
     );
     if (!request) return (
-        <View style={s.center}><Text style={{ color: '#ef4444' }}>Job not found</Text></View>
+        <View style={[s.center, { backgroundColor: colors.background }]}><Text style={{ color: colors.error }}>Job not found</Text></View>
     );
 
     const vehicleIcon = VEHICLE_TYPE_ICONS[request.vehicle.type] || '🚗';
@@ -163,137 +165,139 @@ export default function WasherJobRequestScreen() {
     const timeChanged = preferredTime && preferredTime !== request.scheduledTime;
 
     return (
-        <View style={s.container}>
+        <View style={[s.container, { backgroundColor: colors.background }]}>
             {/* Header */}
-            <View style={s.header}>
-                <TouchableOpacity onPress={() => router.back()} style={s.backBtn}><Ionicons name="close" size={26} color="#0d1629" /></TouchableOpacity>
-                <Text style={s.headerTitle}>Job Request</Text>
+            <View style={[s.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+                <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
+                    <Ionicons name="close" size={26} color={colors.textPrimary} />
+                </TouchableOpacity>
+                <Text style={[s.headerTitle, { color: colors.textPrimary }]}>Job Request</Text>
                 <View style={{ width: 40 }} />
             </View>
 
             <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
                 {/* Race mode banner */}
-                <View style={s.raceBanner}>
+                <View style={[s.raceBanner, { backgroundColor: isDark ? colors.cardBackground : '#0d1629' }]}>
                     <View style={s.raceBannerLeft}>
                         <Text style={s.raceIcon}>🏁</Text>
                         <View>
                             <Text style={s.raceBannerTitle}>RACE MODE ACTIVE</Text>
-                            <Text style={s.raceBannerSub}>First to accept wins this job!</Text>
+                            <Text style={[s.raceBannerSub, { color: isDark ? colors.textSecondary : 'rgba(255,255,255,0.7)' }]}>First to accept wins this job!</Text>
                         </View>
                     </View>
                     <View style={s.racePulseDot} />
                 </View>
 
                 {/* Earnings card */}
-                <View style={s.earningsCard}>
+                <View style={[s.earningsCard, { backgroundColor: colors.cardBackground, borderColor: isDark ? colors.border : '#bae6fd' }]}>
                     <View>
-                        <Text style={s.earningsLabel}>You'll Earn</Text>
-                        <Text style={s.earningsAmount}>
+                        <Text style={[s.earningsLabel, { color: colors.textSecondary }]}>You'll Earn</Text>
+                        <Text style={[s.earningsAmount, { color: colors.textPrimary }]}>
                             {request.paidWithSubscription
-                                ? <Text style={{ color: '#16a34a' }}>Subscription Job</Text>
+                                ? <Text style={{ color: colors.success || '#16a34a' }}>Subscription Job</Text>
                                 : `LKR ${request.totalPrice.toLocaleString()}`}
                         </Text>
                         {request.priceBreakdown && request.priceBreakdown.multiplier > 1.0 && (
-                            <Text style={s.earningsNote}>Includes {request.vehicle.type} surcharge (+{Math.round((request.priceBreakdown.multiplier - 1) * 100)}%)</Text>
+                            <Text style={[s.earningsNote, { color: colors.accent }]}>Includes {request.vehicle.type} surcharge (+{Math.round((request.priceBreakdown.multiplier - 1) * 100)}%)</Text>
                         )}
                     </View>
-                    <View style={s.durationPill}>
-                        <Ionicons name="time-outline" size={16} color="#0ca6e8" />
-                        <Text style={s.durationTxt}>~{request.duration} min</Text>
+                    <View style={[s.durationPill, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f4fd' }]}>
+                        <Ionicons name="time-outline" size={16} color={colors.accent} />
+                        <Text style={[s.durationTxt, { color: colors.accent }]}>~{request.duration} min</Text>
                     </View>
                 </View>
 
                 {/* ── Vehicle Details ── */}
-                <View style={s.card}>
+                <View style={[s.card, { backgroundColor: colors.cardBackground }]}>
                     <View style={s.cardTitleRow}>
-                        <Ionicons name="car-sport" size={18} color="#0ca6e8" />
-                        <Text style={s.cardTitle}>Vehicle</Text>
+                        <Ionicons name="car-sport" size={18} color={colors.accent} />
+                        <Text style={[s.cardTitle, { color: colors.textPrimary }]}>Vehicle</Text>
                     </View>
 
                     <View style={s.vehicleMain}>
                         <Text style={s.vehicleEmoji}>{vehicleIcon}</Text>
                         <View style={{ flex: 1, marginLeft: 14 }}>
-                            <Text style={s.vehicleName}>{request.vehicle.nickname || `${request.vehicle.make} ${request.vehicle.model}`}</Text>
-                            <Text style={s.vehicleDetails}>{request.vehicle.make} {request.vehicle.model} · {request.vehicle.year}</Text>
+                            <Text style={[s.vehicleName, { color: colors.textPrimary }]}>{request.vehicle.nickname || `${request.vehicle.make} ${request.vehicle.model}`}</Text>
+                            <Text style={[s.vehicleDetails, { color: colors.textSecondary }]}>{request.vehicle.make} {request.vehicle.model} · {request.vehicle.year}</Text>
                         </View>
                     </View>
 
                     <View style={s.vehicleMetaGrid}>
-                        <VehicleMeta icon="ellipse-outline" label="Type" value={request.vehicle.type} />
-                        <VehicleMeta icon="color-palette-outline" label="Color" value={request.vehicle.color} />
-                        <VehicleMeta icon="card-outline" label="Plate" value={request.vehicle.licensePlate} />
+                        <VehicleMeta icon="ellipse-outline" label="Type" value={request.vehicle.type} colors={colors} />
+                        <VehicleMeta icon="color-palette-outline" label="Color" value={request.vehicle.color} colors={colors} />
+                        <VehicleMeta icon="card-outline" label="Plate" value={request.vehicle.licensePlate} colors={colors} />
                     </View>
 
                     {/* Special car care notes */}
                     {hasSpecialNotes ? (
-                        <View style={s.notesBox}>
+                        <View style={[s.notesBox, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb', borderColor: colors.warning }]}>
                             <View style={s.notesHeader}>
-                                <Ionicons name="warning" size={16} color="#d97706" />
-                                <Text style={s.notesHeaderTxt}>Customer's Special Instructions</Text>
+                                <Ionicons name="warning" size={16} color={colors.warning} />
+                                <Text style={[s.notesHeaderTxt, { color: colors.warning }]}>Customer's Special Instructions</Text>
                             </View>
-                            <Text style={s.notesTxt}>{request.notes}</Text>
+                            <Text style={[s.notesTxt, { color: colors.textPrimary }]}>{request.notes}</Text>
                         </View>
                     ) : (
                         <View style={s.noNotesRow}>
-                            <Ionicons name="checkmark-circle-outline" size={16} color="#16a34a" />
-                            <Text style={s.noNotesTxt}>No special instructions from customer</Text>
+                            <Ionicons name="checkmark-circle-outline" size={16} color={colors.success || '#16a34a'} />
+                            <Text style={[s.noNotesTxt, { color: colors.success || '#16a34a' }]}>No special instructions from customer</Text>
                         </View>
                     )}
                 </View>
 
                 {/* ── Schedule ── */}
-                <View style={s.card}>
+                <View style={[s.card, { backgroundColor: colors.cardBackground }]}>
                     <View style={s.cardTitleRow}>
-                        <Ionicons name="calendar" size={18} color="#0ca6e8" />
-                        <Text style={s.cardTitle}>Schedule</Text>
+                        <Ionicons name="calendar" size={18} color={colors.accent} />
+                        <Text style={[s.cardTitle, { color: colors.textPrimary }]}>Schedule</Text>
                     </View>
                     <View style={s.scheduleRow}>
                         <View style={s.scheduleItem}>
-                            <Text style={s.scheduleLabel}>Date</Text>
-                            <Text style={s.scheduleValue}>{formatDate(request.scheduledDate)}</Text>
+                            <Text style={[s.scheduleLabel, { color: colors.textSecondary }]}>Date</Text>
+                            <Text style={[s.scheduleValue, { color: colors.textPrimary }]}>{formatDate(request.scheduledDate)}</Text>
                         </View>
                     </View>
                     <View style={s.scheduleRow}>
                         <View style={s.scheduleItem}>
-                            <Text style={s.scheduleLabel}>Customer's Requested Time</Text>
-                            <Text style={s.scheduleValue}>{fmt(request.scheduledTime)}</Text>
+                            <Text style={[s.scheduleLabel, { color: colors.textSecondary }]}>Customer's Requested Time</Text>
+                            <Text style={[s.scheduleValue, { color: colors.textPrimary }]}>{fmt(request.scheduledTime)}</Text>
                         </View>
                     </View>
                     <View style={s.scheduleRow}>
                         <View style={s.scheduleItem}>
-                            <Text style={s.scheduleLabel}>Service</Text>
-                            <Text style={s.scheduleValue}>{request.service.name}</Text>
+                            <Text style={[s.scheduleLabel, { color: colors.textSecondary }]}>Service</Text>
+                            <Text style={[s.scheduleValue, { color: colors.textPrimary }]}>{request.service.name}</Text>
                         </View>
                     </View>
                 </View>
 
                 {/* ── Location ── */}
-                <View style={s.card}>
+                <View style={[s.card, { backgroundColor: colors.cardBackground }]}>
                     <View style={s.cardTitleRow}>
-                        <Ionicons name="location" size={18} color="#0ca6e8" />
-                        <Text style={s.cardTitle}>Service Location</Text>
+                        <Ionicons name="location" size={18} color={colors.accent} />
+                        <Text style={[s.cardTitle, { color: colors.textPrimary }]}>Service Location</Text>
                     </View>
-                    <Text style={s.addressLabel}>{request.address.label}</Text>
-                    <Text style={s.addressLine}>{request.address.addressLine1}</Text>
-                    {request.address.addressLine2 && <Text style={s.addressLine}>{request.address.addressLine2}</Text>}
-                    <Text style={s.addressLine}>{request.address.city}{request.address.postalCode ? `, ${request.address.postalCode}` : ''}</Text>
+                    <Text style={[s.addressLabel, { color: colors.textPrimary }]}>{request.address.label}</Text>
+                    <Text style={[s.addressLine, { color: colors.textSecondary }]}>{request.address.addressLine1}</Text>
+                    {request.address.addressLine2 && <Text style={[s.addressLine, { color: colors.textSecondary }]}>{request.address.addressLine2}</Text>}
+                    <Text style={[s.addressLine, { color: colors.textSecondary }]}>{request.address.city}{request.address.postalCode ? `, ${request.address.postalCode}` : ''}</Text>
                     {request.address.location && (
-                        <TouchableOpacity style={s.navBtn} onPress={openNavigation}>
-                            <Ionicons name="navigate-outline" size={16} color="#0ca6e8" />
-                            <Text style={s.navBtnTxt}>Open in Maps</Text>
+                        <TouchableOpacity style={[s.navBtn, { borderColor: isDark ? colors.border : '#bae6fd' }]} onPress={openNavigation}>
+                            <Ionicons name="navigate-outline" size={16} color={colors.accent} />
+                            <Text style={[s.navBtnTxt, { color: colors.accent }]}>Open in Maps</Text>
                         </TouchableOpacity>
                     )}
                 </View>
 
                 {/* ── Action Buttons ── */}
                 <View style={s.actionRow}>
-                    <TouchableOpacity style={s.declineBtn} onPress={handleDecline} disabled={declining || accepting}>
-                        {declining ? <ActivityIndicator color="#ef4444" /> : (
-                            <><Ionicons name="close-circle-outline" size={20} color="#ef4444" /><Text style={s.declineTxt}>Skip</Text></>
+                    <TouchableOpacity style={[s.declineBtn, { backgroundColor: colors.background, borderColor: colors.error }]} onPress={handleDecline} disabled={declining || accepting}>
+                        {declining ? <ActivityIndicator color={colors.error} /> : (
+                            <><Ionicons name="close-circle-outline" size={20} color={colors.error} /><Text style={[s.declineTxt, { color: colors.error }]}>Skip</Text></>
                         )}
                     </TouchableOpacity>
-                    <TouchableOpacity style={s.acceptBtn} onPress={() => setAcceptModalVisible(true)} disabled={accepting || declining}>
+                    <TouchableOpacity style={[s.acceptBtn, { backgroundColor: colors.accent }]} onPress={() => setAcceptModalVisible(true)} disabled={accepting || declining}>
                         {accepting ? <ActivityIndicator color="#fff" /> : (
                             <><Ionicons name="flash" size={20} color="#fff" /><Text style={s.acceptTxt}>Accept Job</Text></>
                         )}
@@ -305,31 +309,31 @@ export default function WasherJobRequestScreen() {
 
             {/* ── Accept Modal: Preferred Time ── */}
             <Modal visible={acceptModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setAcceptModalVisible(false)}>
-                <View style={s.modalWrap}>
-                    <View style={s.modalHead}>
-                        <TouchableOpacity onPress={() => setAcceptModalVisible(false)}><Ionicons name="close" size={24} color="#6b7280" /></TouchableOpacity>
-                        <Text style={s.modalTitle}>Confirm Arrival Time</Text>
+                <View style={[s.modalWrap, { backgroundColor: colors.background }]}>
+                    <View style={[s.modalHead, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+                        <TouchableOpacity onPress={() => setAcceptModalVisible(false)}><Ionicons name="close" size={24} color={colors.textSecondary} /></TouchableOpacity>
+                        <Text style={[s.modalTitle, { color: colors.textPrimary }]}>Confirm Arrival Time</Text>
                         <View style={{ width: 24 }} />
                     </View>
 
                     <ScrollView contentContainerStyle={s.modalScroll}>
                         {/* Job summary */}
-                        <View style={s.modalSummary}>
-                            <Text style={s.modalSummaryService}>{request.service.name}</Text>
-                            <Text style={s.modalSummaryVehicle}>
+                        <View style={[s.modalSummary, { backgroundColor: isDark ? colors.cardBackground : '#e0f4fd' }]}>
+                            <Text style={[s.modalSummaryService, { color: colors.textPrimary }]}>{request.service.name}</Text>
+                            <Text style={[s.modalSummaryVehicle, { color: colors.textSecondary }]}>
                                 {vehicleIcon} {request.vehicle.nickname || `${request.vehicle.make} ${request.vehicle.model}`} · {request.vehicle.licensePlate}
                             </Text>
-                            <Text style={s.modalSummaryDate}>{formatDate(request.scheduledDate)}</Text>
+                            <Text style={[s.modalSummaryDate, { color: colors.textSecondary }]}>{formatDate(request.scheduledDate)}</Text>
                         </View>
 
                         {/* Customer's requested time callout */}
-                        <View style={s.customerTimeRow}>
-                            <Ionicons name="person-circle-outline" size={18} color="#6b7280" />
-                            <Text style={s.customerTimeTxt}>Customer requested: <Text style={{ fontWeight: '700', color: '#0d1629' }}>{fmt(request.scheduledTime)}</Text></Text>
+                        <View style={[s.customerTimeRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+                            <Ionicons name="person-circle-outline" size={18} color={colors.textSecondary} />
+                            <Text style={[s.customerTimeTxt, { color: colors.textSecondary }]}>Customer requested: <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{fmt(request.scheduledTime)}</Text></Text>
                         </View>
 
-                        <Text style={s.modalSectionTitle}>Your Preferred Arrival Time</Text>
-                        <Text style={s.modalSectionSub}>You can confirm the customer's time or pick a different slot. The customer will be notified.</Text>
+                        <Text style={[s.modalSectionTitle, { color: colors.textPrimary }]}>Your Preferred Arrival Time</Text>
+                        <Text style={[s.modalSectionSub, { color: colors.textSecondary }]}>You can confirm the customer's time or pick a different slot. The customer will be notified.</Text>
 
                         <View style={s.timeGrid}>
                             {TIME_SLOTS.map(t => {
@@ -338,11 +342,21 @@ export default function WasherJobRequestScreen() {
                                 return (
                                     <TouchableOpacity
                                         key={t}
-                                        style={[s.timeChip, isSel && s.timeChipSel, isCustTime && !isSel && s.timeChipCust]}
+                                        style={[
+                                            s.timeChip, 
+                                            { backgroundColor: colors.cardBackground, borderColor: colors.divider },
+                                            isSel && [s.timeChipSel, { backgroundColor: colors.accent, borderColor: colors.accent }], 
+                                            isCustTime && !isSel && [s.timeChipCust, { borderColor: colors.accent }]
+                                        ]}
                                         onPress={() => setPreferredTime(t)}
                                     >
-                                        <Text style={[s.timeChipTxt, isSel && s.timeChipSelTxt, isCustTime && !isSel && s.timeChipCustTxt]}>{fmt(t)}</Text>
-                                        {isCustTime && <Text style={[s.timeChipBadge, isSel && { color: '#fff' }]}>requested</Text>}
+                                        <Text style={[
+                                            s.timeChipTxt, 
+                                            { color: colors.textPrimary },
+                                            isSel && [s.timeChipSelTxt, { color: '#fff' }], 
+                                            isCustTime && !isSel && [s.timeChipCustTxt, { color: colors.accent }]
+                                        ]}>{fmt(t)}</Text>
+                                        {isCustTime && <Text style={[s.timeChipBadge, { color: colors.accent }, isSel && { color: '#fff' }]}>requested</Text>}
                                     </TouchableOpacity>
                                 );
                             })}
@@ -350,9 +364,9 @@ export default function WasherJobRequestScreen() {
 
                         {/* Difference notice */}
                         {timeChanged && (
-                            <View style={s.timeChangedNotice}>
-                                <Ionicons name="information-circle-outline" size={16} color="#0ca6e8" />
-                                <Text style={s.timeChangedTxt}>
+                            <View style={[s.timeChangedNotice, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f4fd', borderColor: isDark ? colors.border : '#bae6fd' }]}>
+                                <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
+                                <Text style={[s.timeChangedTxt, { color: colors.textPrimary }]}>
                                     You're arriving at {fmt(preferredTime!)} instead of the customer's requested {fmt(request.scheduledTime)}. They'll be notified.
                                 </Text>
                             </View>
@@ -360,16 +374,16 @@ export default function WasherJobRequestScreen() {
 
                         {/* Special notes reminder */}
                         {hasSpecialNotes && (
-                            <View style={s.notesReminderBox}>
-                                <Ionicons name="warning" size={16} color="#d97706" />
+                            <View style={[s.notesReminderBox, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb', borderColor: colors.warning }]}>
+                                <Ionicons name="warning" size={16} color={colors.warning} />
                                 <View style={{ flex: 1, marginLeft: 10 }}>
-                                    <Text style={s.notesReminderTitle}>Remember: Special Instructions</Text>
-                                    <Text style={s.notesReminderTxt}>{request.notes}</Text>
+                                    <Text style={[s.notesReminderTitle, { color: colors.warning }]}>Remember: Special Instructions</Text>
+                                    <Text style={[s.notesReminderTxt, { color: colors.textPrimary }]}>{request.notes}</Text>
                                 </View>
                             </View>
                         )}
 
-                        <TouchableOpacity style={[s.confirmBtn, !preferredTime && s.confirmBtnDisabled]} onPress={handleAcceptConfirm} disabled={!preferredTime || accepting}>
+                        <TouchableOpacity style={[s.confirmBtn, { backgroundColor: colors.accent }, !preferredTime && s.confirmBtnDisabled]} onPress={handleAcceptConfirm} disabled={!preferredTime || accepting}>
                             {accepting ? <ActivityIndicator color="#fff" /> : (
                                 <><Ionicons name="flash" size={20} color="#fff" /><Text style={s.confirmBtnTxt}>Accept & Set Arrival {preferredTime ? fmt(preferredTime) : ''}</Text></>
                             )}
@@ -383,117 +397,117 @@ export default function WasherJobRequestScreen() {
     );
 }
 
-function VehicleMeta({ icon, label, value }: { icon: string; label: string; value: string }) {
+function VehicleMeta({ icon, label, value, colors }: { icon: string; label: string; value: string; colors: any }) {
     return (
-        <View style={s.vehicleMetaItem}>
-            <Ionicons name={icon as any} size={14} color="#9ca3af" />
-            <Text style={s.vehicleMetaLabel}>{label}</Text>
-            <Text style={s.vehicleMetaValue}>{value}</Text>
+        <View style={[s.vehicleMetaItem, { backgroundColor: colors.background }]}>
+            <Ionicons name={icon as any} size={14} color={colors.textSecondary} />
+            <Text style={[s.vehicleMetaLabel, { color: colors.textSecondary }]}>{label}</Text>
+            <Text style={[s.vehicleMetaValue, { color: colors.textPrimary }]}>{value}</Text>
         </View>
     );
 }
 
 const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8fafc' },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc', gap: 10 },
-    loadingTxt: { fontSize: 15, color: '#6b7280', marginTop: 8 },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+    container: { flex: 1 },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10 },
+    loadingTxt: { fontSize: 15, marginTop: 8 },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1 },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
+    headerTitle: { fontSize: 18, fontWeight: '700' },
     scroll: { padding: 20, paddingBottom: 40 },
 
     // Race banner
-    raceBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0d1629', borderRadius: 16, padding: 16, marginBottom: 16 },
+    raceBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 16, padding: 16, marginBottom: 16 },
     raceBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     raceIcon: { fontSize: 28 },
     raceBannerTitle: { fontSize: 14, fontWeight: '800', color: '#fff', letterSpacing: 1 },
-    raceBannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
+    raceBannerSub: { fontSize: 12, marginTop: 2 },
     racePulseDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#22c55e' },
 
     // Earnings
-    earningsCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: 1.5, borderColor: '#bae6fd' },
-    earningsLabel: { fontSize: 12, color: '#6b7280', fontWeight: '600', marginBottom: 4 },
-    earningsAmount: { fontSize: 28, fontWeight: '800', color: '#0d1629' },
-    earningsNote: { fontSize: 12, color: '#0ca6e8', marginTop: 4 },
-    durationPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#e0f4fd', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
-    durationTxt: { fontSize: 14, fontWeight: '700', color: '#0ca6e8' },
+    earningsCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: 1.5 },
+    earningsLabel: { fontSize: 12, fontWeight: '600', marginBottom: 4 },
+    earningsAmount: { fontSize: 28, fontWeight: '800' },
+    earningsNote: { fontSize: 12, marginTop: 4 },
+    durationPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
+    durationTxt: { fontSize: 14, fontWeight: '700' },
 
     // Cards
-    card: { backgroundColor: '#fff', borderRadius: 16, padding: 18, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
+    card: { borderRadius: 16, padding: 18, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
     cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-    cardTitle: { fontSize: 16, fontWeight: '700', color: '#0d1629' },
+    cardTitle: { fontSize: 16, fontWeight: '700' },
 
     // Vehicle
     vehicleMain: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
     vehicleEmoji: { fontSize: 40 },
-    vehicleName: { fontSize: 17, fontWeight: '700', color: '#0d1629' },
-    vehicleDetails: { fontSize: 13, color: '#6b7280', marginTop: 3 },
+    vehicleName: { fontSize: 17, fontWeight: '700' },
+    vehicleDetails: { fontSize: 13, marginTop: 3 },
     vehicleMetaGrid: { flexDirection: 'row', gap: 8, marginBottom: 14 },
-    vehicleMetaItem: { flex: 1, backgroundColor: '#f8fafc', borderRadius: 10, padding: 10, alignItems: 'center', gap: 4 },
-    vehicleMetaLabel: { fontSize: 11, color: '#9ca3af', fontWeight: '600' },
-    vehicleMetaValue: { fontSize: 13, color: '#0d1629', fontWeight: '700', textAlign: 'center' },
+    vehicleMetaItem: { flex: 1, borderRadius: 10, padding: 10, alignItems: 'center', gap: 4 },
+    vehicleMetaLabel: { fontSize: 11, fontWeight: '600' },
+    vehicleMetaValue: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
 
     // Notes
-    notesBox: { backgroundColor: '#fffbeb', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#fde68a' },
+    notesBox: { borderRadius: 12, padding: 14, borderWidth: 1 },
     notesHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-    notesHeaderTxt: { fontSize: 13, fontWeight: '700', color: '#92400e' },
-    notesTxt: { fontSize: 14, color: '#78350f', lineHeight: 20 },
+    notesHeaderTxt: { fontSize: 13, fontWeight: '700' },
+    notesTxt: { fontSize: 14, lineHeight: 20 },
     noNotesRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    noNotesTxt: { fontSize: 13, color: '#16a34a' },
+    noNotesTxt: { fontSize: 13 },
 
     // Schedule
     scheduleRow: { marginBottom: 12 },
     scheduleItem: {},
-    scheduleLabel: { fontSize: 12, color: '#9ca3af', fontWeight: '600', marginBottom: 3 },
-    scheduleValue: { fontSize: 15, fontWeight: '600', color: '#0d1629' },
+    scheduleLabel: { fontSize: 12, fontWeight: '600', marginBottom: 3 },
+    scheduleValue: { fontSize: 15, fontWeight: '600' },
 
     // Address
-    addressLabel: { fontSize: 15, fontWeight: '700', color: '#0d1629', marginBottom: 4 },
-    addressLine: { fontSize: 14, color: '#6b7280', marginBottom: 2 },
-    navBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: '#bae6fd', alignSelf: 'flex-start' },
-    navBtnTxt: { fontSize: 14, color: '#0ca6e8', fontWeight: '600' },
+    addressLabel: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
+    addressLine: { fontSize: 14, marginBottom: 2 },
+    navBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, alignSelf: 'flex-start' },
+    navBtnTxt: { fontSize: 14, fontWeight: '600' },
 
     // Actions
     actionRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
-    declineBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 14, borderWidth: 1.5, borderColor: '#fca5a5', backgroundColor: '#fff' },
-    declineTxt: { fontSize: 16, fontWeight: '700', color: '#ef4444' },
-    acceptBtn: { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 14, backgroundColor: '#0ca6e8' },
+    declineBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 14, borderWidth: 1.5 },
+    declineTxt: { fontSize: 16, fontWeight: '700' },
+    acceptBtn: { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, borderRadius: 14 },
     acceptTxt: { fontSize: 16, fontWeight: '800', color: '#fff' },
 
     // Accept modal
-    modalWrap: { flex: 1, backgroundColor: '#f8fafc' },
-    modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', paddingTop: 20, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-    modalTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
+    modalWrap: { flex: 1 },
+    modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1 },
+    modalTitle: { fontSize: 18, fontWeight: '700' },
     modalScroll: { padding: 20, paddingBottom: 40 },
 
-    modalSummary: { backgroundColor: '#e0f4fd', borderRadius: 16, padding: 18, marginBottom: 16 },
-    modalSummaryService: { fontSize: 18, fontWeight: '800', color: '#0d1629', marginBottom: 4 },
-    modalSummaryVehicle: { fontSize: 14, color: '#374151', marginBottom: 4 },
-    modalSummaryDate: { fontSize: 13, color: '#6b7280' },
+    modalSummary: { borderRadius: 16, padding: 18, marginBottom: 16 },
+    modalSummaryService: { fontSize: 18, fontWeight: '800', marginBottom: 4 },
+    modalSummaryVehicle: { fontSize: 14, marginBottom: 4 },
+    modalSummaryDate: { fontSize: 13 },
 
-    customerTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, marginBottom: 20, borderWidth: 1, borderColor: '#e2e8f0' },
-    customerTimeTxt: { fontSize: 14, color: '#6b7280', flex: 1 },
+    customerTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, padding: 12, marginBottom: 20, borderWidth: 1 },
+    customerTimeTxt: { fontSize: 14, flex: 1 },
 
-    modalSectionTitle: { fontSize: 15, fontWeight: '700', color: '#0d1629', marginBottom: 4 },
-    modalSectionSub: { fontSize: 13, color: '#6b7280', marginBottom: 16, lineHeight: 18 },
+    modalSectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
+    modalSectionSub: { fontSize: 13, marginBottom: 16, lineHeight: 18 },
 
     timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-    timeChip: { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, backgroundColor: '#fff', borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center' },
-    timeChipSel: { backgroundColor: '#0ca6e8', borderColor: '#0ca6e8' },
-    timeChipCust: { borderColor: '#0ca6e8', borderWidth: 1.5 },
-    timeChipTxt: { fontSize: 14, fontWeight: '600', color: '#374151' },
-    timeChipSelTxt: { color: '#fff' },
-    timeChipCustTxt: { color: '#0ca6e8' },
-    timeChipBadge: { fontSize: 9, color: '#0ca6e8', fontWeight: '700', marginTop: 2 },
+    timeChip: { paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
+    timeChipSel: { },
+    timeChipCust: { borderWidth: 1.5 },
+    timeChipTxt: { fontSize: 14, fontWeight: '600' },
+    timeChipSelTxt: { },
+    timeChipCustTxt: { },
+    timeChipBadge: { fontSize: 9, fontWeight: '700', marginTop: 2 },
 
-    timeChangedNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: '#e0f4fd', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#bae6fd' },
-    timeChangedTxt: { flex: 1, fontSize: 13, color: '#0d1629', lineHeight: 18 },
+    timeChangedNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1 },
+    timeChangedTxt: { flex: 1, fontSize: 13, lineHeight: 18 },
 
-    notesReminderBox: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#fffbeb', borderRadius: 12, padding: 14, marginBottom: 20, borderWidth: 1, borderColor: '#fde68a' },
-    notesReminderTitle: { fontSize: 13, fontWeight: '700', color: '#92400e', marginBottom: 4 },
-    notesReminderTxt: { fontSize: 13, color: '#78350f', lineHeight: 18 },
+    notesReminderBox: { flexDirection: 'row', alignItems: 'flex-start', borderRadius: 12, padding: 14, marginBottom: 20, borderWidth: 1 },
+    notesReminderTitle: { fontSize: 13, fontWeight: '700', marginBottom: 4 },
+    notesReminderTxt: { fontSize: 13, lineHeight: 18 },
 
-    confirmBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#0ca6e8', borderRadius: 16, paddingVertical: 18 },
+    confirmBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 18 },
     confirmBtnDisabled: { backgroundColor: '#d1d5db' },
     confirmBtnTxt: { fontSize: 16, fontWeight: '800', color: '#fff' },
 });

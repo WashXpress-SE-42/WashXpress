@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { Header } from '../components/Header';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { apiFetch } from '../services/apiClient';
 import { signup } from '../services/authService';
 
@@ -47,6 +48,7 @@ export default function SignupScreen() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const { setAuth } = useAuth();
+  const { colors, isDark } = useTheme();
 
   // Step 1 — Personal Information
   const [firstName, setFirstName] = useState('');
@@ -219,25 +221,33 @@ export default function SignupScreen() {
     options: string[]; onSelect: (v: string) => void; selectedValue: string;
   }) => (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{title}</Text>
+      <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+        <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.divider }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{title}</Text>
             <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color="#6b7280" />
+              <Ionicons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.modalScroll}>
             {options.map((option) => (
               <TouchableOpacity
                 key={option}
-                style={[styles.modalOption, selectedValue === option && styles.modalOptionSelected]}
+                style={[
+                  styles.modalOption, 
+                  { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider },
+                  selectedValue === option && [styles.modalOptionSelected, { backgroundColor: colors.background }]
+                ]}
                 onPress={() => { onSelect(option); onClose(); }}
               >
-                <Text style={[styles.modalOptionText, selectedValue === option && styles.modalOptionTextSelected]}>
+                <Text style={[
+                  styles.modalOptionText, 
+                  { color: colors.textPrimary },
+                  selectedValue === option && [styles.modalOptionTextSelected, { color: colors.accent }]
+                ]}>
                   {option}
                 </Text>
-                {selectedValue === option && <Ionicons name="checkmark" size={20} color="#2563eb" />}
+                {selectedValue === option && <Ionicons name="checkmark" size={20} color={colors.accent} />}
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -251,9 +261,9 @@ export default function SignupScreen() {
 
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* Header */}
@@ -262,24 +272,25 @@ export default function SignupScreen() {
         />
 
         {/* Progress Bar with step dots */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${((step - 1) / 2) * 100}%` }]} />
+        <View style={[styles.progressContainer, { backgroundColor: colors.cardBackground }]}>
+          <View style={[styles.progressTrack, { backgroundColor: colors.divider }]}>
+            <View style={[styles.progressFill, { width: `${((step - 1) / 2) * 100}%`, backgroundColor: colors.accent }]} />
           </View>
           <View style={styles.stepDotsRow}>
             {stepLabels.map((label, i) => (
               <View key={label} style={styles.stepDotWrapper}>
                 <View style={[
                   styles.stepDot,
-                  i + 1 <= step && styles.stepDotActive,
-                  i + 1 < step && styles.stepDotDone,
+                  { backgroundColor: colors.divider },
+                  i + 1 <= step && [styles.stepDotActive, { backgroundColor: colors.accent }],
+                  i + 1 < step && [styles.stepDotDone, { backgroundColor: colors.success || '#16a34a' }],
                 ]}>
                   {i + 1 < step
                     ? <Ionicons name="checkmark" size={12} color="#fff" />
-                    : <Text style={[styles.stepDotText, i + 1 <= step && styles.stepDotTextActive]}>{i + 1}</Text>
+                    : <Text style={[styles.stepDotText, { color: colors.textSecondary }, i + 1 <= step && styles.stepDotTextActive]}>{i + 1}</Text>
                   }
                 </View>
-                <Text style={[styles.stepLabel, i + 1 === step && styles.stepLabelActive]}>{label}</Text>
+                <Text style={[styles.stepLabel, { color: colors.textSecondary }, i + 1 === step && [styles.stepLabelActive, { color: colors.accent }]]}>{label}</Text>
               </View>
             ))}
           </View>
@@ -290,42 +301,43 @@ export default function SignupScreen() {
           {/* ── STEP 1: Personal Information ── */}
           {step === 1 && (
             <View style={styles.formContainer}>
-              <Text style={styles.sectionTitle}>Personal Information</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Personal Information</Text>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>First Name *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="person-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                  <TextInput style={styles.input} placeholder="John" value={firstName} onChangeText={setFirstName} autoCapitalize="words" />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>First Name *</Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput style={[styles.input, { color: colors.textPrimary }]} placeholder="John" placeholderTextColor={colors.textSecondary} value={firstName} onChangeText={setFirstName} autoCapitalize="words" />
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Last Name *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="person-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                  <TextInput style={styles.input} placeholder="Doe" value={lastName} onChangeText={setLastName} autoCapitalize="words" />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Last Name *</Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput style={[styles.input, { color: colors.textPrimary }]} placeholder="Doe" placeholderTextColor={colors.textSecondary} value={lastName} onChangeText={setLastName} autoCapitalize="words" />
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email Address *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="mail-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                  <TextInput style={styles.input} placeholder="john@example.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address *</Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput style={[styles.input, { color: colors.textPrimary }]} placeholder="john@example.com" placeholderTextColor={colors.textSecondary} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Phone Number *</Text>
-                <View style={styles.phoneInputContainer}>
-                  <View style={styles.phonePrefix}>
-                    <Text style={styles.phonePrefixText}>+94</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Phone Number *</Text>
+                <View style={[styles.phoneInputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <View style={[styles.phonePrefix, { backgroundColor: colors.background }]}>
+                    <Text style={[styles.phonePrefixText, { color: colors.textPrimary }]}>+94</Text>
                   </View>
-                  <View style={styles.phoneDivider} />
+                  <View style={[styles.phoneDivider, { backgroundColor: colors.border }]} />
                   <TextInput
-                    style={styles.phoneInput}
+                    style={[styles.phoneInput, { color: colors.textPrimary }]}
                     placeholder="771234567 or 0771234567"
+                    placeholderTextColor={colors.textSecondary}
                     value={phone}
                     onChangeText={(text) => {
                       const cleaned = text.replace(/[^0-9]/g, '');
@@ -335,22 +347,22 @@ export default function SignupScreen() {
                     maxLength={10}
                   />
                 </View>
-                <Text style={styles.hint}>Enter 9 or 10 digits (0 prefix optional)</Text>
+                <Text style={[styles.hint, { color: colors.textSecondary }]}>Enter 9 or 10 digits (0 prefix optional)</Text>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Password *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="lock-closed-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                  <TextInput style={styles.input} placeholder="Create a secure password" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} autoCapitalize="none" />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Password *</Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput style={[styles.input, { color: colors.textPrimary }]} placeholder="Create a secure password" placeholderTextColor={colors.textSecondary} value={password} onChangeText={setPassword} secureTextEntry={!showPassword} autoCapitalize="none" />
                   <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color="#9ca3af" />
+                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textSecondary} />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.hint}>Minimum 6 characters</Text>
+                <Text style={[styles.hint, { color: colors.textSecondary }]}>Minimum 6 characters</Text>
               </View>
 
-              <TouchableOpacity style={[styles.button, !isStep1Valid && styles.buttonDisabled]} onPress={handleStep1Next} disabled={!isStep1Valid}>
+              <TouchableOpacity style={[styles.button, { backgroundColor: colors.accent }, !isStep1Valid && styles.buttonDisabled]} onPress={handleStep1Next} disabled={!isStep1Valid}>
                 <Text style={styles.buttonText}>Continue to Vehicle Details</Text>
                 <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
               </TouchableOpacity>
@@ -360,46 +372,47 @@ export default function SignupScreen() {
           {/* ── STEP 2: Vehicle Information ── */}
           {step === 2 && (
             <View style={styles.formContainer}>
-              <Text style={styles.sectionTitle}>Vehicle Information</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Vehicle Information</Text>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Vehicle Type *</Text>
-                <TouchableOpacity style={styles.selectButton} onPress={() => setShowTypeModal(true)}>
-                  <Text style={[styles.selectButtonText, !carType && styles.selectButtonPlaceholder]}>{carType || 'Select vehicle type'}</Text>
-                  <Ionicons name="chevron-down" size={20} color="#6b7280" />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Vehicle Type *</Text>
+                <TouchableOpacity style={[styles.selectButton, { borderColor: colors.border, backgroundColor: colors.cardBackground }]} onPress={() => setShowTypeModal(true)}>
+                  <Text style={[styles.selectButtonText, { color: colors.textPrimary }, !carType && [styles.selectButtonPlaceholder, { color: colors.textSecondary }]]}>{carType || 'Select vehicle type'}</Text>
+                  <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Brand *</Text>
-                <TouchableOpacity style={styles.selectButton} onPress={() => setShowBrandModal(true)}>
-                  <Ionicons name="car-outline" size={20} color="#9ca3af" style={styles.selectIcon} />
-                  <Text style={[styles.selectButtonText, !carBrand && styles.selectButtonPlaceholder, { marginLeft: 32 }]}>{carBrand || 'Select brand'}</Text>
-                  <Ionicons name="chevron-down" size={20} color="#6b7280" />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Brand *</Text>
+                <TouchableOpacity style={[styles.selectButton, { borderColor: colors.border, backgroundColor: colors.cardBackground }]} onPress={() => setShowBrandModal(true)}>
+                  <Ionicons name="car-outline" size={20} color={colors.textSecondary} style={styles.selectIcon} />
+                  <Text style={[styles.selectButtonText, { color: colors.textPrimary }, !carBrand && [styles.selectButtonPlaceholder, { color: colors.textSecondary }], { marginLeft: 32 }]}>{carBrand || 'Select brand'}</Text>
+                  <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Model *</Text>
-                <View style={styles.inputContainer}>
-                  <TextInput style={[styles.input, { paddingLeft: 16 }]} placeholder="e.g., Camry, Civic, Model 3" value={carModel} onChangeText={setCarModel} />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Model *</Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <TextInput style={[styles.input, { paddingLeft: 16, color: colors.textPrimary }]} placeholder="e.g., Camry, Civic, Model 3" placeholderTextColor={colors.textSecondary} value={carModel} onChangeText={setCarModel} />
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>License Plate Number *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="pricetag-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                  <TextInput style={styles.input} placeholder="ABC1234" value={plateNumber} onChangeText={(t) => setPlateNumber(t.toUpperCase())} autoCapitalize="characters" />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>License Plate Number *</Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="pricetag-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput style={[styles.input, { color: colors.textPrimary }]} placeholder="ABC1234" placeholderTextColor={colors.textSecondary} value={plateNumber} onChangeText={(t) => setPlateNumber(t.toUpperCase())} autoCapitalize="characters" />
                 </View>
               </View>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Year *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="calendar-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Year *</Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.textPrimary }]}
                     placeholder="e.g., 2020"
+                    placeholderTextColor={colors.textSecondary}
                     value={carYear}
                     onChangeText={(t) => {
                       const cleaned = t.replace(/[^0-9]/g, '');
@@ -412,20 +425,20 @@ export default function SignupScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Vehicle Color *</Text>
-                <TouchableOpacity style={styles.selectButton} onPress={() => setShowColorModal(true)}>
-                  <Ionicons name="color-palette-outline" size={20} color="#9ca3af" style={styles.selectIcon} />
-                  <Text style={[styles.selectButtonText, !carColor && styles.selectButtonPlaceholder, { marginLeft: 32 }]}>{carColor || 'Select color'}</Text>
-                  <Ionicons name="chevron-down" size={20} color="#6b7280" />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Vehicle Color *</Text>
+                <TouchableOpacity style={[styles.selectButton, { borderColor: colors.border, backgroundColor: colors.cardBackground }]} onPress={() => setShowColorModal(true)}>
+                  <Ionicons name="color-palette-outline" size={20} color={colors.textSecondary} style={styles.selectIcon} />
+                  <Text style={[styles.selectButtonText, { color: colors.textPrimary }, !carColor && [styles.selectButtonPlaceholder, { color: colors.textSecondary }], { marginLeft: 32 }]}>{carColor || 'Select color'}</Text>
+                  <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
               {/* Vehicle Summary Card */}
               {carType && (
-                <View style={styles.summaryCard}>
+                <View style={[styles.summaryCard, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)', borderColor: colors.border }]}>
                   <View style={styles.summaryHeader}>
-                    <Ionicons name="car" size={20} color="#1e40af" />
-                    <Text style={styles.summaryTitle}>Vehicle Summary</Text>
+                    <Ionicons name="car" size={20} color={colors.accent} />
+                    <Text style={[styles.summaryTitle, { color: colors.accent }]}>Vehicle Summary</Text>
                   </View>
                   {[
                     { label: 'Type', value: carType },
@@ -435,15 +448,15 @@ export default function SignupScreen() {
                     { label: 'Color', value: carColor },
                   ].map(({ label, value }) => (
                     <View key={label} style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>{label}:</Text>
-                      <Text style={styles.summaryValue}>{value || '-'}</Text>
+                      <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{label}:</Text>
+                      <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{value || '-'}</Text>
                     </View>
                   ))}
                 </View>
               )}
 
               <TouchableOpacity
-                style={[styles.button, (!isStep2Valid || loading) && styles.buttonDisabled]}
+                style={[styles.button, { backgroundColor: colors.accent }, (!isStep2Valid || loading) && styles.buttonDisabled]}
                 onPress={handleStep2Next}
                 disabled={!isStep2Valid || loading}
               >
@@ -462,27 +475,31 @@ export default function SignupScreen() {
           {/* ── STEP 3: Home Address ── */}
           {step === 3 && (
             <View style={styles.formContainer}>
-              <Text style={styles.sectionTitle}>Home Address</Text>
-              <Text style={styles.sectionSubtitle}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Home Address</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
                 Add your default service address. Washers will come to this location.
               </Text>
 
               {/* Address Label */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Address Label *</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Address Label *</Text>
                 <View style={styles.labelButtonRow}>
                   {addressLabels.map((lbl) => (
                     <TouchableOpacity
                       key={lbl}
-                      style={[styles.labelChip, addressLabel === lbl && styles.labelChipActive]}
+                      style={[
+                        styles.labelChip, 
+                        { borderColor: colors.border, backgroundColor: colors.cardBackground },
+                        addressLabel === lbl && [styles.labelChipActive, { backgroundColor: colors.accent, borderColor: colors.accent }]
+                      ]}
                       onPress={() => setAddressLabel(lbl)}
                     >
                       <Ionicons
                         name={lbl === 'Home' ? 'home-outline' : lbl === 'Work' ? 'briefcase-outline' : 'location-outline'}
                         size={16}
-                        color={addressLabel === lbl ? '#fff' : '#6b7280'}
+                        color={addressLabel === lbl ? '#fff' : colors.textSecondary}
                       />
-                      <Text style={[styles.labelChipText, addressLabel === lbl && styles.labelChipTextActive]}>{lbl}</Text>
+                      <Text style={[styles.labelChipText, { color: colors.textSecondary }, addressLabel === lbl && styles.labelChipTextActive]}>{lbl}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -490,12 +507,13 @@ export default function SignupScreen() {
 
               {/* Street Address */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Street Address *</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="location-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Street Address *</Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="location-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.textPrimary }]}
                     placeholder="No. 12, Main Street"
+                    placeholderTextColor={colors.textSecondary}
                     value={addressLine1}
                     onChangeText={setAddressLine1}
                     autoCapitalize="words"
@@ -505,12 +523,13 @@ export default function SignupScreen() {
 
               {/* Apartment / Unit */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Apartment / Unit <Text style={styles.optional}>(optional)</Text></Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="business-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Apartment / Unit <Text style={[styles.optional, { color: colors.textSecondary }]}>(optional)</Text></Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="business-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.textPrimary }]}
                     placeholder="Apt 4B, Floor 3, etc."
+                    placeholderTextColor={colors.textSecondary}
                     value={addressLine2}
                     onChangeText={setAddressLine2}
                     autoCapitalize="words"
@@ -520,24 +539,25 @@ export default function SignupScreen() {
 
               {/* City */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>City *</Text>
-                <TouchableOpacity style={styles.selectButton} onPress={() => setShowCityModal(true)}>
-                  <Ionicons name="map-outline" size={20} color="#9ca3af" style={styles.selectIcon} />
-                  <Text style={[styles.selectButtonText, !city && styles.selectButtonPlaceholder, { marginLeft: 32 }]}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>City *</Text>
+                <TouchableOpacity style={[styles.selectButton, { borderColor: colors.border, backgroundColor: colors.cardBackground }]} onPress={() => setShowCityModal(true)}>
+                  <Ionicons name="map-outline" size={20} color={colors.textSecondary} style={styles.selectIcon} />
+                  <Text style={[styles.selectButtonText, { color: colors.textPrimary }, !city && [styles.selectButtonPlaceholder, { color: colors.textSecondary }], { marginLeft: 32 }]}>
                     {city || 'Select city'}
                   </Text>
-                  <Ionicons name="chevron-down" size={20} color="#6b7280" />
+                  <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
               {/* Postal Code */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Postal Code <Text style={styles.optional}>(optional)</Text></Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="mail-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Postal Code <Text style={[styles.optional, { color: colors.textSecondary }]}>(optional)</Text></Text>
+                <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.textPrimary }]}
                     placeholder="10100"
+                    placeholderTextColor={colors.textSecondary}
                     value={postalCode}
                     onChangeText={setPostalCode}
                     keyboardType="numeric"
@@ -548,32 +568,32 @@ export default function SignupScreen() {
 
               {/* Country — fixed */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Country</Text>
-                <View style={[styles.inputContainer, { backgroundColor: '#f3f4f6' }]}>
-                  <Ionicons name="flag-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
-                  <Text style={[styles.input, { color: '#6b7280', paddingTop: 13 }]}>Sri Lanka</Text>
-                  <Ionicons name="lock-closed" size={16} color="#d1d5db" />
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Country</Text>
+                <View style={[styles.inputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                  <Ionicons name="flag-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                  <Text style={[styles.input, { color: colors.textSecondary, paddingTop: 13 }]}>Sri Lanka</Text>
+                  <Ionicons name="lock-closed" size={16} color={colors.divider} />
                 </View>
               </View>
 
               {/* Address preview card */}
               {addressLine1 && city && (
-                <View style={styles.addressPreviewCard}>
+                <View style={[styles.addressPreviewCard, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)', borderColor: colors.border }]}>
                   <View style={styles.addressPreviewHeader}>
-                    <Ionicons name="home" size={18} color="#1e40af" />
-                    <Text style={styles.addressPreviewLabel}>{addressLabel}</Text>
-                    <View style={styles.defaultBadge}>
+                    <Ionicons name="home" size={18} color={colors.accent} />
+                    <Text style={[styles.addressPreviewLabel, { color: colors.textPrimary }]}>{addressLabel}</Text>
+                    <View style={[styles.defaultBadge, { backgroundColor: colors.success || '#16a34a' }]}>
                       <Text style={styles.defaultBadgeText}>Default</Text>
                     </View>
                   </View>
-                  <Text style={styles.addressPreviewLine}>{addressLine1}</Text>
-                  {addressLine2 ? <Text style={styles.addressPreviewLine}>{addressLine2}</Text> : null}
-                  <Text style={styles.addressPreviewLine}>{city}{postalCode ? `, ${postalCode}` : ''}, Sri Lanka</Text>
+                  <Text style={[styles.addressPreviewLine, { color: colors.textPrimary }]}>{addressLine1}</Text>
+                  {addressLine2 ? <Text style={[styles.addressPreviewLine, { color: colors.textPrimary }]}>{addressLine2}</Text> : null}
+                  <Text style={[styles.addressPreviewLine, { color: colors.textPrimary }]}>{city}{postalCode ? `, ${postalCode}` : ''}, Sri Lanka</Text>
                 </View>
               )}
 
               <TouchableOpacity
-                style={[styles.button, (!isStep3Valid || loading) && styles.buttonDisabled]}
+                style={[styles.button, { backgroundColor: colors.accent }, (!isStep3Valid || loading) && styles.buttonDisabled]}
                 onPress={handleStep3Complete}
                 disabled={!isStep3Valid || loading}
               >
@@ -585,7 +605,7 @@ export default function SignupScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.skipButton} onPress={handleSkipAddress}>
-                <Text style={styles.skipButtonText}>Skip for now</Text>
+                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Skip for now</Text>
               </TouchableOpacity>
             </View>
           )}

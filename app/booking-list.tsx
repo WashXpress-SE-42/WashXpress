@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { apiFetch } from '../services/apiClient';
+import { useTheme } from '../context/ThemeContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Booking {
@@ -30,14 +31,7 @@ interface Booking {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-    pending: { label: 'Finding Washer', color: '#f59e0b', bg: '#fffbeb', icon: 'time-outline' },
-    confirmed: { label: 'Confirmed', color: '#0ca6e8', bg: '#e0f4fd', icon: 'checkmark-circle-outline' },
-    in_progress: { label: 'In Progress', color: '#8b5cf6', bg: '#f5f3ff', icon: 'water-outline' },
-    completed: { label: 'Completed', color: '#10b981', bg: '#f0fdf4', icon: 'trophy-outline' },
-    cancelled: { label: 'Cancelled', color: '#6b7280', bg: '#f9fafb', icon: 'close-circle-outline' },
-    rejected: { label: 'Rejected', color: '#ef4444', bg: '#fef2f2', icon: 'ban-outline' },
-};
+// STATUS_CONFIG is now moved inside the component to use theme colors
 
 const CATEGORY_EMOJI: Record<string, string> = {
     'exterior-wash': '🚿',
@@ -60,12 +54,22 @@ function formatTime(timeStr: string) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function BookingListScreen() {
+    const { colors, isDark } = useTheme();
     const [tab, setTab] = useState<'active' | 'history'>('active');
     const [active, setActive] = useState<Booking[]>([]);
     const [history, setHistory] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const tabAnim = useRef(new Animated.Value(0)).current;
+
+    const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
+        pending: { label: 'Finding Washer', color: colors.warning || '#f59e0b', bg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb', icon: 'time-outline' },
+        confirmed: { label: 'Confirmed', color: colors.accent || '#0ca6e8', bg: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f4fd', icon: 'checkmark-circle-outline' },
+        in_progress: { label: 'In Progress', color: '#8b5cf6', bg: isDark ? 'rgba(139, 92, 246, 0.15)' : '#f5f3ff', icon: 'water-outline' },
+        completed: { label: 'Completed', color: colors.success || '#10b981', bg: isDark ? 'rgba(16, 185, 129, 0.15)' : '#f0fdf4', icon: 'trophy-outline' },
+        cancelled: { label: 'Cancelled', color: colors.textSecondary || '#6b7280', bg: isDark ? 'rgba(107, 114, 128, 0.15)' : '#f9fafb', icon: 'close-circle-outline' },
+        rejected: { label: 'Rejected', color: colors.error || '#ef4444', bg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2', icon: 'ban-outline' },
+    };
 
     const load = useCallback(async (silent = false) => {
         try {
@@ -119,36 +123,36 @@ export default function BookingListScreen() {
     const current = tab === 'active' ? active : history;
 
     return (
-        <View style={s.container}>
+        <View style={[s.container, { backgroundColor: colors.background }]}>
             {/* ── Header ── */}
-            <View style={s.header}>
+            <View style={[s.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider }]}>
                 <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-                    <Ionicons name="arrow-back" size={24} color="#0d1629" />
+                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
-                <Text style={s.headerTitle}>My Bookings</Text>
+                <Text style={[s.headerTitle, { color: colors.textPrimary }]}>My Bookings</Text>
                 <TouchableOpacity
                     onPress={() => switchTab('history')}
-                    style={[s.historyBtn, tab === 'history' && s.historyBtnActive]}
+                    style={[s.historyBtn, tab === 'history' && { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.2)' : '#e0f4fd' }, { backgroundColor: colors.divider }]}
                 >
-                    <Ionicons name="time-outline" size={20} color={tab === 'history' ? '#0ca6e8' : '#9ca3af'} />
+                    <Ionicons name="time-outline" size={20} color={tab === 'history' ? colors.accent : colors.textSecondary} />
                 </TouchableOpacity>
             </View>
 
             {/* ── Tab Bar ── */}
-            <View style={s.tabBar}>
+            <View style={[s.tabBar, { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider }]}>
                 <TouchableOpacity style={s.tabItem} onPress={() => switchTab('active')}>
-                    <Text style={[s.tabLabel, tab === 'active' && s.tabLabelActive]}>Active Jobs</Text>
+                    <Text style={[s.tabLabel, tab === 'active' && { color: colors.accent }]}>Active Jobs</Text>
                     {active.length > 0 && (
-                        <View style={s.badge}>
+                        <View style={[s.badge, { backgroundColor: colors.accent }]}>
                             <Text style={s.badgeTxt}>{active.length}</Text>
                         </View>
                     )}
                 </TouchableOpacity>
                 <TouchableOpacity style={s.tabItem} onPress={() => switchTab('history')}>
-                    <Text style={[s.tabLabel, tab === 'history' && s.tabLabelActive]}>History</Text>
+                    <Text style={[s.tabLabel, tab === 'history' && { color: colors.accent }]}>History</Text>
                     {history.length > 0 && tab === 'history' && (
-                        <View style={[s.badge, { backgroundColor: '#e5e7eb' }]}>
-                            <Text style={[s.badgeTxt, { color: '#6b7280' }]}>{history.length}</Text>
+                        <View style={[s.badge, { backgroundColor: colors.divider }]}>
+                            <Text style={[s.badgeTxt, { color: colors.textSecondary }]}>{history.length}</Text>
                         </View>
                     )}
                 </TouchableOpacity>
@@ -156,6 +160,7 @@ export default function BookingListScreen() {
                     style={[
                         s.tabIndicator,
                         {
+                            backgroundColor: colors.accent,
                             left: tabAnim.interpolate({
                                 inputRange: [0, 1],
                                 outputRange: ['2%', '52%'],
@@ -168,18 +173,18 @@ export default function BookingListScreen() {
             {/* ── Content ── */}
             {loading ? (
                 <View style={s.center}>
-                    <ActivityIndicator size="large" color="#0ca6e8" />
+                    <ActivityIndicator size="large" color={colors.accent} />
                 </View>
             ) : (
                 <ScrollView
                     contentContainerStyle={s.scroll}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0ca6e8']} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.accent]} tintColor={colors.accent} />}
                     showsVerticalScrollIndicator={false}
                 >
                     {current.length === 0 ? (
-                        <EmptyState tab={tab} />
+                        <EmptyState tab={tab} colors={colors} />
                     ) : (
-                        current.map((b) => <BookingCard key={b.id} booking={b} />)
+                        current.map((b) => <BookingCard key={b.id} booking={b} colors={colors} isDark={isDark} statusConfig={STATUS_CONFIG} />)
                     )}
                     <View style={{ height: 40 }} />
                 </ScrollView>
@@ -189,17 +194,17 @@ export default function BookingListScreen() {
 }
 
 // ─── Booking Card ─────────────────────────────────────────────────────────────
-function BookingCard({ booking }: { booking: Booking }) {
-    const cfg = STATUS_CONFIG[booking.status] || STATUS_CONFIG.pending;
+function BookingCard({ booking, colors, isDark, statusConfig }: { booking: Booking; colors: any; isDark: boolean; statusConfig: any }) {
+    const cfg = statusConfig[booking.status] || statusConfig.pending;
     const emoji = CATEGORY_EMOJI[booking.service?.categoryId] || '🚗';
     const isPending = booking.status === 'pending';
     const isInProgress = booking.status === 'in_progress';
 
     return (
         <TouchableOpacity
-            style={s.card}
+            style={[s.card, { backgroundColor: colors.cardBackground }]}
             onPress={() =>
-                router.push({ pathname: '/booking-details', params: { bookingId: booking.id } } as any)
+                router.push({ pathname: '/booking-details', params: { id: booking.id } } as any)
             }
             activeOpacity={0.88}
         >
@@ -207,11 +212,11 @@ function BookingCard({ booking }: { booking: Booking }) {
             <View style={s.cardTop}>
                 <View style={[s.serviceIconCircle, { backgroundColor: cfg.bg }]}>
                     <Text style={s.serviceEmoji}>{emoji}</Text>
-                    {isInProgress && <View style={s.inProgressDot} />}
+                    {isInProgress && <View style={[s.inProgressDot, { borderColor: colors.cardBackground }]} />}
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={s.serviceName} numberOfLines={1}>{booking.service?.name}</Text>
-                    <Text style={s.vehicleName} numberOfLines={1}>
+                    <Text style={[s.serviceName, { color: colors.textPrimary }]} numberOfLines={1}>{booking.service?.name}</Text>
+                    <Text style={[s.vehicleName, { color: colors.textSecondary }]} numberOfLines={1}>
                         {booking.vehicle?.make} {booking.vehicle?.model} · {booking.vehicle?.color}
                     </Text>
                 </View>
@@ -221,21 +226,21 @@ function BookingCard({ booking }: { booking: Booking }) {
                 </View>
             </View>
 
-            <View style={s.divider} />
+            <View style={[s.divider, { backgroundColor: colors.divider }]} />
 
             {/* Detail row */}
             <View style={s.cardDetails}>
                 <View style={s.detailItem}>
-                    <Ionicons name="calendar-outline" size={13} color="#9ca3af" />
-                    <Text style={s.detailTxt}>{formatDate(booking.scheduledDate)}</Text>
+                    <Ionicons name="calendar-outline" size={13} color={colors.textSecondary} />
+                    <Text style={[s.detailTxt, { color: colors.textSecondary }]}>{formatDate(booking.scheduledDate)}</Text>
                 </View>
                 <View style={s.detailItem}>
-                    <Ionicons name="time-outline" size={13} color="#9ca3af" />
-                    <Text style={s.detailTxt}>{formatTime(booking.scheduledTime)}</Text>
+                    <Ionicons name="time-outline" size={13} color={colors.textSecondary} />
+                    <Text style={[s.detailTxt, { color: colors.textSecondary }]}>{formatTime(booking.scheduledTime)}</Text>
                 </View>
                 <View style={s.detailItem}>
-                    <Ionicons name="location-outline" size={13} color="#9ca3af" />
-                    <Text style={s.detailTxt} numberOfLines={1}>{booking.address?.city}</Text>
+                    <Ionicons name="location-outline" size={13} color={colors.textSecondary} />
+                    <Text style={[s.detailTxt, { color: colors.textSecondary }]} numberOfLines={1}>{booking.address?.city}</Text>
                 </View>
             </View>
 
@@ -243,30 +248,30 @@ function BookingCard({ booking }: { booking: Booking }) {
             <View style={s.cardFooter}>
                 <View style={s.footerLeft}>
                     {booking.paidWithSubscription ? (
-                        <View style={s.subBadge}>
-                            <Ionicons name="shield-checkmark-outline" size={12} color="#0ca6e8" />
-                            <Text style={s.subBadgeTxt}>Subscription</Text>
+                        <View style={[s.subBadge, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f4fd' }]}>
+                            <Ionicons name="shield-checkmark-outline" size={12} color={colors.accent} />
+                            <Text style={[s.subBadgeTxt, { color: colors.accent }]}>Subscription</Text>
                         </View>
                     ) : (
-                        <Text style={s.price}>LKR {booking.totalPrice?.toLocaleString()}</Text>
+                        <Text style={[s.price, { color: colors.textPrimary }]}>LKR {booking.totalPrice?.toLocaleString()}</Text>
                     )}
                     {booking.assignedStaffName && (
-                        <View style={s.washerBadge}>
-                            <Ionicons name="person-outline" size={12} color="#10b981" />
-                            <Text style={s.washerBadgeTxt}>{booking.assignedStaffName}</Text>
+                        <View style={[s.washerBadge, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#f0fdf4' }]}>
+                            <Ionicons name="person-outline" size={12} color={colors.success} />
+                            <Text style={[s.washerBadgeTxt, { color: colors.success }]}>{booking.assignedStaffName}</Text>
                         </View>
                     )}
                 </View>
                 <View style={s.viewBtn}>
-                    <Text style={s.viewBtnTxt}>View</Text>
-                    <Ionicons name="chevron-forward" size={14} color="#0ca6e8" />
+                    <Text style={[s.viewBtnTxt, { color: colors.accent }]}>View</Text>
+                    <Ionicons name="chevron-forward" size={14} color={colors.accent} />
                 </View>
             </View>
 
             {/* Pending amber bar at bottom */}
             {isPending && (
-                <View style={s.pendingBar}>
-                    <View style={s.pendingBarFill} />
+                <View style={[s.pendingBar, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7' }]}>
+                    <View style={[s.pendingBarFill, { backgroundColor: colors.warning }]} />
                 </View>
             )}
         </TouchableOpacity>
@@ -274,27 +279,27 @@ function BookingCard({ booking }: { booking: Booking }) {
 }
 
 // ─── Empty State ──────────────────────────────────────────────────────────────
-function EmptyState({ tab }: { tab: 'active' | 'history' }) {
+function EmptyState({ tab, colors }: { tab: 'active' | 'history'; colors: any }) {
     return (
         <View style={s.emptyState}>
-            <View style={s.emptyIconCircle}>
+            <View style={[s.emptyIconCircle, { backgroundColor: colors.divider }]}>
                 <Ionicons
                     name={tab === 'active' ? 'car-outline' : 'time-outline'}
                     size={44}
-                    color="#9ca3af"
+                    color={colors.textSecondary}
                 />
             </View>
-            <Text style={s.emptyTitle}>
+            <Text style={[s.emptyTitle, { color: colors.textPrimary }]}>
                 {tab === 'active' ? 'No active bookings' : 'No booking history'}
             </Text>
-            <Text style={s.emptySubtitle}>
+            <Text style={[s.emptySubtitle, { color: colors.textSecondary }]}>
                 {tab === 'active'
                     ? 'Book a car wash service to get started.'
                     : 'Completed and cancelled bookings will appear here.'}
             </Text>
             {tab === 'active' && (
                 <TouchableOpacity
-                    style={s.emptyBtn}
+                    style={[s.emptyBtn, { backgroundColor: colors.accent }]}
                     onPress={() => router.push('/service-browse' as any)}
                 >
                     <Ionicons name="search-outline" size={16} color="#fff" />
@@ -307,13 +312,13 @@ function EmptyState({ tab }: { tab: 'active' | 'history' }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8fafc' },
+    container: { flex: 1 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        backgroundColor: '#fff', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
-        borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+        paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
+        borderBottomWidth: 1,
     },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
     headerTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
@@ -324,8 +329,8 @@ const s = StyleSheet.create({
     historyBtnActive: { backgroundColor: '#e0f4fd' },
 
     tabBar: {
-        flexDirection: 'row', backgroundColor: '#fff',
-        borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+        flexDirection: 'row',
+        borderBottomWidth: 1,
         position: 'relative',
     },
     tabItem: {
@@ -348,7 +353,7 @@ const s = StyleSheet.create({
     scroll: { padding: 16 },
 
     card: {
-        backgroundColor: '#fff', borderRadius: 20, marginBottom: 12,
+        borderRadius: 20, marginBottom: 12,
         overflow: 'hidden',
         shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.06, shadowRadius: 10, elevation: 3,

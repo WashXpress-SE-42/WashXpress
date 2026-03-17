@@ -2,6 +2,7 @@ import PayHere from '@/utils/Payhere';
 import { apiFetch } from '@/services/apiClient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import {
   ActivityIndicator,
   Alert,
@@ -64,15 +65,15 @@ interface Subscription {
 }
 
 // ── Allowance Progress Bar ────────────────────────────────────────────────────
-function AllowanceBar({ label, used, total, color }: { label: string; used: number; total: number; color: string }) {
+function AllowanceBar({ label, used, total, color, colors }: { label: string; used: number; total: number; color: string; colors: any }) {
   const pct = total > 0 ? ((total - used) / total) * 100 : 0;
   return (
     <View style={styles.allowanceRow}>
       <View style={styles.allowanceLabelRow}>
-        <Text style={styles.allowanceLabel}>{label}</Text>
-        <Text style={styles.allowanceCount}>{used} / {total} remaining</Text>
+        <Text style={[styles.allowanceLabel, { color: colors.textSecondary }]}>{label}</Text>
+        <Text style={[styles.allowanceCount, { color: colors.textPrimary }]}>{used} / {total} remaining</Text>
       </View>
-      <View style={styles.progressBg}>
+      <View style={[styles.progressBg, { backgroundColor: colors.divider }]}>
         <View style={[styles.progressFill, { width: `${pct}%` as any, backgroundColor: color }]} />
       </View>
     </View>
@@ -80,14 +81,14 @@ function AllowanceBar({ label, used, total, color }: { label: string; used: numb
 }
 
 // ── Active Subscription Card ──────────────────────────────────────────────────
-function ActiveSubCard({ sub, onCancel }: { sub: Subscription; onCancel: () => void }) {
+function ActiveSubCard({ sub, onCancel, colors }: { sub: Subscription; onCancel: () => void; colors: any }) {
   const plan = sub.plan;
   const color = plan?.color || '#0ca6e8';
   const endDate = new Date(sub.endDate).toLocaleDateString('en-LK', { day: 'numeric', month: 'long', year: 'numeric' });
   const daysLeft = Math.max(0, Math.ceil((new Date(sub.endDate).getTime() - Date.now()) / 86400000));
 
   return (
-    <View style={[styles.activeCard, { borderColor: color }]}>
+    <View style={[styles.activeCard, { backgroundColor: colors.cardBackground, borderColor: color }]}>
       <View style={[styles.activeCardHeader, { backgroundColor: color }]}>
         <View>
           <Text style={styles.activeCardTitle}>{sub.planName} Plan</Text>
@@ -98,17 +99,17 @@ function ActiveSubCard({ sub, onCancel }: { sub: Subscription; onCancel: () => v
         </View>
       </View>
       <View style={styles.activeCardBody}>
-        <Text style={styles.renewalText}>Renews on {endDate} · {daysLeft} days left</Text>
-        <Text style={styles.sectionLabel}>Service Allowances</Text>
-        <AllowanceBar label="Exterior Washes" used={sub.remainingWashes} total={sub.totalWashes} color={color} />
-        <AllowanceBar label="Interior Cleans" used={sub.remainingInteriorCleans} total={sub.totalInteriorCleans} color={color} />
+        <Text style={[styles.renewalText, { color: colors.textSecondary }]}>Renews on {endDate} · {daysLeft} days left</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Service Allowances</Text>
+        <AllowanceBar label="Exterior Washes" used={sub.remainingWashes} total={sub.totalWashes} color={color} colors={colors} />
+        <AllowanceBar label="Interior Cleans" used={sub.remainingInteriorCleans} total={sub.totalInteriorCleans} color={color} colors={colors} />
         {sub.totalTireCleans > 0 && (
-          <AllowanceBar label="Tire Cleanings" used={sub.remainingTireCleans} total={sub.totalTireCleans} color={color} />
+          <AllowanceBar label="Tire Cleanings" used={sub.remainingTireCleans} total={sub.totalTireCleans} color={color} colors={colors} />
         )}
         {sub.totalFullDetails > 0 && (
-          <AllowanceBar label="Full Details" used={sub.remainingFullDetails} total={sub.totalFullDetails} color={color} />
+          <AllowanceBar label="Full Details" used={sub.remainingFullDetails} total={sub.totalFullDetails} color={color} colors={colors} />
         )}
-        <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
+        <TouchableOpacity style={[styles.cancelBtn, { borderColor: colors.divider }]} onPress={onCancel}>
           <Text style={styles.cancelBtnText}>Cancel Subscription</Text>
         </TouchableOpacity>
       </View>
@@ -121,41 +122,45 @@ function PlanCard({
   plan,
   onSelect,
   isCurrentPlan,
+  colors,
+  isDark,
 }: {
   plan: Plan;
   onSelect: () => void;
   isCurrentPlan?: boolean;
+  colors: any;
+  isDark: boolean;
 }) {
   return (
-    <View style={[styles.planCard, plan.isPopular && { borderColor: plan.color, borderWidth: 2 }]}>
+    <View style={[styles.planCard, { backgroundColor: colors.cardBackground, borderColor: colors.divider }, plan.isPopular && { borderColor: plan.color, borderWidth: 2 }]}>
       {plan.isPopular && (
         <View style={[styles.popularBadge, { backgroundColor: plan.color }]}>
           <Text style={styles.popularBadgeText}>MOST POPULAR</Text>
         </View>
       )}
-      <View style={[styles.planHeader, { backgroundColor: plan.color + '15' }]}>
+      <View style={[styles.planHeader, { backgroundColor: isDark ? `${plan.color}25` : `${plan.color}15` }]}>
         <Text style={[styles.planName, { color: plan.color }]}>{plan.name}</Text>
-        <Text style={styles.planTagline}>{plan.tagline}</Text>
+        <Text style={[styles.planTagline, { color: colors.textSecondary }]}>{plan.tagline}</Text>
         <Text style={[styles.planPrice, { color: plan.color }]}>
           LKR {plan.price.toLocaleString()}
-          <Text style={styles.planPricePer}> /month</Text>
+          <Text style={[styles.planPricePer, { color: colors.textSecondary }]}> /month</Text>
         </Text>
       </View>
       <View style={styles.planBody}>
         <View style={styles.allowanceSummary}>
-          <AllowancePill icon="🚿" label={`${plan.allowances?.washes ?? 0} Washes`} color={plan.color} />
-          <AllowancePill icon="🧹" label={`${plan.allowances?.interiorCleans ?? 0} Interior`} color={plan.color} />
+          <AllowancePill icon="🚿" label={`${plan.allowances?.washes ?? 0} Washes`} color={plan.color} colors={colors} isDark={isDark} />
+          <AllowancePill icon="🧹" label={`${plan.allowances?.interiorCleans ?? 0} Interior`} color={plan.color} colors={colors} isDark={isDark} />
           {(plan.allowances?.tireCleans ?? 0) > 0 && (
-            <AllowancePill icon="⚙️" label={`${plan.allowances?.tireCleans} Tires`} color={plan.color} />
+            <AllowancePill icon="⚙️" label={`${plan.allowances?.tireCleans} Tires`} color={plan.color} colors={colors} isDark={isDark} />
           )}
           {(plan.allowances?.fullDetails ?? 0) > 0 && (
-            <AllowancePill icon="✨" label={`${plan.allowances?.fullDetails} Full Detail`} color={plan.color} />
+            <AllowancePill icon="✨" label={`${plan.allowances?.fullDetails} Full Detail`} color={plan.color} colors={colors} isDark={isDark} />
           )}
         </View>
         {plan.features.map((f, i) => (
           <View key={i} style={styles.featureRow}>
             <Text style={[styles.featureCheck, { color: plan.color }]}>✓</Text>
-            <Text style={styles.featureText}>{f}</Text>
+            <Text style={[styles.featureText, { color: colors.textSecondary }]}>{f}</Text>
           </View>
         ))}
         {isCurrentPlan ? (
@@ -172,9 +177,9 @@ function PlanCard({
   );
 }
 
-function AllowancePill({ icon, label, color }: { icon: string; label: string; color: string }) {
+function AllowancePill({ icon, label, color, colors, isDark }: { icon: string; label: string; color: string; colors: any; isDark: boolean }) {
   return (
-    <View style={[styles.pill, { backgroundColor: color + '15', borderColor: color + '40' }]}>
+    <View style={[styles.pill, { backgroundColor: isDark ? `${color}25` : `${color}15`, borderColor: `${color}40` }]}>
       <Text style={styles.pillIcon}>{icon}</Text>
       <Text style={[styles.pillLabel, { color }]}>{label}</Text>
     </View>
@@ -183,6 +188,7 @@ function AllowancePill({ icon, label, color }: { icon: string; label: string; co
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function SubscriptionsScreen() {
+  const { colors, isDark } = useTheme();
   const router = useRouter();
 
   // changeSubscriptionId passed from my-subscription.tsx when changing plan
@@ -353,43 +359,43 @@ export default function SubscriptionsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0ca6e8" />
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title={isChangingPlan ? 'Change Plan' : 'Subscriptions'} />
       <ScrollView contentContainerStyle={styles.content}>
 
         {/* Change plan info banner */}
         {isChangingPlan && changingSubscription && (
-          <View style={styles.changeBanner}>
-            <Text style={styles.changeBannerTitle}>Changing from {changingSubscription.planName}</Text>
-            <Text style={styles.changeBannerSub}>
+          <View style={[styles.changeBanner, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.1)' : '#e0f4fd', borderLeftColor: colors.accent }]}>
+            <Text style={[styles.changeBannerTitle, { color: colors.textPrimary }]}>Changing from {changingSubscription.planName}</Text>
+            <Text style={[styles.changeBannerSub, { color: colors.textSecondary }]}>
               Your current plan will be cancelled and the new plan activates immediately after payment.
             </Text>
           </View>
         )}
 
         {!isChangingPlan && (
-          <Text style={styles.subheading}>Save more with monthly plans</Text>
+          <Text style={[styles.subheading, { color: colors.textSecondary }]}>Save more with monthly plans</Text>
         )}
 
         {/* Active plans — hidden when in change mode */}
         {!isChangingPlan && activeSubscriptions.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your Active Plans</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Your Active Plans</Text>
             {activeSubscriptions.map(sub => (
-              <ActiveSubCard key={sub.id} sub={sub} onCancel={() => handleCancel(sub.id)} />
+              <ActiveSubCard key={sub.id} sub={sub} onCancel={() => handleCancel(sub.id)} colors={colors} />
             ))}
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             {isChangingPlan
               ? 'Select New Plan'
               : activeSubscriptions.length > 0
@@ -402,6 +408,8 @@ export default function SubscriptionsScreen() {
               plan={plan}
               isCurrentPlan={isChangingPlan && plan.id === currentPlanId}
               onSelect={() => handleSelectPlan(plan)}
+              colors={colors}
+              isDark={isDark}
             />
           ))}
         </View>
@@ -418,21 +426,21 @@ export default function SubscriptionsScreen() {
       {/* Vehicle picker modal — fresh subscriptions only */}
       <Modal visible={vehicleModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Select Vehicle</Text>
-            <Text style={styles.modalSub}>Which vehicle is this plan for?</Text>
+          <View style={[styles.modalBox, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Vehicle</Text>
+            <Text style={[styles.modalSub, { color: colors.textSecondary }]}>Which vehicle is this plan for?</Text>
             <FlatList
               data={vehicles}
               keyExtractor={v => v.id}
               renderItem={({ item: v }) => (
-                <TouchableOpacity style={styles.vehicleItem} onPress={() => handleSubscribe(v.id)}>
-                  <Text style={styles.vehicleName}>{v.nickname || `${v.make} ${v.model}`}</Text>
-                  <Text style={styles.vehiclePlate}>{v.licensePlate} · {v.year}</Text>
+                <TouchableOpacity style={[styles.vehicleItem, { borderBottomColor: colors.divider }]} onPress={() => handleSubscribe(v.id)}>
+                  <Text style={[styles.vehicleName, { color: colors.textPrimary }]}>{v.nickname || `${v.make} ${v.model}`}</Text>
+                  <Text style={[styles.vehiclePlate, { color: colors.textSecondary }]}>{v.licensePlate} · {v.year} </Text>
                 </TouchableOpacity>
               )}
             />
-            <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setVehicleModalVisible(false)}>
-              <Text style={styles.modalCancelText}>Cancel</Text>
+            <TouchableOpacity style={[styles.modalCancelBtn, { borderColor: colors.divider }]} onPress={() => setVehicleModalVisible(false)}>
+              <Text style={[styles.modalCancelText, { color: colors.textSecondary }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -442,47 +450,47 @@ export default function SubscriptionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1 },
   content: { padding: 20, paddingBottom: 40 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  subheading: { fontSize: 14, color: '#64748b', marginBottom: 24, marginTop: 4 },
+  subheading: { fontSize: 14, marginBottom: 24, marginTop: 4 },
   section: { marginBottom: 28 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#0d1629', marginBottom: 14 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', marginBottom: 14 },
 
   changeBanner: {
-    backgroundColor: '#e0f4fd', borderRadius: 14, padding: 16,
-    marginBottom: 24, borderLeftWidth: 4, borderLeftColor: '#0ca6e8',
+    borderRadius: 14, padding: 16,
+    marginBottom: 24, borderLeftWidth: 4,
   },
-  changeBannerTitle: { fontSize: 15, fontWeight: '700', color: '#0d1629', marginBottom: 4 },
-  changeBannerSub: { fontSize: 13, color: '#374151', lineHeight: 20 },
+  changeBannerTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
+  changeBannerSub: { fontSize: 13, lineHeight: 20 },
 
   allowanceRow: { marginBottom: 10 },
   allowanceLabelRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  allowanceLabel: { fontSize: 13, color: '#374151' },
-  allowanceCount: { fontSize: 13, fontWeight: '600', color: '#0d1629' },
-  progressBg: { height: 6, backgroundColor: '#e2e8f0', borderRadius: 4 },
+  allowanceLabel: { fontSize: 13 },
+  allowanceCount: { fontSize: 13, fontWeight: '600' },
+  progressBg: { height: 6, borderRadius: 4 },
   progressFill: { height: 6, borderRadius: 4 },
 
-  activeCard: { borderRadius: 16, borderWidth: 1.5, overflow: 'hidden', marginBottom: 16, backgroundColor: '#fff' },
+  activeCard: { borderRadius: 16, borderWidth: 1.5, overflow: 'hidden', marginBottom: 16 },
   activeCardHeader: { padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   activeCardTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
   activeCardSub: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
   activeBadge: { backgroundColor: 'rgba(255,255,255,0.25)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   activeBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   activeCardBody: { padding: 16 },
-  renewalText: { fontSize: 13, color: '#64748b', marginBottom: 14 },
-  sectionLabel: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 10 },
+  renewalText: { fontSize: 13, marginBottom: 14 },
+  sectionLabel: { fontSize: 14, fontWeight: '600', marginBottom: 10 },
   cancelBtn: { marginTop: 14, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#fca5a5', alignItems: 'center' },
   cancelBtnText: { color: '#ef4444', fontSize: 14, fontWeight: '600' },
 
-  planCard: { backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 16, overflow: 'hidden' },
+  planCard: { borderRadius: 16, borderWidth: 1, marginBottom: 16, overflow: 'hidden' },
   popularBadge: { paddingVertical: 6, alignItems: 'center' },
   popularBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700', letterSpacing: 1 },
   planHeader: { padding: 20 },
   planName: { fontSize: 22, fontWeight: '800' },
   planTagline: { fontSize: 13, color: '#64748b', marginTop: 2, marginBottom: 10 },
   planPrice: { fontSize: 28, fontWeight: '800' },
-  planPricePer: { fontSize: 14, fontWeight: '400', color: '#64748b' },
+  planPricePer: { fontSize: 14, fontWeight: '400' },
   planBody: { padding: 20 },
   allowanceSummary: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
@@ -490,7 +498,7 @@ const styles = StyleSheet.create({
   pillLabel: { fontSize: 12, fontWeight: '600' },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   featureCheck: { fontSize: 15, fontWeight: '700' },
-  featureText: { fontSize: 14, color: '#374151' },
+  featureText: { fontSize: 14 },
   selectBtn: { marginTop: 16, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   selectBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   currentPlanBadge: { marginTop: 16, paddingVertical: 13, borderRadius: 12, borderWidth: 2, alignItems: 'center' },
@@ -502,12 +510,12 @@ const styles = StyleSheet.create({
   },
   overlayText: { color: '#fff', marginTop: 12, fontSize: 15 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalBox: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: '60%' },
-  modalTitle: { fontSize: 20, fontWeight: '700', color: '#0d1629', marginBottom: 4 },
-  modalSub: { fontSize: 14, color: '#64748b', marginBottom: 16 },
-  vehicleItem: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  vehicleName: { fontSize: 16, fontWeight: '600', color: '#0d1629' },
-  vehiclePlate: { fontSize: 13, color: '#64748b', marginTop: 2 },
-  modalCancelBtn: { marginTop: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center' },
-  modalCancelText: { color: '#64748b', fontSize: 15, fontWeight: '600' },
+  modalBox: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: '60%' },
+  modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 4 },
+  modalSub: { fontSize: 14, marginBottom: 16 },
+  vehicleItem: { paddingVertical: 14, borderBottomWidth: 1 },
+  vehicleName: { fontSize: 16, fontWeight: '600' },
+  vehiclePlate: { fontSize: 13, marginTop: 2 },
+  modalCancelBtn: { marginTop: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
+  modalCancelText: { fontSize: 15, fontWeight: '600' },
 });

@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '@/services/apiClient';
+import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -56,6 +57,7 @@ const VEHICLE_TYPE_ICONS: Record<string, string> = {
 };
 
 export default function WasherInProgressScreen() {
+    const { colors, isDark } = useTheme();
     const router = useRouter();
     const { logout } = useAuth();
     const { id: bookingId } = useLocalSearchParams<{ id: string }>();
@@ -176,10 +178,10 @@ export default function WasherInProgressScreen() {
     }
 
     if (loading) return (
-        <View style={s.center}><ActivityIndicator size="large" color="#0ca6e8" /></View>
+        <View style={[s.center, { backgroundColor: colors.background }]}><ActivityIndicator size="large" color={colors.accent} /></View>
     );
     if (!booking) return (
-        <View style={s.center}><Text style={{ color: '#ef4444' }}>Booking not found</Text></View>
+        <View style={[s.center, { backgroundColor: colors.background }]}><Text style={{ color: colors.error }}>Booking not found</Text></View>
     );
 
     const vehicleIcon = VEHICLE_TYPE_ICONS[booking.vehicle.type] || '🚗';
@@ -187,27 +189,27 @@ export default function WasherInProgressScreen() {
     const timeChanged = booking.washerPreferredTime && booking.washerPreferredTime !== booking.scheduledTime;
 
     return (
-        <View style={s.container}>
+        <View style={[s.container, { backgroundColor: colors.background }]}>
             {/* Header */}
-            <View style={s.header}>
+            <View style={[s.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-                    <Ionicons name="arrow-back" size={24} color="#0d1629" />
+                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
-                <Text style={s.headerTitle}>Job In Progress</Text>
-                <View style={[s.statusPill, { backgroundColor: '#fffbeb' }]}>
+                <Text style={[s.headerTitle, { color: colors.textPrimary }]}>Job In Progress</Text>
+                <View style={[s.statusPill, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb' }]}>
                     <Ionicons name="construct" size={14} color="#f59e0b" />
                     <Text style={[s.statusPillTxt, { color: '#f59e0b' }]}>Active Job</Text>
                 </View>
             </View>
 
             {/* Top quick actions & crucial info */}
-            <View style={s.topBar}>
+            <View style={[s.topBar, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
                 <View style={s.topInfo}>
-                    <Text style={s.topService}>{booking.service.name}</Text>
-                    <Text style={s.topMeta}>
+                    <Text style={[s.topService, { color: colors.textPrimary }]}>{booking.service.name}</Text>
+                    <Text style={[s.topMeta, { color: colors.textSecondary }]}>
                         {formatDate(booking.scheduledDate)} · {fmt(booking.washerPreferredTime || booking.scheduledTime)}
                     </Text>
-                    <Text numberOfLines={1} style={s.topAddress}>
+                    <Text numberOfLines={1} style={[s.topAddress, { color: colors.textSecondary }]}>
                         {booking.address.label || booking.address.addressLine1}
                     </Text>
                 </View>
@@ -216,54 +218,54 @@ export default function WasherInProgressScreen() {
             <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
                 {/* Earnings banner */}
-                <View style={s.earningsBanner}>
+                <View style={[s.earningsBanner, { backgroundColor: colors.cardBackground }]}>
                     <View>
-                        <Text style={s.earningsLabel}>Earnings for this Job</Text>
-                        <Text style={s.earningsValue}>
+                        <Text style={[s.earningsLabel, { color: colors.textSecondary }]}>Earnings for this Job</Text>
+                        <Text style={[s.earningsValue, { color: colors.textPrimary }]}>
                             {booking.paidWithSubscription
                                 ? 'Subscription Job'
                                 : `LKR ${booking.totalPrice.toLocaleString()}`}
                         </Text>
                     </View>
-                    <View style={s.durationPill}>
-                        <Ionicons name="time-outline" size={15} color="#0ca6e8" />
-                        <Text style={s.durationTxt}>~{booking.duration} min</Text>
+                    <View style={[s.durationPill, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : 'rgba(12, 166, 232, 0.1)' }]}>
+                        <Ionicons name="time-outline" size={15} color={colors.accent} />
+                        <Text style={[s.durationTxt, { color: colors.accent }]}>~{booking.duration} min</Text>
                     </View>
                 </View>
 
                  {/* ── Quick Action Buttons (Contact and Directions) ── */}
                  <View style={s.quickActionsRow}>
-                    <TouchableOpacity style={[s.quickActionBtn, s.contactBtn]} onPress={handleContactCustomer}>
-                        <Ionicons name="call" size={20} color="#0ea5e9" />
-                        <Text style={s.contactBtnTxt}>Contact Customer</Text>
+                     <TouchableOpacity style={[s.quickActionBtn, s.contactBtn, { backgroundColor: isDark ? 'rgba(14, 165, 233, 0.15)' : '#e0f2fe', borderColor: colors.border }]} onPress={handleContactCustomer}>
+                        <Ionicons name="call" size={20} color={(colors as any).info || '#0ea5e9'} />
+                        <Text style={[s.contactBtnTxt, { color: (colors as any).info || '#0ea5e9' }]}>Contact Customer</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={[s.quickActionBtn, s.directionsBtn]} onPress={openNavigation}>
-                        <Ionicons name="navigate" size={20} color="#16a34a" />
-                        <Text style={s.directionsBtnTxt}>Get Directions</Text>
+                    <TouchableOpacity style={[s.quickActionBtn, s.directionsBtn, { backgroundColor: isDark ? 'rgba(22, 163, 74, 0.15)' : '#dcfce7', borderColor: colors.border }]} onPress={openNavigation}>
+                        <Ionicons name="navigate" size={20} color={colors.success || '#16a34a'} />
+                        <Text style={[s.directionsBtnTxt, { color: colors.success || '#16a34a' }]}>Get Directions</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* ── Vehicle & Car Care Notes ── */}
-                <View style={s.card}>
-                    <CardTitle icon="car-sport" title="Vehicle" />
+                <View style={[s.card, { backgroundColor: colors.cardBackground }]}>
+                    <CardTitle icon="car-sport" title="Vehicle" colors={colors} />
 
                     <View style={s.vehicleRow}>
                         <Text style={s.vehicleEmoji}>{vehicleIcon}</Text>
                         <View style={{ flex: 1, marginLeft: 14 }}>
-                            <Text style={s.vehicleName}>{booking.vehicle.nickname || `${booking.vehicle.make} ${booking.vehicle.model}`}</Text>
-                            <Text style={s.vehicleDetails}>{booking.vehicle.make} {booking.vehicle.model} · {booking.vehicle.year} · {booking.vehicle.color}</Text>
-                            <Text style={s.vehiclePlate}>{booking.vehicle.licensePlate}</Text>
+                            <Text style={[s.vehicleName, { color: colors.textPrimary }]}>{booking.vehicle.nickname || `${booking.vehicle.make} ${booking.vehicle.model}`}</Text>
+                            <Text style={[s.vehicleDetails, { color: colors.textSecondary }]}>{booking.vehicle.make} {booking.vehicle.model} · {booking.vehicle.year} · {booking.vehicle.color}</Text>
+                            <Text style={[s.vehiclePlate, { color: colors.accent }]}>{booking.vehicle.licensePlate}</Text>
                         </View>
-                        <View style={s.vehicleTypePill}>
-                            <Text style={s.vehicleTypeTxt}>{booking.vehicle.type}</Text>
+                        <View style={[s.vehicleTypePill, { backgroundColor: colors.divider }]}>
+                            <Text style={[s.vehicleTypeTxt, { color: colors.textPrimary }]}>{booking.vehicle.type}</Text>
                         </View>
                     </View>
 
                     {booking.priceBreakdown && booking.priceBreakdown.multiplier > 1.0 && (
-                        <View style={s.multiplierRow}>
-                            <Ionicons name="information-circle-outline" size={14} color="#0ca6e8" />
-                            <Text style={s.multiplierTxt}>
+                        <View style={[s.multiplierRow, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f4fd' }]}>
+                            <Ionicons name="information-circle-outline" size={14} color={colors.accent} />
+                            <Text style={[s.multiplierTxt, { color: colors.accent }]}>
                                 {booking.vehicle.type} vehicle — {Math.round((booking.priceBreakdown.multiplier - 1) * 100)}% size surcharge applied
                             </Text>
                         </View>
@@ -271,47 +273,47 @@ export default function WasherInProgressScreen() {
 
                     {/* Special instructions — prominent */}
                     {hasSpecialNotes ? (
-                        <View style={s.specialNotesBox}>
+                        <View style={[s.specialNotesBox, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb', borderColor: colors.warning }]}>
                             <View style={s.specialNotesHeader}>
-                                <Ionicons name="warning" size={18} color="#d97706" />
-                                <Text style={s.specialNotesTitle}>⚠️ Special Instructions</Text>
+                                <Ionicons name="warning" size={18} color={colors.warning} />
+                                <Text style={[s.specialNotesTitle, { color: colors.warning }]}>⚠️ Special Instructions</Text>
                             </View>
-                            <Text style={s.specialNotesTxt}>{booking.notes}</Text>
+                            <Text style={[s.specialNotesTxt, { color: colors.textPrimary }]}>{booking.notes}</Text>
                         </View>
                     ) : (
-                        <View style={s.noNotesRow}>
-                            <Ionicons name="checkmark-circle-outline" size={16} color="#16a34a" />
-                            <Text style={s.noNotesTxt}>No special instructions from customer</Text>
+                        <View style={[s.noNotesRow, { backgroundColor: isDark ? 'rgba(22, 163, 74, 0.1)' : '#f0fdf4' }]}>
+                            <Ionicons name="checkmark-circle-outline" size={16} color={colors.success || '#16a34a'} />
+                            <Text style={[s.noNotesTxt, { color: colors.success || '#16a34a' }]}>No special instructions from customer</Text>
                         </View>
                     )}
                 </View>
 
                 {/* ── Location Details ── */}
-                <View style={s.card}>
-                    <CardTitle icon="location" title="Service Location" />
-                    <Text style={s.addressLabel}>{booking.address.label}</Text>
-                    <Text style={s.addressLine}>{booking.address.addressLine1}</Text>
-                    {booking.address.addressLine2 && <Text style={s.addressLine}>{booking.address.addressLine2}</Text>}
-                    <Text style={s.addressLine}>{booking.address.city}{booking.address.postalCode ? `, ${booking.address.postalCode}` : ''}</Text>
+                <View style={[s.card, { backgroundColor: colors.cardBackground }]}>
+                    <CardTitle icon="location" title="Service Location" colors={colors} />
+                    <Text style={[s.addressLabel, { color: colors.textPrimary }]}>{booking.address.label}</Text>
+                    <Text style={[s.addressLine, { color: colors.textSecondary }]}>{booking.address.addressLine1}</Text>
+                    {booking.address.addressLine2 && <Text style={[s.addressLine, { color: colors.textSecondary }]}>{booking.address.addressLine2}</Text>}
+                    <Text style={[s.addressLine, { color: colors.textSecondary }]}>{booking.address.city}{booking.address.postalCode ? `, ${booking.address.postalCode}` : ''}</Text>
                 </View>
 
                 {/* ── Schedule ── */}
-                <View style={s.card}>
-                    <CardTitle icon="time" title="Schedule Information" />
+                <View style={[s.card, { backgroundColor: colors.cardBackground }]}>
+                    <CardTitle icon="time" title="Schedule Information" colors={colors} />
 
                     <View style={s.scheduleGrid}>
-                        <ScheduleItem label="Date" value={formatDate(booking.scheduledDate)} />
-                        <ScheduleItem label="Service" value={booking.service.name} />
+                        <ScheduleItem label="Date" value={formatDate(booking.scheduledDate)} colors={colors} />
+                        <ScheduleItem label="Service" value={booking.service.name} colors={colors} />
                     </View>
 
                     {/* Time display — show both if different */}
-                    <View style={s.timeBlock}>
-                        <Text style={s.timeLbl}>Agreed Arrival Time</Text>
-                        <Text style={s.timeVal}>{fmt(booking.washerPreferredTime || booking.scheduledTime)}</Text>
+                    <View style={[s.timeBlock, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                        <Text style={[s.timeLbl, { color: colors.textSecondary }]}>Agreed Arrival Time</Text>
+                        <Text style={[s.timeVal, { color: colors.textPrimary }]}>{fmt(booking.washerPreferredTime || booking.scheduledTime)}</Text>
                         {timeChanged && (
                             <View style={s.timeChangedRow}>
-                                <Ionicons name="information-circle-outline" size={13} color="#6b7280" />
-                                <Text style={s.timeChangedTxt}>Customer originally requested {fmt(booking.scheduledTime)}</Text>
+                                <Ionicons name="information-circle-outline" size={13} color={colors.textSecondary} />
+                                <Text style={[s.timeChangedTxt, { color: colors.textSecondary }]}>Customer originally requested {fmt(booking.scheduledTime)}</Text>
                             </View>
                         )}
                     </View>
@@ -320,31 +322,31 @@ export default function WasherInProgressScreen() {
                 {/* ── Action Buttons ── */}
                 {!booking.arrivedAt && !booking.startedAt && (
                     <TouchableOpacity
-                        style={[s.actionBtn, s.arriveBtn]}
+                        style={[s.actionBtn, s.arriveBtn, { backgroundColor: colors.accent }]}
                         onPress={() => handleUpdateStatus('arrive', 'Confirm Arrival', "Have you arrived at the customer's location?", 'Customer notified you have arrived!')}
                         disabled={actionLoading}
                     >
-                        {actionLoading ? <ActivityIndicator color="#fff" /> : <><Ionicons name="location" size={24} color="#fff" /><Text style={s.actionBtnTxt}>I've Arrived</Text></>}
+                        {actionLoading ? <ActivityIndicator color="#fff" /> : <><Ionicons name="location" size={24} color="#fff" /><Text style={[s.actionBtnTxt, { color: '#fff' }]}>I've Arrived</Text></>}
                     </TouchableOpacity>
                 )}
 
                 {booking.arrivedAt && !booking.startedAt && (
                     <TouchableOpacity
-                        style={[s.actionBtn, s.startBtn]}
+                        style={[s.actionBtn, s.startBtn, { backgroundColor: colors.warning || '#f59e0b' }]}
                         onPress={() => handleUpdateStatus('start', 'Start Wash', 'Begin the washing process?', 'Started vehicle wash.')}
                         disabled={actionLoading}
                     >
-                        {actionLoading ? <ActivityIndicator color="#fff" /> : <><Ionicons name="play-circle" size={24} color="#fff" /><Text style={s.actionBtnTxt}>Start Wash</Text></>}
+                        {actionLoading ? <ActivityIndicator color="#fff" /> : <><Ionicons name="play-circle" size={24} color="#fff" /><Text style={[s.actionBtnTxt, { color: '#fff' }]}>Start Wash</Text></>}
                     </TouchableOpacity>
                 )}
 
                 {booking.startedAt && (
                     <TouchableOpacity
-                        style={[s.actionBtn, s.completeBtn]}
+                        style={[s.actionBtn, s.completeBtn, { backgroundColor: colors.success || '#16a34a' }]}
                         onPress={() => handleUpdateStatus('complete', 'Complete Service', 'Are you done with the wash?', 'Service marked complete. Great job!')}
                         disabled={actionLoading}
                     >
-                        {actionLoading ? <ActivityIndicator color="#fff" /> : <><Ionicons name="checkmark-done-circle" size={24} color="#fff" /><Text style={s.actionBtnTxt}>Finish Job & Complete Service</Text></>}
+                        {actionLoading ? <ActivityIndicator color="#fff" /> : <><Ionicons name="checkmark-done-circle" size={24} color="#fff" /><Text style={[s.actionBtnTxt, { color: '#fff' }]}>Finish Job & Complete Service</Text></>}
                     </TouchableOpacity>
                 )}
 
@@ -354,91 +356,91 @@ export default function WasherInProgressScreen() {
     );
 }
 
-function CardTitle({ icon, title }: { icon: string; title: string }) {
+function CardTitle({ icon, title, colors }: { icon: string; title: string; colors: any }) {
     return (
         <View style={s.cardTitleRow}>
-            <Ionicons name={icon as any} size={18} color="#0ca6e8" />
-            <Text style={s.cardTitle}>{title}</Text>
+            <Ionicons name={icon as any} size={18} color={colors.accent} />
+            <Text style={[s.cardTitle, { color: colors.textPrimary }]}>{title}</Text>
         </View>
     );
 }
 
-function ScheduleItem({ label, value }: { label: string; value: string }) {
+function ScheduleItem({ label, value, colors }: { label: string; value: string; colors: any }) {
     return (
-        <View style={s.scheduleItem}>
-            <Text style={s.scheduleLbl}>{label}</Text>
-            <Text style={s.scheduleVal}>{value}</Text>
+        <View style={[s.scheduleItem, { backgroundColor: colors.background }]}>
+            <Text style={[s.scheduleLbl, { color: colors.textSecondary }]}>{label}</Text>
+            <Text style={[s.scheduleVal, { color: colors.textPrimary }]}>{value}</Text>
         </View>
     );
 }
 
 const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8fafc' },
+    container: { flex: 1 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', paddingTop: 56, paddingBottom: 10, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingBottom: 10, paddingHorizontal: 20, borderBottomWidth: 1 },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
+    headerTitle: { fontSize: 18, fontWeight: '700' },
     statusPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
     statusPillTxt: { fontSize: 12, fontWeight: '700' },
-    topBar: { backgroundColor: '#fff', paddingHorizontal: 20, paddingBottom: 16, paddingTop: 12, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
+    topBar: { paddingHorizontal: 20, paddingBottom: 16, paddingTop: 12, borderBottomWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
     topInfo: { flex: 1 },
-    topService: { fontSize: 16, fontWeight: '700', color: '#0d1629' },
-    topMeta: { fontSize: 13, color: '#6b7280', marginTop: 4 },
-    topAddress: { fontSize: 13, color: '#9ca3af', marginTop: 4, maxWidth: '100%' },
+    topService: { fontSize: 16, fontWeight: '700' },
+    topMeta: { fontSize: 13, marginTop: 4 },
+    topAddress: { fontSize: 13, marginTop: 4, maxWidth: '100%' },
     scroll: { padding: 20, paddingBottom: 40 },
 
-    earningsBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0d1629', borderRadius: 18, padding: 20, marginBottom: 16 },
-    earningsLabel: { fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '600', marginBottom: 6 },
-    earningsValue: { fontSize: 26, fontWeight: '800', color: '#fff' },
-    durationPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(12,166,232,0.2)', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 },
-    durationTxt: { fontSize: 15, fontWeight: '700', color: '#0ca6e8' },
+    earningsBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 18, padding: 20, marginBottom: 16 },
+    earningsLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6 },
+    earningsValue: { fontSize: 26, fontWeight: '800' },
+    durationPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 },
+    durationTxt: { fontSize: 15, fontWeight: '700' },
 
     quickActionsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
     quickActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, borderWidth: 1 },
-    contactBtn: { backgroundColor: '#e0f2fe', borderColor: '#bae6fd' },
-    contactBtnTxt: { fontSize: 15, fontWeight: '700', color: '#0284c7' },
-    directionsBtn: { backgroundColor: '#dcfce7', borderColor: '#bbf7d0' },
-    directionsBtnTxt: { fontSize: 15, fontWeight: '700', color: '#16a34a' },
+    contactBtn: { },
+    contactBtnTxt: { fontSize: 15, fontWeight: '700' },
+    directionsBtn: { },
+    directionsBtnTxt: { fontSize: 15, fontWeight: '700' },
 
-    card: { backgroundColor: '#fff', borderRadius: 18, padding: 18, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+    card: { borderRadius: 18, padding: 18, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
     cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-    cardTitle: { fontSize: 16, fontWeight: '700', color: '#0d1629' },
+    cardTitle: { fontSize: 16, fontWeight: '700' },
 
     scheduleGrid: { flexDirection: 'row', gap: 12, marginBottom: 14 },
-    scheduleItem: { flex: 1, backgroundColor: '#f8fafc', borderRadius: 12, padding: 12 },
-    scheduleLbl: { fontSize: 11, color: '#9ca3af', fontWeight: '600', marginBottom: 4 },
-    scheduleVal: { fontSize: 14, fontWeight: '700', color: '#0d1629' },
+    scheduleItem: { flex: 1, borderRadius: 12, padding: 12 },
+    scheduleLbl: { fontSize: 11, fontWeight: '600', marginBottom: 4 },
+    scheduleVal: { fontSize: 14, fontWeight: '700' },
 
-    timeBlock: { backgroundColor: '#f8fafc', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#f1f5f9' },
-    timeLbl: { fontSize: 12, color: '#64748b', fontWeight: '600', marginBottom: 4 },
-    timeVal: { fontSize: 22, fontWeight: '800', color: '#0d1629' },
+    timeBlock: { borderRadius: 14, padding: 14, borderWidth: 1 },
+    timeLbl: { fontSize: 12, fontWeight: '600', marginBottom: 4 },
+    timeVal: { fontSize: 22, fontWeight: '800' },
     timeChangedRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 8 },
-    timeChangedTxt: { flex: 1, fontSize: 12, color: '#6b7280', lineHeight: 17 },
+    timeChangedTxt: { flex: 1, fontSize: 12, lineHeight: 17 },
 
     vehicleRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 },
     vehicleEmoji: { fontSize: 36, marginTop: 2 },
-    vehicleName: { fontSize: 16, fontWeight: '700', color: '#0d1629' },
-    vehicleDetails: { fontSize: 13, color: '#6b7280', marginTop: 2 },
-    vehiclePlate: { fontSize: 13, color: '#0ca6e8', fontWeight: '600', marginTop: 2 },
-    vehicleTypePill: { backgroundColor: '#f1f5f9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
-    vehicleTypeTxt: { fontSize: 12, fontWeight: '700', color: '#374151' },
+    vehicleName: { fontSize: 16, fontWeight: '700' },
+    vehicleDetails: { fontSize: 13, marginTop: 2 },
+    vehiclePlate: { fontSize: 13, fontWeight: '600', marginTop: 2 },
+    vehicleTypePill: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
+    vehicleTypeTxt: { fontSize: 12, fontWeight: '700' },
 
-    multiplierRow: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#e0f4fd', borderRadius: 10, padding: 10, marginBottom: 14 },
-    multiplierTxt: { fontSize: 13, color: '#0ca6e8', flex: 1 },
+    multiplierRow: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 10, padding: 10, marginBottom: 14 },
+    multiplierTxt: { fontSize: 13, flex: 1 },
 
-    specialNotesBox: { backgroundColor: '#fffbeb', borderRadius: 14, padding: 16, borderWidth: 1.5, borderColor: '#fde68a' },
+    specialNotesBox: { borderRadius: 14, padding: 16, borderWidth: 1.5 },
     specialNotesHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-    specialNotesTitle: { fontSize: 14, fontWeight: '800', color: '#92400e' },
-    specialNotesTxt: { fontSize: 15, color: '#78350f', lineHeight: 22 },
-    noNotesRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f0fdf4', borderRadius: 10, padding: 12 },
-    noNotesTxt: { fontSize: 13, color: '#16a34a', fontWeight: '600' },
+    specialNotesTitle: { fontSize: 14, fontWeight: '800' },
+    specialNotesTxt: { fontSize: 15, lineHeight: 22 },
+    noNotesRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, padding: 12 },
+    noNotesTxt: { fontSize: 13, fontWeight: '600' },
 
-    addressLabel: { fontSize: 15, fontWeight: '700', color: '#0d1629', marginBottom: 4 },
-    addressLine: { fontSize: 14, color: '#6b7280', marginBottom: 2 },
+    addressLabel: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
+    addressLine: { fontSize: 14, marginBottom: 2 },
 
     actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 18, marginTop: 12 },
-    arriveBtn: { backgroundColor: '#ea580c' },
-    startBtn: { backgroundColor: '#f59e0b' },
-    completeBtn: { backgroundColor: '#16a34a' },
-    actionBtnTxt: { fontSize: 16, fontWeight: '800', color: '#fff' },
+    arriveBtn: { },
+    startBtn: { },
+    completeBtn: { },
+    actionBtnTxt: { fontSize: 16, fontWeight: '800' },
 });

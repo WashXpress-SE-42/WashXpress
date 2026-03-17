@@ -7,6 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { apiFetch } from '../services/apiClient';
+import { useTheme } from '../context/ThemeContext';
 
 const LABELS = ['Home', 'Work', 'Office', 'Other'];
 
@@ -26,6 +27,7 @@ const SRI_LANKA_CITIES = [
 ];
 
 export default function AddAddressScreen() {
+    const { colors, isDark } = useTheme();
     const { addressId, edit } = useLocalSearchParams<{ addressId?: string; edit?: string }>();
     const isEdit = edit === 'true' && !!addressId;
 
@@ -96,28 +98,32 @@ export default function AddAddressScreen() {
     );
 
     if (loading) return (
-        <View style={s.container}>
-            <Header isEdit={isEdit} />
-            <View style={s.center}><ActivityIndicator size="large" color="#0ca6e8" /></View>
+        <View style={[s.container, { backgroundColor: colors.background }]}>
+            <Header isEdit={isEdit} colors={colors} />
+            <View style={s.center}><ActivityIndicator size="large" color={colors.accent} /></View>
         </View>
     );
 
     return (
-        <View style={s.container}>
-            <Header isEdit={isEdit} />
+        <View style={[s.container, { backgroundColor: colors.background }]}>
+            <Header isEdit={isEdit} colors={colors} />
             <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                 <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
                     {/* Label */}
                     <View style={s.fieldWrap}>
-                        <Text style={s.fieldLabel}>Address Type</Text>
+                        <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Address Type</Text>
                         <View style={s.labelRow}>
                             {LABELS.map(l => {
                                 const sel = label === l;
                                 return (
-                                    <TouchableOpacity key={l} style={[s.labelChip, sel && s.labelChipSel]} onPress={() => setLabel(l)}>
-                                        <Ionicons name={LABEL_ICONS[l] as any} size={16} color={sel ? '#fff' : '#6b7280'} />
-                                        <Text style={[s.labelChipTxt, sel && s.labelChipSelTxt]}>{l}</Text>
+                                    <TouchableOpacity
+                                        key={l}
+                                        style={[s.labelChip, { backgroundColor: colors.cardBackground, borderColor: colors.divider }, sel && { backgroundColor: colors.accent, borderColor: colors.accent }]}
+                                        onPress={() => setLabel(l)}
+                                    >
+                                        <Ionicons name={LABEL_ICONS[l] as any} size={16} color={sel ? '#fff' : colors.textSecondary} />
+                                        <Text style={[s.labelChipTxt, { color: colors.textSecondary }, sel && { color: '#fff' }]}>{l}</Text>
                                     </TouchableOpacity>
                                 );
                             })}
@@ -126,11 +132,11 @@ export default function AddAddressScreen() {
 
                     {/* Address Line 1 */}
                     <View style={s.fieldWrap}>
-                        <Text style={s.fieldLabel}>Street Address <Text style={s.required}>*</Text></Text>
+                        <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Street Address <Text style={s.required}>*</Text></Text>
                         <TextInput
-                            style={s.input}
+                            style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
                             placeholder="e.g. 42 Galle Road"
-                            placeholderTextColor="#9ca3af"
+                            placeholderTextColor={colors.textSecondary}
                             value={addressLine1}
                             onChangeText={setAddressLine1}
                             autoCapitalize="words"
@@ -139,11 +145,11 @@ export default function AddAddressScreen() {
 
                     {/* Address Line 2 */}
                     <View style={s.fieldWrap}>
-                        <Text style={s.fieldLabel}>Apartment / Floor <Text style={s.optional}>(optional)</Text></Text>
+                        <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Apartment / Floor <Text style={[s.optional, { color: colors.textSecondary }]}>(optional)</Text></Text>
                         <TextInput
-                            style={s.input}
+                            style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
                             placeholder="e.g. Apt 3B, 2nd Floor"
-                            placeholderTextColor="#9ca3af"
+                            placeholderTextColor={colors.textSecondary}
                             value={addressLine2}
                             onChangeText={setAddressLine2}
                             autoCapitalize="words"
@@ -152,22 +158,25 @@ export default function AddAddressScreen() {
 
                     {/* City */}
                     <View style={s.fieldWrap}>
-                        <Text style={s.fieldLabel}>City <Text style={s.required}>*</Text></Text>
-                        <TouchableOpacity style={[s.input, s.cityPicker]} onPress={() => setCityModal(true)}>
-                            <Text style={city ? s.cityPickerSelected : s.cityPickerPlaceholder}>
+                        <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>City <Text style={s.required}>*</Text></Text>
+                        <TouchableOpacity
+                            style={[s.input, s.cityPicker, { backgroundColor: colors.cardBackground, borderColor: colors.divider }]}
+                            onPress={() => setCityModal(true)}
+                        >
+                            <Text style={[city ? s.cityPickerSelected : s.cityPickerPlaceholder, { color: city ? colors.textPrimary : colors.textSecondary }]}>
                                 {city || 'Select city...'}
                             </Text>
-                            <Ionicons name="chevron-down" size={18} color="#9ca3af" />
+                            <Ionicons name="chevron-down" size={18} color={colors.textSecondary} />
                         </TouchableOpacity>
                     </View>
 
                     {/* Postal Code */}
                     <View style={s.fieldWrap}>
-                        <Text style={s.fieldLabel}>Postal Code <Text style={s.optional}>(optional)</Text></Text>
+                        <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Postal Code <Text style={[s.optional, { color: colors.textSecondary }]}>(optional)</Text></Text>
                         <TextInput
-                            style={s.input}
+                            style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
                             placeholder="e.g. 10000"
-                            placeholderTextColor="#9ca3af"
+                            placeholderTextColor={colors.textSecondary}
                             value={postalCode}
                             onChangeText={setPostalCode}
                             keyboardType="numeric"
@@ -177,14 +186,14 @@ export default function AddAddressScreen() {
 
                     {/* Country (read-only) */}
                     <View style={s.fieldWrap}>
-                        <Text style={s.fieldLabel}>Country</Text>
-                        <View style={[s.input, s.readOnly]}>
-                            <Text style={s.readOnlyTxt}>🇱🇰  Sri Lanka</Text>
+                        <Text style={[s.fieldLabel, { color: colors.textPrimary }]}>Country</Text>
+                        <View style={[s.input, s.readOnly, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc', borderColor: colors.divider }]}>
+                            <Text style={[s.readOnlyTxt, { color: colors.textSecondary }]}>🇱🇰  Sri Lanka</Text>
                         </View>
                     </View>
 
                     {/* Save button */}
-                    <TouchableOpacity style={[s.saveBtn, saving && s.saveBtnDisabled]} onPress={handleSave} disabled={saving}>
+                    <TouchableOpacity style={[s.saveBtn, { backgroundColor: colors.accent }, saving && { backgroundColor: isDark ? '#444' : '#d1d5db' }]} onPress={handleSave} disabled={saving}>
                         {saving
                             ? <ActivityIndicator color="#fff" />
                             : <><Ionicons name={isEdit ? 'save-outline' : 'add-circle-outline'} size={20} color="#fff" /><Text style={s.saveBtnTxt}>{isEdit ? 'Save Changes' : 'Add Address'}</Text></>
@@ -197,28 +206,28 @@ export default function AddAddressScreen() {
 
             {/* City Picker Modal */}
             <Modal visible={cityModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setCityModal(false)}>
-                <View style={s.modalWrap}>
-                    <View style={s.modalHead}>
-                        <Text style={s.modalTitle}>Select City</Text>
+                <View style={[s.modalWrap, { backgroundColor: colors.background }]}>
+                    <View style={[s.modalHead, { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider }]}>
+                        <Text style={[s.modalTitle, { color: colors.textPrimary }]}>Select City</Text>
                         <TouchableOpacity onPress={() => setCityModal(false)}>
-                            <Ionicons name="close" size={24} color="#6b7280" />
+                            <Ionicons name="close" size={24} color={colors.textSecondary} />
                         </TouchableOpacity>
                     </View>
 
                     {/* Search */}
-                    <View style={s.searchWrap}>
-                        <Ionicons name="search-outline" size={18} color="#9ca3af" />
+                    <View style={[s.searchWrap, { backgroundColor: colors.cardBackground, borderColor: colors.divider }]}>
+                        <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
                         <TextInput
-                            style={s.searchInput}
+                            style={[s.searchInput, { color: colors.textPrimary }]}
                             placeholder="Search city..."
-                            placeholderTextColor="#9ca3af"
+                            placeholderTextColor={colors.textSecondary}
                             value={citySearch}
                             onChangeText={setCitySearch}
                             autoFocus
                         />
                         {citySearch.length > 0 && (
                             <TouchableOpacity onPress={() => setCitySearch('')}>
-                                <Ionicons name="close-circle" size={18} color="#9ca3af" />
+                                <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -227,16 +236,16 @@ export default function AddAddressScreen() {
                         {filteredCities.map(c => (
                             <TouchableOpacity
                                 key={c}
-                                style={[s.cityItem, city === c && s.cityItemSel]}
+                                style={[s.cityItem, { borderBottomColor: colors.divider }, city === c && [s.cityItemSel, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.1)' : '#f0faff' }]]}
                                 onPress={() => { setCity(c); setCityModal(false); setCitySearch(''); }}
                             >
-                                <Text style={[s.cityItemTxt, city === c && s.cityItemSelTxt]}>{c}</Text>
-                                {city === c && <Ionicons name="checkmark-circle" size={20} color="#0ca6e8" />}
+                                <Text style={[s.cityItemTxt, { color: colors.textPrimary }, city === c && [s.cityItemSelTxt, { color: colors.accent }]]}>{c}</Text>
+                                {city === c && <Ionicons name="checkmark-circle" size={20} color={colors.accent} />}
                             </TouchableOpacity>
                         ))}
                         {filteredCities.length === 0 && (
                             <View style={s.noResults}>
-                                <Text style={s.noResultsTxt}>No cities found for "{citySearch}"</Text>
+                                <Text style={[s.noResultsTxt, { color: colors.textSecondary }]}>No cities found for "{citySearch}"</Text>
                             </View>
                         )}
                     </ScrollView>
@@ -246,64 +255,64 @@ export default function AddAddressScreen() {
     );
 }
 
-function Header({ isEdit }: { isEdit: boolean }) {
+function Header({ isEdit, colors }: { isEdit: boolean, colors: any }) {
     return (
-        <View style={s.header}>
+        <View style={[s.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider }]}>
             <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-                <Ionicons name="arrow-back" size={24} color="#0d1629" />
+                <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
-            <Text style={s.headerTitle}>{isEdit ? 'Edit Address' : 'Add Address'}</Text>
+            <Text style={[s.headerTitle, { color: colors.textPrimary }]}>{isEdit ? 'Edit Address' : 'Add Address'}</Text>
             <View style={{ width: 40 }} />
         </View>
     );
 }
 
 const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8fafc' },
+    container: { flex: 1 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        backgroundColor: '#fff', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
-        borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+        paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
+        borderBottomWidth: 1,
     },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
-    headerTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
+    headerTitle: { fontSize: 18, fontWeight: '700' },
     scroll: { padding: 20 },
 
     fieldWrap: { marginBottom: 20 },
-    fieldLabel: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 },
+    fieldLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
     required: { color: '#ef4444' },
-    optional: { color: '#9ca3af', fontWeight: '400', fontSize: 12 },
+    optional: { fontWeight: '400', fontSize: 12 },
 
     labelRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-    labelChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#e2e8f0' },
-    labelChipSel: { backgroundColor: '#0ca6e8', borderColor: '#0ca6e8' },
-    labelChipTxt: { fontSize: 14, fontWeight: '600', color: '#374151' },
-    labelChipSelTxt: { color: '#fff' },
+    labelChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5 },
+    labelChipSel: { },
+    labelChipTxt: { fontSize: 14, fontWeight: '600' },
+    labelChipSelTxt: { },
 
     input: {
-        backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0',
-        paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: '#0d1629',
+        borderRadius: 12, borderWidth: 1,
+        paddingHorizontal: 14, paddingVertical: 13, fontSize: 15,
     },
     cityPicker: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    cityPickerSelected: { fontSize: 15, color: '#0d1629', fontWeight: '500' },
-    cityPickerPlaceholder: { fontSize: 15, color: '#9ca3af' },
-    readOnly: { backgroundColor: '#f8fafc', justifyContent: 'center' },
-    readOnlyTxt: { fontSize: 15, color: '#6b7280' },
+    cityPickerSelected: { fontSize: 15, fontWeight: '500' },
+    cityPickerPlaceholder: { fontSize: 15 },
+    readOnly: { justifyContent: 'center' },
+    readOnlyTxt: { fontSize: 15 },
 
-    saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#0ca6e8', borderRadius: 16, paddingVertical: 18, marginTop: 8 },
-    saveBtnDisabled: { backgroundColor: '#d1d5db' },
+    saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 18, marginTop: 8 },
+    saveBtnDisabled: { },
     saveBtnTxt: { fontSize: 16, fontWeight: '800', color: '#fff' },
 
-    modalWrap: { flex: 1, backgroundColor: '#f8fafc' },
-    modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', paddingTop: 20, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-    modalTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
-    searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', margin: 16, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0', paddingHorizontal: 14, paddingVertical: 10 },
-    searchInput: { flex: 1, fontSize: 15, color: '#0d1629' },
-    cityItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-    cityItemSel: { backgroundColor: '#f0faff' },
-    cityItemTxt: { fontSize: 15, color: '#374151' },
-    cityItemSelTxt: { color: '#0ca6e8', fontWeight: '700' },
+    modalWrap: { flex: 1 },
+    modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1 },
+    modalTitle: { fontSize: 18, fontWeight: '700' },
+    searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 10, margin: 16, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },
+    searchInput: { flex: 1, fontSize: 15 },
+    cityItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: 1 },
+    cityItemSel: { },
+    cityItemTxt: { fontSize: 15 },
+    cityItemSelTxt: { fontWeight: '700' },
     noResults: { padding: 40, alignItems: 'center' },
-    noResultsTxt: { fontSize: 14, color: '#9ca3af' },
+    noResultsTxt: { fontSize: 14 },
 });

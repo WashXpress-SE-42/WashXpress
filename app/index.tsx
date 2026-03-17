@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { auth } from '../firebaseConfig';
 import { apiFetch } from '../services/apiClient';
 import { Redirect } from 'expo-router';
+import { useTheme } from '../context/ThemeContext';
 
 type Destination =
   | '/login'
@@ -15,6 +16,7 @@ type Destination =
 export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
   const [destination, setDestination] = useState<Destination | null>(null);
+  const { colors } = useTheme();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -99,8 +101,8 @@ export default function Index() {
 
   if (isLoading || !destination) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
