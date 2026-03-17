@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { apiFetch } from '../services/apiClient';
+import { useTheme } from '../context/ThemeContext';
 
 interface Address {
   id: string;
@@ -24,6 +25,7 @@ const LABEL_ICONS: Record<string, string> = {
 };
 
 export default function AddressListScreen() {
+  const { colors, isDark } = useTheme();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -89,27 +91,27 @@ export default function AddressListScreen() {
   };
 
   if (loading) return (
-    <View style={s.container}>
-      <Header />
-      <View style={s.center}><ActivityIndicator size="large" color="#0ca6e8" /></View>
+    <View style={[s.container, { backgroundColor: colors.background }]}>
+      <Header colors={colors} />
+      <View style={s.center}><ActivityIndicator size="large" color={colors.accent} /></View>
     </View>
   );
 
   return (
-    <View style={s.container}>
-      <Header />
+    <View style={[s.container, { backgroundColor: colors.background }]}>
+      <Header colors={colors} />
       <ScrollView
         contentContainerStyle={s.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0ca6e8']} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.accent]} tintColor={colors.accent} />}
       >
         {addresses.length === 0 ? (
           <View style={s.emptyState}>
-            <View style={s.emptyIconCircle}>
-              <Ionicons name="location-outline" size={44} color="#9ca3af" />
+            <View style={[s.emptyIconCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }]}>
+              <Ionicons name="location-outline" size={44} color={colors.textSecondary} />
             </View>
-            <Text style={s.emptyTitle}>No addresses yet</Text>
-            <Text style={s.emptySubtitle}>Add your home, work, or any location where you'd like your car washed.</Text>
-            <TouchableOpacity style={s.emptyAddBtn} onPress={() => router.push('/add-address' as any)}>
+            <Text style={[s.emptyTitle, { color: colors.textPrimary }]}>No addresses yet</Text>
+            <Text style={[s.emptySubtitle, { color: colors.textSecondary }]}>Add your home, work, or any location where you'd like your car washed.</Text>
+            <TouchableOpacity style={[s.emptyAddBtn, { backgroundColor: colors.accent }]} onPress={() => router.push('/add-address' as any)}>
               <Ionicons name="add" size={18} color="#fff" />
               <Text style={s.emptyAddBtnTxt}>Add Address</Text>
             </TouchableOpacity>
@@ -119,59 +121,59 @@ export default function AddressListScreen() {
             {addresses.map(a => {
               const iconName = LABEL_ICONS[a.label] || 'location';
               return (
-                <View key={a.id} style={[s.addressCard, a.isDefault && s.addressCardDefault]}>
+                <View key={a.id} style={[s.addressCard, { backgroundColor: colors.cardBackground, shadowColor: '#000' }, a.isDefault && { borderColor: colors.accent }]}>
                   <View style={s.addressCardLeft}>
-                    <View style={[s.addressIconCircle, a.isDefault && s.addressIconCircleDefault]}>
-                      <Ionicons name={iconName as any} size={22} color={a.isDefault ? '#fff' : '#6b7280'} />
+                    <View style={[s.addressIconCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }, a.isDefault && { backgroundColor: colors.accent }]}>
+                      <Ionicons name={iconName as any} size={22} color={a.isDefault ? '#fff' : colors.textSecondary} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <View style={s.addressTopRow}>
-                        <Text style={s.addressLabel}>{a.label}</Text>
+                        <Text style={[s.addressLabel, { color: colors.textPrimary }]}>{a.label}</Text>
                         {a.isDefault && (
-                          <View style={s.defaultBadge}>
-                            <Ionicons name="star" size={10} color="#0ca6e8" />
-                            <Text style={s.defaultBadgeTxt}>Default</Text>
+                          <View style={[s.defaultBadge, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f4fd' }]}>
+                            <Ionicons name="star" size={10} color={colors.accent} />
+                            <Text style={[s.defaultBadgeTxt, { color: colors.accent }]}>Default</Text>
                           </View>
                         )}
                       </View>
-                      <Text style={s.addressLine1}>{a.addressLine1}</Text>
-                      {a.addressLine2 && <Text style={s.addressLine2}>{a.addressLine2}</Text>}
-                      <Text style={s.addressCity}>{a.city}{a.postalCode ? `, ${a.postalCode}` : ''}</Text>
+                      <Text style={[s.addressLine1, { color: colors.textPrimary }]}>{a.addressLine1}</Text>
+                      {a.addressLine2 && <Text style={[s.addressLine2, { color: colors.textSecondary }]}>{a.addressLine2}</Text>}
+                      <Text style={[s.addressCity, { color: colors.textSecondary }]}>{a.city}{a.postalCode ? `, ${a.postalCode}` : ''}</Text>
                     </View>
                   </View>
 
-                  <View style={s.addressActions}>
+                  <View style={[s.addressActions, { borderTopColor: colors.divider }]}>
                     {/* Edit */}
                     <TouchableOpacity
-                      style={s.actionBtn}
+                      style={[s.actionBtn, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.1)' : '#f8fafc' }]}
                       onPress={() => router.push({ pathname: '/add-address', params: { addressId: a.id, edit: 'true' } } as any)}
                     >
-                      <Ionicons name="pencil-outline" size={16} color="#0ca6e8" />
+                      <Ionicons name="pencil-outline" size={16} color={colors.accent} />
                     </TouchableOpacity>
 
                     {/* Set default */}
                     {!a.isDefault && (
                       <TouchableOpacity
-                        style={s.actionBtn}
+                        style={[s.actionBtn, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : '#f8fafc' }]}
                         onPress={() => handleSetDefault(a)}
                         disabled={settingDefault === a.id}
                       >
                         {settingDefault === a.id
-                          ? <ActivityIndicator size="small" color="#f59e0b" />
-                          : <Ionicons name="star-outline" size={16} color="#f59e0b" />
+                          ? <ActivityIndicator size="small" color={colors.warning} />
+                          : <Ionicons name="star-outline" size={16} color={colors.warning} />
                         }
                       </TouchableOpacity>
                     )}
 
                     {/* Delete */}
                     <TouchableOpacity
-                      style={s.actionBtn}
+                      style={[s.actionBtn, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : '#f8fafc' }]}
                       onPress={() => handleDelete(a)}
                       disabled={deleting === a.id}
                     >
                       {deleting === a.id
-                        ? <ActivityIndicator size="small" color="#ef4444" />
-                        : <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                        ? <ActivityIndicator size="small" color={colors.error} />
+                        : <Ionicons name="trash-outline" size={16} color={colors.error} />
                       }
                     </TouchableOpacity>
                   </View>
@@ -179,12 +181,12 @@ export default function AddressListScreen() {
               );
             })}
 
-            <TouchableOpacity style={s.addCard} onPress={() => router.push('/add-address' as any)}>
-              <View style={s.addCardIcon}>
-                <Ionicons name="add-circle" size={26} color="#0ca6e8" />
+            <TouchableOpacity style={[s.addCard, { backgroundColor: colors.cardBackground, borderColor: isDark ? colors.accent : '#e0f4fd' }]} onPress={() => router.push('/add-address' as any)}>
+              <View style={[s.addCardIcon, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f4fd' }]}>
+                <Ionicons name="add-circle" size={26} color={colors.accent} />
               </View>
-              <Text style={s.addCardTxt}>Add Another Address</Text>
-              <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+              <Text style={[s.addCardTxt, { color: colors.accent }]}>Add Another Address</Text>
+              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </>
         )}
@@ -194,27 +196,27 @@ export default function AddressListScreen() {
   );
 }
 
-function Header() {
+function Header({ colors }: { colors: any }) {
   return (
-    <View style={s.header}>
+    <View style={[s.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider }]}>
       <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-        <Ionicons name="arrow-back" size={24} color="#0d1629" />
+        <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
       </TouchableOpacity>
-      <Text style={s.headerTitle}>Saved Addresses</Text>
+      <Text style={[s.headerTitle, { color: colors.textPrimary }]}>Saved Addresses</Text>
       <TouchableOpacity onPress={() => router.push('/add-address' as any)} style={s.headerAddBtn}>
-        <Ionicons name="add" size={24} color="#0ca6e8" />
+        <Ionicons name="add" size={24} color={colors.accent} />
       </TouchableOpacity>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#fff', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
-    borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+    paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
+    borderBottomWidth: 1,
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
@@ -222,35 +224,35 @@ const s = StyleSheet.create({
   scroll: { padding: 20 },
 
   emptyState: { alignItems: 'center', paddingVertical: 60 },
-  emptyIconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: '#0d1629', marginBottom: 8 },
-  emptySubtitle: { fontSize: 14, color: '#9ca3af', textAlign: 'center', lineHeight: 22, paddingHorizontal: 24, marginBottom: 28 },
-  emptyAddBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#0ca6e8', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 28 },
+  emptyIconCircle: { width: 100, height: 100, borderRadius: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  emptyTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
+  emptySubtitle: { fontSize: 14, textAlign: 'center', lineHeight: 22, paddingHorizontal: 24, marginBottom: 28 },
+  emptyAddBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 28 },
   emptyAddBtnTxt: { fontSize: 15, fontWeight: '700', color: '#fff' },
 
   addressCard: {
-    backgroundColor: '#fff', borderRadius: 18, padding: 16, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    borderRadius: 18, padding: 16, marginBottom: 12,
+    elevation: 2,
     borderWidth: 1.5, borderColor: 'transparent',
   },
-  addressCardDefault: { borderColor: '#0ca6e8' },
+  addressCardDefault: { },
   addressCardLeft: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
-  addressIconCircle: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center', marginRight: 14, flexShrink: 0 },
-  addressIconCircleDefault: { backgroundColor: '#0ca6e8' },
+  addressIconCircle: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 14, flexShrink: 0 },
+  addressIconCircleDefault: { },
   addressTopRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  addressLabel: { fontSize: 16, fontWeight: '700', color: '#0d1629' },
-  defaultBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#e0f4fd', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  defaultBadgeTxt: { fontSize: 11, fontWeight: '700', color: '#0ca6e8' },
-  addressLine1: { fontSize: 14, color: '#374151', marginBottom: 2 },
-  addressLine2: { fontSize: 13, color: '#6b7280', marginBottom: 2 },
-  addressCity: { fontSize: 13, color: '#6b7280' },
-  addressActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 4, borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 10 },
-  actionBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#f8fafc', justifyContent: 'center', alignItems: 'center' },
+  addressLabel: { fontSize: 16, fontWeight: '700' },
+  defaultBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  defaultBadgeTxt: { fontSize: 11, fontWeight: '700' },
+  addressLine1: { fontSize: 14, marginBottom: 2 },
+  addressLine2: { fontSize: 13, marginBottom: 2 },
+  addressCity: { fontSize: 13 },
+  addressActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 4, borderTopWidth: 1, paddingTop: 10 },
+  actionBtn: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
 
   addCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 18, padding: 18, borderWidth: 1.5, borderColor: '#e0f4fd', borderStyle: 'dashed',
+    flexDirection: 'row', alignItems: 'center',
+    borderRadius: 18, padding: 18, borderWidth: 1.5, borderStyle: 'dashed',
   },
-  addCardIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#e0f4fd', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
-  addCardTxt: { flex: 1, fontSize: 15, fontWeight: '600', color: '#0ca6e8' },
+  addCardIcon: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  addCardTxt: { flex: 1, fontSize: 15, fontWeight: '600' },
 });

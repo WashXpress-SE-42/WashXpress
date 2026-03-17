@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { apiFetch } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 interface CertificationProgress {
   type: 'field_certification' | 'training_center' | 'experience_review';
@@ -53,19 +54,20 @@ const STATUS_LABELS: Record<string, string> = {
   uncertified: 'Pending',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  pending_certification: '#f59e0b',
-  in_training: '#2563eb',
-  certified: '#16a34a',
-  rejected: '#dc2626',
-  uncertified: '#6b7280',
-};
+const getStatusColors = (colors: any) => ({
+  pending_certification: colors.warning || '#f59e0b',
+  in_training: colors.info || '#2563eb',
+  certified: colors.success || '#16a34a',
+  rejected: colors.error || '#dc2626',
+  uncertified: colors.textSecondary || '#6b7280',
+});
 
 export default function WasherPendingScreen() {
-  const { logout, user } = useAuth();
+  const { logout } = useAuth();
   const [profile, setProfile] = useState<ProviderProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { colors, isDark } = useTheme();
 
   // Pulse animation for pending indicators
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -144,9 +146,9 @@ export default function WasherPendingScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text style={styles.loadingText}>Loading your profile...</Text>
+      <View style={[s.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={[s.loadingText, { color: colors.textSecondary }]}>Loading your profile...</Text>
       </View>
     );
   }
@@ -155,36 +157,37 @@ export default function WasherPendingScreen() {
   const certPath = profile?.certificationPath;
   const progress = profile?.certificationProgress;
 
-  const statusColor = STATUS_COLORS[certStatus] || '#6b7280';
+  const statusColors = getStatusColors(colors) as Record<string, string>;
+  const statusColor = statusColors[certStatus] || colors.textSecondary;
   const statusLabel = STATUS_LABELS[certStatus] || 'Pending';
 
   return (
     <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
+      style={[s.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={s.scrollContent}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563eb']} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.accent]} tintColor={colors.accent} />
       }
     >
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View style={styles.logoMark}>
-            <Ionicons name="water" size={28} color="#2563eb" />
+      <View style={[s.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider }]}>
+        <View style={s.headerTop}>
+          <View style={[s.logoMark, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)' }]}>
+            <Ionicons name="water" size={28} color={colors.accent} />
           </View>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-            <Ionicons name="log-out-outline" size={20} color="#6b7280" />
-            <Text style={styles.logoutText}>Logout</Text>
+          <TouchableOpacity onPress={handleLogout} style={s.logoutBtn}>
+            <Ionicons name="log-out-outline" size={20} color={colors.textSecondary} />
+            <Text style={[s.logoutText, { color: colors.textSecondary }]}>Logout</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.headerGreeting}>Hi, {profile?.displayName?.split(' ')[0] || 'Washer'} 👋</Text>
-        <Text style={styles.headerSubtitle}>Your application is being processed</Text>
+        <Text style={[s.headerGreeting, { color: colors.textPrimary }]}>Hi, {profile?.displayName?.split(' ')[0] || 'Washer'} 👋</Text>
+        <Text style={[s.headerSubtitle, { color: colors.textSecondary }]}>Your application is being processed</Text>
 
         {/* Status pill */}
-        <View style={[styles.statusPill, { backgroundColor: statusColor + '20', borderColor: statusColor }]}>
-          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-          <Text style={[styles.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
+        <View style={[s.statusPill, { backgroundColor: statusColor + '20', borderColor: statusColor }]}>
+          <View style={[s.statusDot, { backgroundColor: statusColor }]} />
+          <Text style={[s.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
         </View>
       </View>
 
@@ -192,81 +195,82 @@ export default function WasherPendingScreen() {
       {certPath === 'field_certification' && progress && (
         <>
           {/* Progress Ring Card */}
-          <View style={styles.progressCard}>
-            <View style={styles.progressCardHeader}>
-              <View style={styles.progressIconWrapper}>
-                <Ionicons name="people" size={22} color="#2563eb" />
+          <View style={[s.progressCard, { backgroundColor: colors.cardBackground }]}>
+            <View style={s.progressCardHeader}>
+              <View style={[s.progressIconWrapper, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)' }]}>
+                <Ionicons name="people" size={22} color={colors.accent} />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.progressCardTitle}>Field Certification</Text>
-                <Text style={styles.progressCardSubtitle}>Mentored on-the-job evaluations</Text>
+                <Text style={[s.progressCardTitle, { color: colors.textPrimary }]}>Field Certification</Text>
+                <Text style={[s.progressCardSubtitle, { color: colors.textSecondary }]}>Mentored on-the-job evaluations</Text>
               </View>
             </View>
 
             {/* Big progress display */}
-            <View style={styles.bigProgressRow}>
-              <View style={styles.bigProgressCircle}>
+            <View style={s.bigProgressRow}>
+              <View style={[s.bigProgressCircle, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)', borderColor: colors.accent }]}>
                 <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-                  <Text style={styles.bigProgressNumber}>{progress.completed ?? 0}</Text>
+                  <Text style={[s.bigProgressNumber, { color: colors.accent }]}>{progress.completed ?? 0}</Text>
                 </Animated.View>
-                <Text style={styles.bigProgressDivider}>of {progress.required ?? 6}</Text>
+                <Text style={[s.bigProgressDivider, { color: colors.textSecondary }]}>of {progress.required ?? 6}</Text>
               </View>
 
-              <View style={styles.progressMeta}>
-                <Text style={styles.progressMetaLabel}>Evaluations completed</Text>
-                <View style={styles.progressBarTrack}>
+              <View style={s.progressMeta}>
+                <Text style={[s.progressMetaLabel, { color: colors.textPrimary }]}>Evaluations completed</Text>
+                <View style={[s.progressBarTrack, { backgroundColor: colors.divider }]}>
                   <View
                     style={[
-                      styles.progressBarFill,
-                      { width: `${progress.percentage ?? 0}%` },
+                      s.progressBarFill,
+                      { width: `${progress.percentage ?? 0}%`, backgroundColor: colors.accent },
                     ]}
                   />
                 </View>
-                <Text style={styles.progressMetaPercent}>{progress.percentage ?? 0}% complete</Text>
+                <Text style={[s.progressMetaPercent, { color: colors.textSecondary }]}>{progress.percentage ?? 0}% complete</Text>
               </View>
             </View>
 
             {/* Steps */}
-            <View style={styles.stepsContainer}>
+            <View style={s.stepsContainer}>
               {Array.from({ length: progress.required ?? 6 }).map((_, i) => {
                 const evaluation = progress.evaluations?.[i];
                 const isDone = i < (progress.completed ?? 0);
                 const isCurrent = i === (progress.completed ?? 0);
 
                 return (
-                  <View key={i} style={styles.stepRow}>
+                  <View key={i} style={[s.stepRow, { borderBottomColor: colors.divider }]}>
                     <View style={[
-                      styles.stepCircle,
-                      isDone && styles.stepCircleDone,
-                      isCurrent && styles.stepCircleCurrent,
+                      s.stepCircle,
+                      { borderColor: colors.divider },
+                      isDone && [s.stepCircleDone, { backgroundColor: colors.success, borderColor: colors.success }],
+                      isCurrent && [s.stepCircleCurrent, { borderColor: colors.accent }],
                     ]}>
                       {isDone
                         ? <Ionicons name="checkmark" size={14} color="#fff" />
-                        : <Text style={[styles.stepNumber, isCurrent && styles.stepNumberCurrent]}>{i + 1}</Text>
+                        : <Text style={[s.stepNumber, { color: colors.textSecondary }, isCurrent && [s.stepNumberCurrent, { color: colors.accent }]]}>{i + 1}</Text>
                       }
                     </View>
 
-                    <View style={styles.stepContent}>
-                      <Text style={[styles.stepTitle, isDone && styles.stepTitleDone]}>
+                    <View style={s.stepContent}>
+                      <Text style={[s.stepTitle, { color: colors.textPrimary }, isDone && [s.stepTitleDone, { color: colors.textSecondary, textDecorationLine: 'line-through' }]]}>
                         Evaluation {i + 1}
-                        {isCurrent && <Text style={styles.stepCurrentBadge}> ← Next</Text>}
+                        {isCurrent && <Text style={[s.stepCurrentBadge, { color: colors.accent }]}> ← Next</Text>}
                       </Text>
                       {evaluation && (
-                        <Text style={styles.stepMeta}>
+                        <Text style={[s.stepMeta, { color: colors.textSecondary }]}>
                           {evaluation.mentorName && `Mentor: ${evaluation.mentorName}`}
                           {evaluation.date && ` · ${evaluation.date}`}
                         </Text>
                       )}
                       {!evaluation && !isDone && (
-                        <Text style={styles.stepMeta}>
+                        <Text style={[s.stepMeta, { color: colors.textSecondary }]}>
                           {isCurrent ? 'Awaiting mentor assignment' : 'Upcoming'}
                         </Text>
                       )}
                     </View>
 
                     {isDone && (
-                      <View style={styles.stepPassedBadge}>
-                        <Text style={styles.stepPassedText}>Passed</Text>
+                      <View style={[s.stepPassedBadge, { backgroundColor: isDark ? 'rgba(22, 163, 74, 0.15)' : '#f0fdf4' }]}>
+                        <Text style={[s.stepPassedText, { color: colors.success || '#16a34a' }]}>Passed</Text>
                       </View>
                     )}
                   </View>
@@ -275,9 +279,9 @@ export default function WasherPendingScreen() {
             </View>
 
             {(progress.completed ?? 0) === 0 && (
-              <View style={styles.infoBox}>
-                <Ionicons name="information-circle-outline" size={18} color="#2563eb" />
-                <Text style={styles.infoBoxText}>
+              <View style={[s.infoBox, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)', borderColor: colors.border }]}>
+                <Ionicons name="information-circle-outline" size={18} color={colors.accent} />
+                <Text style={[s.infoBoxText, { color: colors.accent }]}>
                   A mentor will be assigned to you shortly. They'll accompany you on your first wash jobs and evaluate your technique.
                 </Text>
               </View>
@@ -288,14 +292,14 @@ export default function WasherPendingScreen() {
 
       {/* ── TRAINING CENTER PATH ── */}
       {certPath === 'training_center' && (
-        <View style={styles.progressCard}>
-          <View style={styles.progressCardHeader}>
-            <View style={styles.progressIconWrapper}>
-              <Ionicons name="school" size={22} color="#7c3aed" />
+        <View style={[s.progressCard, { backgroundColor: colors.cardBackground }]}>
+          <View style={s.progressCardHeader}>
+            <View style={[s.progressIconWrapper, { backgroundColor: (colors.accentLight || 'rgba(37,99,235,0.1)') }]}>
+              <Ionicons name="school" size={22} color={colors.accent} />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.progressCardTitle}>Training Center</Text>
-              <Text style={styles.progressCardSubtitle}>Structured classroom program</Text>
+              <Text style={[s.progressCardTitle, { color: colors.textPrimary }]}>Training Center</Text>
+              <Text style={[s.progressCardSubtitle, { color: colors.textSecondary }]}>Structured classroom program</Text>
             </View>
           </View>
 
@@ -332,27 +336,28 @@ export default function WasherPendingScreen() {
               done: certStatus === 'certified',
             },
           ].map((stage, i) => (
-            <View key={i} style={styles.trainingStageRow}>
+            <View key={i} style={s.trainingStageRow}>
               <View style={[
-                styles.trainingStageIcon,
-                stage.done && styles.trainingStageIconDone,
-                stage.active && styles.trainingStageIconActive,
+                s.trainingStageIcon,
+                { backgroundColor: colors.divider },
+                stage.done && [s.trainingStageIconDone, { backgroundColor: colors.success || '#16a34a' }],
+                stage.active && [s.trainingStageIconActive, { backgroundColor: colors.accent }],
               ]}>
                 {stage.done
                   ? <Ionicons name="checkmark" size={18} color="#fff" />
-                  : <Ionicons name={stage.icon} size={18} color={stage.active ? '#fff' : '#9ca3af'} />
+                  : <Ionicons name={stage.icon} size={18} color={stage.active ? '#fff' : colors.textSecondary} />
                 }
               </View>
 
               {i < 3 && (
-                <View style={[styles.trainingConnector, stage.done && styles.trainingConnectorDone]} />
+                <View style={[s.trainingConnector, { backgroundColor: colors.divider }, stage.done && [s.trainingConnectorDone, { backgroundColor: colors.success || '#16a34a' }]]} />
               )}
 
-              <View style={styles.trainingStageContent}>
-                <Text style={[styles.trainingStageTitle, stage.done && styles.trainingStageTitleDone]}>
+              <View style={s.trainingStageContent}>
+                <Text style={[s.trainingStageTitle, { color: colors.textPrimary }, stage.done && [s.trainingStageTitleDone, { color: colors.success || '#16a34a' }]]}>
                   {stage.title}
                 </Text>
-                <Text style={styles.trainingStageDesc}>{stage.desc}</Text>
+                <Text style={[s.trainingStageDesc, { color: colors.textSecondary }]}>{stage.desc}</Text>
               </View>
             </View>
           ))}
@@ -361,14 +366,14 @@ export default function WasherPendingScreen() {
 
       {/* ── EXPERIENCE REVIEW PATH ── */}
       {(certPath === null || !certPath) && certStatus === 'pending_certification' && (
-        <View style={styles.progressCard}>
-          <View style={styles.progressCardHeader}>
-            <View style={[styles.progressIconWrapper, { backgroundColor: '#f0fdf4' }]}>
-              <Ionicons name="briefcase" size={22} color="#16a34a" />
+        <View style={[s.progressCard, { backgroundColor: colors.cardBackground }]}>
+          <View style={s.progressCardHeader}>
+            <View style={[s.progressIconWrapper, { backgroundColor: colors.successLight || 'rgba(22,163,74,0.1)' }]}>
+              <Ionicons name="briefcase" size={22} color={colors.success || '#16a34a'} />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.progressCardTitle}>Experience Review</Text>
-              <Text style={styles.progressCardSubtitle}>Admin verification of your background</Text>
+              <Text style={[s.progressCardTitle, { color: colors.textPrimary }]}>Experience Review</Text>
+              <Text style={[s.progressCardSubtitle, { color: colors.textSecondary }]}>Admin verification of your background</Text>
             </View>
           </View>
 
@@ -378,24 +383,25 @@ export default function WasherPendingScreen() {
             { title: 'Skills Assessment', desc: 'A quick practical evaluation may be scheduled', done: false },
             { title: 'Account Activation', desc: 'Get verified and start accepting jobs', done: false },
           ].map((stage, i) => (
-            <View key={i} style={[styles.reviewStageRow, i < 3 && { marginBottom: 0 }]}>
+            <View key={i} style={[s.reviewStageRow, i < 3 && { marginBottom: 0 }]}>
               <View style={[
-                styles.reviewDot,
-                stage.done && styles.reviewDotDone,
-                stage.active && styles.reviewDotActive,
+                s.reviewDot,
+                { backgroundColor: colors.divider },
+                stage.done && [s.reviewDotDone, { backgroundColor: colors.success || '#16a34a' }],
+                stage.active && [s.reviewDotActive, { backgroundColor: colors.accent }],
               ]}>
                 {stage.done
                   ? <Ionicons name="checkmark" size={12} color="#fff" />
                   : stage.active
-                  ? <Animated.View style={[styles.reviewDotPulse, { transform: [{ scale: pulseAnim }] }]} />
+                  ? <Animated.View style={[s.reviewDotPulse, { transform: [{ scale: pulseAnim }], backgroundColor: colors.background }]} />
                   : null
                 }
               </View>
-              <View style={styles.reviewStageContent}>
-                <Text style={[styles.reviewStageTitle, stage.done && styles.reviewStageTitleDone]}>
+              <View style={s.reviewStageContent}>
+                <Text style={[s.reviewStageTitle, { color: colors.textPrimary }, stage.done && [s.reviewStageTitleDone, { color: colors.success || '#16a34a' }]]}>
                   {stage.title}
                 </Text>
-                <Text style={styles.reviewStageDesc}>{stage.desc}</Text>
+                <Text style={[s.reviewStageDesc, { color: colors.textSecondary }]}>{stage.desc}</Text>
               </View>
             </View>
           ))}
@@ -403,26 +409,26 @@ export default function WasherPendingScreen() {
       )}
 
       {/* What to expect card */}
-      <View style={styles.expectCard}>
-        <Text style={styles.expectTitle}>What happens next?</Text>
+      <View style={[s.expectCard, { backgroundColor: colors.cardBackground }]}>
+        <Text style={[s.expectTitle, { color: colors.textPrimary }]}>What happens next?</Text>
         {[
           { icon: 'notifications-outline' as const, text: 'You\'ll receive an email and app notification when your status changes' },
           { icon: 'refresh-outline' as const, text: 'Pull down to refresh this screen and check for updates' },
           { icon: 'help-circle-outline' as const, text: 'Contact support at support@washxpress.lk for any questions' },
         ].map(({ icon, text }, i) => (
-          <View key={i} style={styles.expectRow}>
-            <View style={styles.expectIconWrapper}>
-              <Ionicons name={icon} size={18} color="#2563eb" />
+          <View key={i} style={s.expectRow}>
+            <View style={[s.expectIconWrapper, { backgroundColor: colors.accentLight || 'rgba(37,99,235,0.1)' }]}>
+              <Ionicons name={icon} size={18} color={colors.accent} />
             </View>
-            <Text style={styles.expectText}>{text}</Text>
+            <Text style={[s.expectText, { color: colors.textSecondary }]}>{text}</Text>
           </View>
         ))}
       </View>
 
       {/* Refresh hint */}
-      <View style={styles.refreshHint}>
-        <Ionicons name="sync-outline" size={14} color="#9ca3af" />
-        <Text style={styles.refreshHintText}>Pull down to check for updates · Auto-checks every 30s</Text>
+      <View style={s.refreshHint}>
+        <Ionicons name="sync-outline" size={14} color={colors.textSecondary} />
+        <Text style={[s.refreshHintText, { color: colors.textSecondary }]}>Pull down to check for updates · Auto-checks every 30s</Text>
       </View>
 
       <View style={{ height: 40 }} />
@@ -430,31 +436,29 @@ export default function WasherPendingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+const s = StyleSheet.create({
+  container: { flex: 1 },
   scrollContent: { paddingBottom: 40 },
 
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
-  loadingText: { marginTop: 12, fontSize: 16, color: '#6b7280' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, fontSize: 16 },
 
   // Header
   header: {
-    backgroundColor: '#fff',
     paddingHorizontal: 24,
     paddingTop: 56,
     paddingBottom: 28,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
   },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   logoMark: {
     width: 44, height: 44, borderRadius: 12,
-    backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
   },
   logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8 },
-  logoutText: { fontSize: 14, color: '#6b7280', fontWeight: '500' },
-  headerGreeting: { fontSize: 26, fontWeight: 'bold', color: '#0f172a', marginBottom: 4 },
-  headerSubtitle: { fontSize: 15, color: '#6b7280', marginBottom: 16 },
+  logoutText: { fontSize: 14, fontWeight: '500' },
+  headerGreeting: { fontSize: 26, fontWeight: 'bold', marginBottom: 4 },
+  headerSubtitle: { fontSize: 15, marginBottom: 16 },
   statusPill: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     alignSelf: 'flex-start',
@@ -466,7 +470,7 @@ const styles = StyleSheet.create({
 
   // Progress card (shared)
   progressCard: {
-    backgroundColor: '#fff', marginHorizontal: 20, marginTop: 20,
+    marginHorizontal: 20, marginTop: 20,
     borderRadius: 20, padding: 20,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
@@ -474,113 +478,113 @@ const styles = StyleSheet.create({
   progressCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   progressIconWrapper: {
     width: 44, height: 44, borderRadius: 12,
-    backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
   },
-  progressCardTitle: { fontSize: 17, fontWeight: '700', color: '#0f172a' },
-  progressCardSubtitle: { fontSize: 13, color: '#6b7280', marginTop: 2 },
+  progressCardTitle: { fontSize: 17, fontWeight: '700' },
+  progressCardSubtitle: { fontSize: 13, marginTop: 2 },
 
   // Field cert — big progress
   bigProgressRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24, gap: 20 },
   bigProgressCircle: {
     width: 90, height: 90, borderRadius: 45,
-    backgroundColor: '#eff6ff', borderWidth: 3, borderColor: '#2563eb',
+    borderWidth: 3,
     justifyContent: 'center', alignItems: 'center',
   },
-  bigProgressNumber: { fontSize: 30, fontWeight: '900', color: '#2563eb', lineHeight: 36 },
-  bigProgressDivider: { fontSize: 13, color: '#6b7280' },
+  bigProgressNumber: { fontSize: 30, fontWeight: '900', lineHeight: 36 },
+  bigProgressDivider: { fontSize: 13 },
   progressMeta: { flex: 1 },
-  progressMetaLabel: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 },
-  progressBarTrack: { height: 8, backgroundColor: '#e2e8f0', borderRadius: 4, overflow: 'hidden' },
-  progressBarFill: { height: '100%', backgroundColor: '#2563eb', borderRadius: 4 },
-  progressMetaPercent: { fontSize: 13, color: '#6b7280', marginTop: 6 },
+  progressMetaLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 },
+  progressBarTrack: { height: 8, borderRadius: 4, overflow: 'hidden' },
+  progressBarFill: { height: '100%', borderRadius: 4 },
+  progressMetaPercent: { fontSize: 13, marginTop: 6 },
 
   // Field cert — steps
   stepsContainer: { gap: 0 },
   stepRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9',
+    paddingVertical: 12, borderBottomWidth: 1,
   },
   stepCircle: {
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: '#f1f5f9', borderWidth: 2, borderColor: '#e2e8f0',
+    borderWidth: 2,
     justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  stepCircleDone: { backgroundColor: '#16a34a', borderColor: '#16a34a' },
-  stepCircleCurrent: { backgroundColor: '#eff6ff', borderColor: '#2563eb' },
-  stepNumber: { fontSize: 13, fontWeight: '700', color: '#9ca3af' },
-  stepNumberCurrent: { color: '#2563eb' },
+  stepCircleDone: {},
+  stepCircleCurrent: {},
+  stepNumber: { fontSize: 13, fontWeight: '700' },
+  stepNumberCurrent: {},
   stepContent: { flex: 1 },
-  stepTitle: { fontSize: 14, fontWeight: '600', color: '#374151' },
-  stepTitleDone: { color: '#16a34a' },
-  stepCurrentBadge: { color: '#2563eb', fontWeight: '700' },
-  stepMeta: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
+  stepTitle: { fontSize: 14, fontWeight: '600' },
+  stepTitleDone: {},
+  stepCurrentBadge: { fontWeight: '700' },
+  stepMeta: { fontSize: 12, marginTop: 2 },
   stepPassedBadge: {
-    backgroundColor: '#f0fdf4', borderRadius: 8,
+    borderRadius: 8,
     paddingHorizontal: 8, paddingVertical: 3,
   },
-  stepPassedText: { fontSize: 11, fontWeight: '700', color: '#16a34a' },
+  stepPassedText: { fontSize: 11, fontWeight: '700' },
 
   // Training center stages
   trainingStageRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 20 },
   trainingStageIcon: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
     marginRight: 14, flexShrink: 0,
   },
-  trainingStageIconDone: { backgroundColor: '#16a34a' },
-  trainingStageIconActive: { backgroundColor: '#2563eb' },
+  trainingStageIconDone: {},
+  trainingStageIconActive: {},
   trainingConnector: {
     position: 'absolute', left: 19, top: 40,
-    width: 2, height: 28, backgroundColor: '#e2e8f0',
+    width: 2, height: 28,
   },
-  trainingConnectorDone: { backgroundColor: '#16a34a' },
+  trainingConnectorDone: {},
   trainingStageContent: { flex: 1, paddingTop: 4 },
-  trainingStageTitle: { fontSize: 15, fontWeight: '600', color: '#374151' },
-  trainingStageTitleDone: { color: '#16a34a' },
-  trainingStageDesc: { fontSize: 13, color: '#6b7280', marginTop: 3, lineHeight: 18 },
+  trainingStageTitle: { fontSize: 15, fontWeight: '600' },
+  trainingStageTitleDone: {},
+  trainingStageDesc: { fontSize: 13, marginTop: 3, lineHeight: 18 },
 
   // Experience review stages
   reviewStageRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 20 },
   reviewDot: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#e2e8f0', justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
     marginRight: 14, flexShrink: 0,
   },
-  reviewDotDone: { backgroundColor: '#16a34a' },
-  reviewDotActive: { backgroundColor: '#2563eb' },
-  reviewDotPulse: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff' },
+  reviewDotDone: {},
+  reviewDotActive: {},
+  reviewDotPulse: { width: 10, height: 10, borderRadius: 5 },
   reviewStageContent: { flex: 1, paddingTop: 2 },
-  reviewStageTitle: { fontSize: 14, fontWeight: '600', color: '#374151' },
-  reviewStageTitleDone: { color: '#16a34a' },
-  reviewStageDesc: { fontSize: 13, color: '#6b7280', marginTop: 2, lineHeight: 18 },
+  reviewStageTitle: { fontSize: 14, fontWeight: '600' },
+  reviewStageTitleDone: {},
+  reviewStageDesc: { fontSize: 13, marginTop: 2, lineHeight: 18 },
 
   // Info box
   infoBox: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    backgroundColor: '#eff6ff', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#bfdbfe', marginTop: 16,
+    borderRadius: 12, padding: 14,
+    borderWidth: 1, marginTop: 16,
   },
-  infoBoxText: { flex: 1, fontSize: 13, color: '#1d4ed8', lineHeight: 18 },
+  infoBoxText: { flex: 1, fontSize: 13, lineHeight: 18 },
 
   // What to expect
   expectCard: {
-    backgroundColor: '#fff', marginHorizontal: 20, marginTop: 16,
+    marginHorizontal: 20, marginTop: 16,
     borderRadius: 20, padding: 20,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
   },
-  expectTitle: { fontSize: 16, fontWeight: '700', color: '#0f172a', marginBottom: 16 },
+  expectTitle: { fontSize: 16, fontWeight: '700', marginBottom: 16 },
   expectRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
   expectIconWrapper: {
     width: 36, height: 36, borderRadius: 10,
-    backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center', flexShrink: 0,
+    justifyContent: 'center', alignItems: 'center', flexShrink: 0,
   },
-  expectText: { flex: 1, fontSize: 14, color: '#374151', lineHeight: 20, paddingTop: 8 },
+  expectText: { flex: 1, fontSize: 14, lineHeight: 20, paddingTop: 8 },
 
   // Refresh hint
   refreshHint: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, marginTop: 20, paddingHorizontal: 24,
   },
-  refreshHintText: { fontSize: 12, color: '#9ca3af' },
+  refreshHintText: { fontSize: 12 },
 });

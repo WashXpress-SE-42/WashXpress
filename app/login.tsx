@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { signin, getProfileFromFirebase, updateProfileInFirebase } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import SubscriptionAgreementModal from '../components/SubscriptionAgreementModal';
 
 export default function LoginScreen() {
@@ -26,6 +27,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showAgreement, setShowAgreement] = useState(false);
   const { setAuth, logout } = useAuth(); // Global auth context
+  const { colors, isDark } = useTheme();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -107,9 +109,9 @@ export default function LoginScreen() {
 
   return (
     <>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <View
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colors.background }]}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -118,16 +120,16 @@ export default function LoginScreen() {
           {/* Logo Header */}
           <View style={styles.header}>
            
-            <Text style={styles.title}>WashXpress</Text>
-            <Text style={styles.subtitle}>Premium Car Care On Demand</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>WashXpress</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Premium Car Care On Demand</Text>
           </View>
 
           {/* Login Card */}
-          <View style={styles.loginCard}>
+          <View style={[styles.loginCard, { backgroundColor: colors.cardBackground }]}>
             {/* Role Toggle */}
             <View style={styles.roleSection}>
-              <Text style={styles.roleLabel}>Login as</Text>
-              <View style={styles.roleToggle}>
+              <Text style={[styles.roleLabel, { color: colors.textSecondary }]}>Login as</Text>
+              <View style={[styles.roleToggle, { backgroundColor: colors.background }]}>
                 <TouchableOpacity
                   style={[
                     styles.roleButton,
@@ -138,12 +140,13 @@ export default function LoginScreen() {
                   <Ionicons
                     name="person"
                     size={20}
-                    color={selectedRole === 'customer' ? '#2563eb' : '#6b7280'}
+                    color={selectedRole === 'customer' ? colors.accent : colors.textSecondary}
                   />
                   <Text
                     style={[
                       styles.roleButtonText,
-                      selectedRole === 'customer' && styles.roleButtonTextActive,
+                      { color: colors.textSecondary },
+                      selectedRole === 'customer' && [styles.roleButtonTextActive, { color: colors.accent }],
                     ]}
                   >
                     Customer
@@ -160,12 +163,13 @@ export default function LoginScreen() {
                   <Ionicons
                     name="briefcase"
                     size={20}
-                    color={selectedRole === 'provider' ? '#2563eb' : '#6b7280'}
+                    color={selectedRole === 'provider' ? colors.accent : colors.textSecondary}
                   />
                   <Text
                     style={[
                       styles.roleButtonText,
-                      selectedRole === 'provider' && styles.roleButtonTextActive,
+                      { color: colors.textSecondary },
+                      selectedRole === 'provider' && [styles.roleButtonTextActive, { color: colors.accent }],
                     ]}
                   >
                     Provider
@@ -176,12 +180,13 @@ export default function LoginScreen() {
 
             {/* Email Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="mail-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address</Text>
+              <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.inputBackground || colors.background }]}>
+                <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.textPrimary }]}
                   placeholder="Enter your email"
+                  placeholderTextColor={colors.textSecondary}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -193,12 +198,13 @@ export default function LoginScreen() {
 
             {/* Password Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color="#9ca3af" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Password</Text>
+              <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.inputBackground || colors.background }]}>
+                <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.textPrimary }]}
                   placeholder="Enter your password"
+                  placeholderTextColor={colors.textSecondary}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
@@ -211,7 +217,7 @@ export default function LoginScreen() {
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color="#9ca3af"
+                    color={colors.textSecondary}
                   />
                 </TouchableOpacity>
               </View>
@@ -219,12 +225,12 @@ export default function LoginScreen() {
 
             {/* Forgot Password */}
             <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              <Text style={[styles.forgotPasswordText, { color: colors.accent }]}>Forgot Password?</Text>
             </TouchableOpacity>
 
             {/* Login Button */}
             <TouchableOpacity
-              style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+              style={[styles.loginButton, { backgroundColor: colors.accent }, loading && styles.loginButtonDisabled]}
               onPress={handleLogin}
               disabled={loading}
             >
@@ -237,43 +243,43 @@ export default function LoginScreen() {
 
             {/* Divider */}
             <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or continue with</Text>
-              <View style={styles.dividerLine} />
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dividerText, { color: colors.textSecondary }]}>or continue with</Text>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
             {/* Social Login */}
             <View style={styles.socialButtons}>
-              <TouchableOpacity style={styles.socialButton}>
+              <TouchableOpacity style={[styles.socialButton, { borderColor: colors.border }]}>
                 <Ionicons name="logo-google" size={20} color="#4285F4" />
-                <Text style={styles.socialButtonText}>Google</Text>
+                <Text style={[styles.socialButtonText, { color: colors.textPrimary }]}>Google</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton}>
+              <TouchableOpacity style={[styles.socialButton, { borderColor: colors.border }]}>
                 <Ionicons name="logo-facebook" size={20} color="#1877F2" />
-                <Text style={styles.socialButtonText}>Facebook</Text>
+                <Text style={[styles.socialButtonText, { color: colors.textPrimary }]}>Facebook</Text>
               </TouchableOpacity>
             </View>
 
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
-              <Text style={styles.signUpText}>Don't have an account? </Text>
+              <Text style={[styles.signUpText, { color: colors.textSecondary }]}>Don't have an account? </Text>
               <TouchableOpacity onPress={() => router.push((selectedRole === 'provider' ? '/washer-signup' : '/signup') as any)}>
-                <Text style={styles.signUpLink}>Sign Up</Text>
+                <Text style={[styles.signUpLink, { color: colors.accent }]}>Sign Up</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Role Info */}
-          <View style={styles.roleInfo}>
-            <Text style={styles.roleInfoText}>
+          <View style={[styles.roleInfo, { backgroundColor: colors.cardBackground, borderColor: colors.border, borderWidth: 1 }]}>
+            <Text style={[styles.roleInfoText, { color: colors.textSecondary }]}>
               {selectedRole === 'customer' ? (
                 <>
-                  <Text style={styles.roleInfoBold}>Customer: </Text>
+                  <Text style={[styles.roleInfoBold, { color: colors.textPrimary }]}>Customer: </Text>
                   Book washes, manage subscriptions, and track your service history
                 </>
               ) : (
                 <>
-                  <Text style={styles.roleInfoBold}>Service Provider: </Text>
+                  <Text style={[styles.roleInfoBold, { color: colors.textPrimary }]}>Service Provider: </Text>
                   Manage appointments, view customer requests, and track earnings
                 </>
               )}

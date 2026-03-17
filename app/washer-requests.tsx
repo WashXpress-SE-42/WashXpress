@@ -13,6 +13,7 @@ import {
     View,
 } from 'react-native';
 import { Header } from '../components/Header';
+import { useTheme } from '../context/ThemeContext';
 
 interface JobRequest {
     id: string;
@@ -40,6 +41,7 @@ interface JobRequest {
         color: string;
         licensePlate: string;
         nickname: string;
+        type?: string;
     };
     address: {
         label: string;
@@ -54,6 +56,7 @@ interface JobRequest {
 
 export default function WasherRequestsScreen() {
     const router = useRouter();
+    const { colors, isDark } = useTheme();
     const [requests, setRequests] = useState<JobRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -63,10 +66,10 @@ export default function WasherRequestsScreen() {
     useEffect(() => {
         loadRequests();
 
-        // Auto-refresh every 5 seconds
+        // Auto-refresh every 15 seconds (less aggressive than 5s)
         const interval = setInterval(() => {
             loadRequests(true);
-        }, 5000);
+        }, 15000);
 
         return () => clearInterval(interval);
     }, []);
@@ -185,57 +188,57 @@ export default function WasherRequestsScreen() {
 
     const renderJobCard = ({ item }: { item: JobRequest }) => (
         <TouchableOpacity
-            style={styles.jobCard}
+            style={[s.jobCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
             onPress={() => router.push(`/washer-job-request?id=${item.id}`)}
             activeOpacity={0.7}
         >
             {/* Race Mode Indicator */}
-            <View style={styles.raceIndicator}>
-                <Ionicons name="flash" size={14} color="#FF9800" />
-                <Text style={styles.raceText}>RACE MODE • First to accept wins!</Text>
+            <View style={[s.raceIndicator, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : '#FFF3E0' }]}>
+                <Ionicons name="flash" size={14} color={colors.warning || '#FF9800'} />
+                <Text style={[s.raceIndicatorText, { color: colors.warning || '#FF9800' }]}>RACE MODE • First to accept wins!</Text>
             </View>
 
             {/* Job Header */}
-            <View style={styles.jobHeader}>
-                <View style={styles.jobInfo}>
-                    <Text style={styles.serviceName}>{item.service.name}</Text>
-                    <Text style={styles.vehicleInfo}>
+            <View style={s.jobHeader}>
+                <View style={s.jobInfo}>
+                    <Text style={[s.serviceName, { color: colors.textPrimary }]}>{item.service.name}</Text>
+                    <Text style={[s.vehicleInfo, { color: colors.textSecondary }]}>
                         {item.vehicle.make} {item.vehicle.model} • {item.vehicle.color}
                     </Text>
-                    <Text style={styles.licensePlate}>{item.vehicle.licensePlate}</Text>
+                    <Text style={[s.licensePlate, { color: colors.accent }]}>{item.vehicle.licensePlate}</Text>
                 </View>
 
-                <View style={styles.priceContainer}>
-                    <Text style={styles.price}>
+                <View style={s.priceContainer}>
+                    <Text style={[s.price, { color: colors.success || '#4CAF50' }]}>
                         {item.paidWithSubscription ? (
-                            <Text style={{ color: '#4CAF50' }}>PAID</Text>
+                            <Text style={{ color: colors.success || '#4CAF50' }}>PAID</Text>
                         ) : (
                             `LKR ${item.totalPrice.toLocaleString()}`
                         )}
                     </Text>
-                    <Text style={styles.duration}>~{item.duration} min</Text>
+                    <Text style={[s.duration, { color: colors.textSecondary }]}>~{item.duration} min</Text>
                 </View>
             </View>
 
             {/* Job Details */}
-            <View style={styles.jobDetails}>
-                <View style={styles.detailRow}>
-                    <Ionicons name="calendar-outline" size={16} color="#666" />
-                    <Text style={styles.detailText}>
+            <View style={s.jobDetails}>
+                <View style={s.detailRow}>
+                    <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
+                    <Text style={[s.detailText, { color: colors.textSecondary }]}>
                         {item.scheduledDate} at {item.scheduledTime}
                     </Text>
                 </View>
 
-                <View style={styles.detailRow}>
-                    <Ionicons name="location-outline" size={16} color="#666" />
-                    <Text style={styles.detailText}>
+                <View style={s.detailRow}>
+                    <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
+                    <Text style={[s.detailText, { color: colors.textSecondary }]}>
                         {item.address.label} • {item.address.city}
                     </Text>
                 </View>
 
-                <View style={styles.detailRow}>
-                    <Ionicons name="time-outline" size={16} color="#666" />
-                    <Text style={styles.detailText}>
+                <View style={s.detailRow}>
+                    <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+                    <Text style={[s.detailText, { color: colors.textSecondary }]}>
                         Posted {calculateTimeAgo(item.createdAt)}
                     </Text>
                 </View>
@@ -243,20 +246,21 @@ export default function WasherRequestsScreen() {
 
             {/* Special Notes */}
             {item.notes && (
-                <View style={styles.notesContainer}>
-                    <Ionicons name="information-circle-outline" size={16} color="#007AFF" />
-                    <Text style={styles.notesText} numberOfLines={2}>
+                <View style={[s.notesContainer, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.1)' : '#F0F8FF' }]}>
+                    <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
+                    <Text style={[s.notesText, { color: colors.accent }]} numberOfLines={2}>
                         {item.notes}
                     </Text>
                 </View>
             )}
 
             {/* Action Buttons */}
-            <View style={styles.actionButtons}>
+            <View style={[s.actionButtons, { borderTopColor: colors.divider }]}>
                 <TouchableOpacity
                     style={[
-                        styles.acceptButton,
-                        acceptingId === item.id && styles.buttonDisabled,
+                        s.acceptButton,
+                        { backgroundColor: colors.success || '#4CAF50' },
+                        acceptingId === item.id && s.buttonDisabled,
                     ]}
                     onPress={(e) => {
                         e.stopPropagation();
@@ -269,15 +273,16 @@ export default function WasherRequestsScreen() {
                     ) : (
                         <>
                             <Ionicons name="checkmark-circle" size={20} color="#FFF" />
-                            <Text style={styles.acceptButtonText}>Accept Job</Text>
+                            <Text style={s.acceptButtonText}>Accept Job</Text>
                         </>
                     )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
                     style={[
-                        styles.declineButton,
-                        decliningId === item.id && styles.buttonDisabled,
+                        s.declineButton,
+                        { backgroundColor: colors.background },
+                        decliningId === item.id && s.buttonDisabled,
                     ]}
                     onPress={(e) => {
                         e.stopPropagation();
@@ -286,9 +291,9 @@ export default function WasherRequestsScreen() {
                     disabled={acceptingId === item.id || decliningId === item.id}
                 >
                     {decliningId === item.id ? (
-                        <ActivityIndicator color="#666" size="small" />
+                        <ActivityIndicator color={colors.textSecondary} size="small" />
                     ) : (
-                        <Text style={styles.declineButtonText}>Decline</Text>
+                        <Text style={[s.declineButtonText, { color: colors.textSecondary }]}>Decline</Text>
                     )}
                 </TouchableOpacity>
             </View>
@@ -296,10 +301,10 @@ export default function WasherRequestsScreen() {
     );
 
     const renderEmptyState = () => (
-        <View style={styles.emptyState}>
-            <Ionicons name="briefcase-outline" size={64} color="#CCC" />
-            <Text style={styles.emptyStateTitle}>No Job Requests</Text>
-            <Text style={styles.emptyStateText}>
+        <View style={s.emptyState}>
+            <Ionicons name="briefcase-outline" size={64} color={colors.divider} />
+            <Text style={[s.emptyStateTitle, { color: colors.textSecondary }]}>No Job Requests</Text>
+            <Text style={[s.emptyStateText, { color: colors.textSecondary }]}>
                 New job requests will appear here when customers book your services
             </Text>
         </View>
@@ -307,30 +312,30 @@ export default function WasherRequestsScreen() {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
-                <Text style={styles.loadingText}>Loading job requests...</Text>
+            <View style={[s.loadingContainer, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.accent} />
+                <Text style={[s.loadingText, { color: colors.textSecondary }]}>Loading job requests...</Text>
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <View style={[s.container, { backgroundColor: colors.background }]}>
             {/* Header */}
-            <Header
-                title={requests.length > 0 ? `Job Requests (${requests.length})` : 'Job Requests'}
-                rightElement={
-                    <TouchableOpacity onPress={() => loadRequests()}>
-                        <Ionicons name="refresh" size={24} color="#000" />
-                    </TouchableOpacity>
-                }
-            />
+            <View style={[s.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider }]}>
+                <Text style={[s.headerTitle, { color: colors.textPrimary }]}>
+                    {requests.length > 0 ? `Job Requests (${requests.length})` : 'Job Requests'}
+                </Text>
+                <TouchableOpacity onPress={() => loadRequests()}>
+                    <Ionicons name="refresh" size={24} color={colors.textPrimary} />
+                </TouchableOpacity>
+            </View>
 
             {/* Race Mode Banner */}
             {requests.length > 0 && (
-                <View style={styles.raceBanner}>
-                    <Ionicons name="flash" size={20} color="#FF9800" />
-                    <Text style={styles.raceBannerText}>
+                <View style={[s.raceBanner, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFF3E0', borderBottomColor: isDark ? colors.border : '#FFE0B2' }]}>
+                    <Ionicons name="flash" size={20} color={colors.warning || '#FF9800'} />
+                    <Text style={[s.raceBannerText, { color: colors.warning || '#E65100' }]}>
                         Multiple washers compete for each job. Accept quickly to win!
                     </Text>
                 </View>
@@ -341,31 +346,28 @@ export default function WasherRequestsScreen() {
                 data={requests}
                 renderItem={renderJobCard}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={s.listContent}
                 ListEmptyComponent={renderEmptyState}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} colors={[colors.accent]} />
                 }
             />
         </View>
     );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#F5F5F5',
     },
     loadingText: {
         marginTop: 12,
         fontSize: 16,
-        color: '#666',
     },
     header: {
         flexDirection: 'row',
@@ -374,27 +376,21 @@ const styles = StyleSheet.create({
         paddingTop: 60,
         paddingBottom: 16,
         paddingHorizontal: 20,
-        backgroundColor: '#FFF',
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
     },
     headerTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#000',
     },
     raceBanner: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFF3E0',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#FFE0B2',
     },
     raceBannerText: {
         flex: 1,
         fontSize: 14,
-        color: '#E65100',
         marginLeft: 12,
         fontWeight: '500',
     },
@@ -403,27 +399,28 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     jobCard: {
-        backgroundColor: '#FFF',
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 16,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: '#E0E0E0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 3,
     },
     raceIndicator: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFF3E0',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 12,
         alignSelf: 'flex-start',
         marginBottom: 12,
     },
-    raceText: {
+    raceIndicatorText: {
         fontSize: 11,
         fontWeight: 'bold',
-        color: '#FF9800',
         marginLeft: 4,
         letterSpacing: 0.5,
     },
@@ -437,31 +434,26 @@ const styles = StyleSheet.create({
     },
     serviceName: {
         fontSize: 18,
-        fontWeight: '600',
-        color: '#000',
+        fontWeight: '700',
         marginBottom: 6,
     },
     vehicleInfo: {
         fontSize: 14,
-        color: '#666',
         marginBottom: 4,
     },
     licensePlate: {
         fontSize: 14,
-        color: '#007AFF',
-        fontWeight: '500',
+        fontWeight: '600',
     },
     priceContainer: {
         alignItems: 'flex-end',
     },
     price: {
         fontSize: 22,
-        fontWeight: 'bold',
-        color: '#4CAF50',
+        fontWeight: '800',
     },
     duration: {
         fontSize: 12,
-        color: '#666',
         marginTop: 4,
     },
     jobDetails: {
@@ -474,36 +466,32 @@ const styles = StyleSheet.create({
     },
     detailText: {
         fontSize: 14,
-        color: '#666',
         marginLeft: 8,
     },
     notesContainer: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: '#F0F8FF',
         padding: 12,
-        borderRadius: 8,
+        borderRadius: 12,
         marginBottom: 16,
     },
     notesText: {
         flex: 1,
         fontSize: 13,
-        color: '#007AFF',
         marginLeft: 8,
+        lineHeight: 18,
     },
     actionButtons: {
         flexDirection: 'row',
         paddingTop: 16,
         borderTopWidth: 1,
-        borderTopColor: '#F0F0F0',
     },
     acceptButton: {
         flex: 2,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#4CAF50',
-        borderRadius: 8,
+        borderRadius: 12,
         paddingVertical: 14,
         marginRight: 8,
     },
@@ -517,14 +505,12 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#F5F5F5',
-        borderRadius: 8,
+        borderRadius: 12,
         paddingVertical: 14,
     },
     declineButtonText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#666',
     },
     buttonDisabled: {
         opacity: 0.6,
@@ -536,16 +522,14 @@ const styles = StyleSheet.create({
     },
     emptyStateTitle: {
         fontSize: 20,
-        fontWeight: '600',
-        color: '#666',
+        fontWeight: '700',
         marginTop: 16,
     },
     emptyStateText: {
         fontSize: 14,
-        color: '#999',
         textAlign: 'center',
         marginTop: 8,
         paddingHorizontal: 40,
-        lineHeight: 20,
+        lineHeight: 22,
     },
 });

@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { apiFetch } from '@/services/apiClient';
+import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -45,10 +46,10 @@ function formatDate(d: string) {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-    confirmed: { label: 'Confirmed', color: '#0ca6e8', bg: '#e0f4fd', icon: 'checkmark-circle' },
-    in_progress: { label: 'In Progress', color: '#f59e0b', bg: '#fffbeb', icon: 'construct' },
-    completed: { label: 'Completed', color: '#16a34a', bg: '#dcfce7', icon: 'checkmark-done-circle' },
-    cancelled: { label: 'Cancelled', color: '#ef4444', bg: '#fef2f2', icon: 'close-circle' },
+    confirmed: { label: 'Confirmed', color: '#0ca6e8', bg: 'rgba(12, 166, 232, 0.15)', icon: 'checkmark-circle' },
+    in_progress: { label: 'In Progress', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', icon: 'construct' },
+    completed: { label: 'Completed', color: '#16a34a', bg: 'rgba(22, 163, 74, 0.15)', icon: 'checkmark-done-circle' },
+    cancelled: { label: 'Completed', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', icon: 'close-circle' },
 };
 
 const VEHICLE_TYPE_ICONS: Record<string, string> = {
@@ -57,6 +58,7 @@ const VEHICLE_TYPE_ICONS: Record<string, string> = {
 };
 
 export default function WasherBookingDetailsScreen() {
+    const { colors, isDark } = useTheme();
     const router = useRouter();
     const { logout } = useAuth();
     const { id: bookingId } = useLocalSearchParams<{ id: string }>();
@@ -173,10 +175,10 @@ export default function WasherBookingDetailsScreen() {
     };
 
     if (loading) return (
-        <View style={s.center}><ActivityIndicator size="large" color="#0ca6e8" /></View>
+        <View style={[s.center, { backgroundColor: colors.background }]}><ActivityIndicator size="large" color={colors.accent} /></View>
     );
     if (!booking) return (
-        <View style={s.center}><Text style={{ color: '#ef4444' }}>Booking not found</Text></View>
+        <View style={[s.center, { backgroundColor: colors.background }]}><Text style={{ color: colors.error }}>Booking not found</Text></View>
     );
 
     const statusCfg = STATUS_CONFIG[booking.status] || STATUS_CONFIG.confirmed;
@@ -185,13 +187,13 @@ export default function WasherBookingDetailsScreen() {
     const timeChanged = booking.washerPreferredTime && booking.washerPreferredTime !== booking.scheduledTime;
 
     return (
-        <View style={s.container}>
+        <View style={[s.container, { backgroundColor: colors.background }]}>
             {/* Header */}
-            <View style={s.header}>
+            <View style={[s.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-                    <Ionicons name="arrow-back" size={24} color="#0d1629" />
+                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
                 </TouchableOpacity>
-                <Text style={s.headerTitle}>Job Details</Text>
+                <Text style={[s.headerTitle, { color: colors.textPrimary }]}>Job Details</Text>
                 <View style={[s.statusPill, { backgroundColor: statusCfg.bg }]}>
                     <Ionicons name={statusCfg.icon as any} size={14} color={statusCfg.color} />
                     <Text style={[s.statusPillTxt, { color: statusCfg.color }]}>{statusCfg.label}</Text>
@@ -199,32 +201,32 @@ export default function WasherBookingDetailsScreen() {
             </View>
 
             {/* Top quick actions & crucial info */}
-            <View style={s.topBar}>
+            <View style={[s.topBar, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
                 <View style={s.topInfo}>
-                    <Text style={s.topService}>{booking.service.name}</Text>
-                    <Text style={s.topMeta}>
+                    <Text style={[s.topService, { color: colors.textPrimary }]}>{booking.service.name}</Text>
+                    <Text style={[s.topMeta, { color: colors.textSecondary }]}>
                         {formatDate(booking.scheduledDate)} · {fmt(booking.washerPreferredTime || booking.scheduledTime)}
                     </Text>
-                    <Text numberOfLines={1} style={s.topAddress}>
+                    <Text numberOfLines={1} style={[s.topAddress, { color: colors.textSecondary }]}>
                         {booking.address.label || booking.address.addressLine1}
                     </Text>
                 </View>
                 <View style={s.topActions}>
                     {booking.customer?.phone && (
                         <TouchableOpacity
-                            style={[s.iconActionBtn, { backgroundColor: '#e0f2fe' }]}
+                            style={[s.iconActionBtn, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f2fe' }]}
                             onPress={() => Linking.openURL(`tel:${booking.customer!.phone}`)}
                         >
-                            <Ionicons name="call" size={18} color="#0ca6e8" />
-                            <Text style={s.iconActionTxt}>Call</Text>
+                            <Ionicons name="call" size={18} color={colors.accent} />
+                            <Text style={[s.iconActionTxt, { color: colors.textPrimary }]}>Call</Text>
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity
-                        style={[s.iconActionBtn, { backgroundColor: '#dcfce7' }]}
+                        style={[s.iconActionBtn, { backgroundColor: isDark ? 'rgba(22, 163, 74, 0.15)' : '#dcfce7' }]}
                         onPress={openNavigation}
                     >
-                        <Ionicons name="navigate" size={18} color="#16a34a" />
-                        <Text style={s.iconActionTxt}>Directions</Text>
+                        <Ionicons name="navigate" size={18} color={colors.success || '#16a34a'} />
+                        <Text style={[s.iconActionTxt, { color: colors.textPrimary }]}>Directions</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -232,63 +234,63 @@ export default function WasherBookingDetailsScreen() {
             <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
                 {/* Earnings banner */}
-                <View style={s.earningsBanner}>
+                <View style={[s.earningsBanner, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
                     <View>
-                        <Text style={s.earningsLabel}>Earnings for this Job</Text>
-                        <Text style={s.earningsValue}>
+                        <Text style={[s.earningsLabel, { color: colors.textSecondary }]}>Earnings for this Job</Text>
+                        <Text style={[s.earningsValue, { color: colors.textPrimary }]}>
                             {booking.paidWithSubscription
                                 ? 'Subscription Job'
                                 : `LKR ${booking.totalPrice.toLocaleString()}`}
                         </Text>
                     </View>
-                    <View style={s.durationPill}>
-                        <Ionicons name="time-outline" size={15} color="#0ca6e8" />
-                        <Text style={s.durationTxt}>~{booking.duration} min</Text>
+                    <View style={[s.durationPill, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : 'rgba(12, 166, 232, 0.1)' }]}>
+                        <Ionicons name="time-outline" size={15} color={colors.accent} />
+                        <Text style={[s.durationTxt, { color: colors.accent }]}>~{booking.duration} min</Text>
                     </View>
                 </View>
 
                 {/* ── Schedule ── */}
-                <View style={s.card}>
-                    <CardTitle icon="calendar" title="Schedule" />
+                <View style={[s.card, { backgroundColor: colors.cardBackground }]}>
+                    <CardTitle icon="calendar" title="Schedule" colors={colors} />
 
                     <View style={s.scheduleGrid}>
-                        <ScheduleItem label="Date" value={formatDate(booking.scheduledDate)} />
-                        <ScheduleItem label="Service" value={booking.service.name} />
+                        <ScheduleItem label="Date" value={formatDate(booking.scheduledDate)} colors={colors} />
+                        <ScheduleItem label="Service" value={booking.service.name} colors={colors} />
                     </View>
 
                     {/* Time display — show both if different */}
-                    <View style={s.timeBlock}>
-                        <Text style={s.timeLbl}>Your Arrival Time</Text>
-                        <Text style={s.timeVal}>{fmt(booking.washerPreferredTime || booking.scheduledTime)}</Text>
+                    <View style={[s.timeBlock, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f4fd' }]}>
+                        <Text style={[s.timeLbl, { color: colors.accent }]}>Your Arrival Time</Text>
+                        <Text style={[s.timeVal, { color: colors.textPrimary }]}>{fmt(booking.washerPreferredTime || booking.scheduledTime)}</Text>
                         {timeChanged && (
                             <View style={s.timeChangedRow}>
-                                <Ionicons name="swap-horizontal-outline" size={13} color="#6b7280" />
-                                <Text style={s.timeChangedTxt}>Customer requested {fmt(booking.scheduledTime)} · you adjusted to {fmt(booking.washerPreferredTime!)}</Text>
+                                <Ionicons name="swap-horizontal-outline" size={13} color={colors.textSecondary} />
+                                <Text style={[s.timeChangedTxt, { color: colors.textSecondary }]}>Customer requested {fmt(booking.scheduledTime)} · you adjusted to {fmt(booking.washerPreferredTime!)}</Text>
                             </View>
                         )}
                     </View>
                 </View>
 
                 {/* ── Vehicle & Car Care Notes ── */}
-                <View style={s.card}>
-                    <CardTitle icon="car-sport" title="Vehicle" />
+                <View style={[s.card, { backgroundColor: colors.cardBackground }]}>
+                    <CardTitle icon="car-sport" title="Vehicle" colors={colors} />
 
                     <View style={s.vehicleRow}>
                         <Text style={s.vehicleEmoji}>{vehicleIcon}</Text>
                         <View style={{ flex: 1, marginLeft: 14 }}>
-                            <Text style={s.vehicleName}>{booking.vehicle.nickname || `${booking.vehicle.make} ${booking.vehicle.model}`}</Text>
-                            <Text style={s.vehicleDetails}>{booking.vehicle.make} {booking.vehicle.model} · {booking.vehicle.year} · {booking.vehicle.color}</Text>
-                            <Text style={s.vehiclePlate}>{booking.vehicle.licensePlate}</Text>
+                            <Text style={[s.vehicleName, { color: colors.textPrimary }]}>{booking.vehicle.nickname || `${booking.vehicle.make} ${booking.vehicle.model}`}</Text>
+                            <Text style={[s.vehicleDetails, { color: colors.textSecondary }]}>{booking.vehicle.make} {booking.vehicle.model} · {booking.vehicle.year} · {booking.vehicle.color}</Text>
+                            <Text style={[s.vehiclePlate, { color: colors.accent }]}>{booking.vehicle.licensePlate}</Text>
                         </View>
-                        <View style={s.vehicleTypePill}>
-                            <Text style={s.vehicleTypeTxt}>{booking.vehicle.type}</Text>
+                        <View style={[s.vehicleTypePill, { backgroundColor: colors.divider }]}>
+                            <Text style={[s.vehicleTypeTxt, { color: colors.textPrimary }]}>{booking.vehicle.type}</Text>
                         </View>
                     </View>
 
                     {booking.priceBreakdown && booking.priceBreakdown.multiplier > 1.0 && (
-                        <View style={s.multiplierRow}>
-                            <Ionicons name="information-circle-outline" size={14} color="#0ca6e8" />
-                            <Text style={s.multiplierTxt}>
+                        <View style={[s.multiplierRow, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.15)' : '#e0f4fd' }]}>
+                            <Ionicons name="information-circle-outline" size={14} color={colors.accent} />
+                            <Text style={[s.multiplierTxt, { color: colors.accent }]}>
                                 {booking.vehicle.type} vehicle — {Math.round((booking.priceBreakdown.multiplier - 1) * 100)}% size surcharge applied
                             </Text>
                         </View>
@@ -296,31 +298,31 @@ export default function WasherBookingDetailsScreen() {
 
                     {/* Special instructions — prominent */}
                     {hasSpecialNotes ? (
-                        <View style={s.specialNotesBox}>
+                        <View style={[s.specialNotesBox, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb', borderColor: colors.warning }]}>
                             <View style={s.specialNotesHeader}>
-                                <Ionicons name="warning" size={18} color="#d97706" />
-                                <Text style={s.specialNotesTitle}>⚠️ Special Car Care Instructions</Text>
+                                <Ionicons name="warning" size={18} color={colors.warning} />
+                                <Text style={[s.specialNotesTitle, { color: colors.warning }]}>⚠️ Special Car Care Instructions</Text>
                             </View>
-                            <Text style={s.specialNotesTxt}>{booking.notes}</Text>
+                            <Text style={[s.specialNotesTxt, { color: colors.textPrimary }]}>{booking.notes}</Text>
                         </View>
                     ) : (
-                        <View style={s.noNotesRow}>
-                            <Ionicons name="checkmark-circle-outline" size={16} color="#16a34a" />
-                            <Text style={s.noNotesTxt}>No special instructions from customer</Text>
+                        <View style={[s.noNotesRow, { backgroundColor: isDark ? 'rgba(22, 163, 74, 0.1)' : '#f0fdf4' }]}>
+                            <Ionicons name="checkmark-circle-outline" size={16} color={colors.success || '#16a34a'} />
+                            <Text style={[s.noNotesTxt, { color: colors.success || '#16a34a' }]}>No special instructions from customer</Text>
                         </View>
                     )}
                 </View>
 
                 {/* ── Location ── */}
-                <View style={s.card}>
-                    <CardTitle icon="location" title="Service Location" />
-                    <Text style={s.addressLabel}>{booking.address.label}</Text>
-                    <Text style={s.addressLine}>{booking.address.addressLine1}</Text>
-                    {booking.address.addressLine2 && <Text style={s.addressLine}>{booking.address.addressLine2}</Text>}
-                    <Text style={s.addressLine}>{booking.address.city}{booking.address.postalCode ? `, ${booking.address.postalCode}` : ''}</Text>
+                <View style={[s.card, { backgroundColor: colors.cardBackground }]}>
+                    <CardTitle icon="location" title="Service Location" colors={colors} />
+                    <Text style={[s.addressLabel, { color: colors.textPrimary }]}>{booking.address.label}</Text>
+                    <Text style={[s.addressLine, { color: colors.textSecondary }]}>{booking.address.addressLine1}</Text>
+                    {booking.address.addressLine2 && <Text style={[s.addressLine, { color: colors.textSecondary }]}>{booking.address.addressLine2}</Text>}
+                    <Text style={[s.addressLine, { color: colors.textSecondary }]}>{booking.address.city}{booking.address.postalCode ? `, ${booking.address.postalCode}` : ''}</Text>
 
                     {booking.address.location && (
-                        <TouchableOpacity style={s.navBtn} onPress={openNavigation}>
+                        <TouchableOpacity style={[s.navBtn, { backgroundColor: colors.accent }]} onPress={openNavigation}>
                             <Ionicons name="navigate" size={16} color="#fff" />
                             <Text style={s.navBtnTxt}>Open in Maps</Text>
                         </TouchableOpacity>
@@ -329,16 +331,16 @@ export default function WasherBookingDetailsScreen() {
 
                 {/* ── Customer ── */}
                 {booking.customer && (
-                    <View style={s.card}>
-                        <CardTitle icon="person-circle" title="Customer" />
-                        <Text style={s.customerName}>{booking.customer.displayName}</Text>
+                    <View style={[s.card, { backgroundColor: colors.cardBackground }]}>
+                        <CardTitle icon="person-circle" title="Customer" colors={colors} />
+                        <Text style={[s.customerName, { color: colors.textPrimary }]}>{booking.customer.displayName}</Text>
                         {booking.customer.phone && (
                             <TouchableOpacity
-                                style={s.callBtn}
+                                style={[s.callBtn, { borderColor: colors.accent }]}
                                 onPress={() => Linking.openURL(`tel:${booking.customer!.phone}`)}
                             >
-                                <Ionicons name="call-outline" size={16} color="#0ca6e8" />
-                                <Text style={s.callBtnTxt}>Call Customer</Text>
+                                <Ionicons name="call-outline" size={16} color={colors.accent} />
+                                <Text style={[s.callBtnTxt, { color: colors.accent }]}>Call Customer</Text>
                             </TouchableOpacity>
                         )}
                     </View>
@@ -347,7 +349,7 @@ export default function WasherBookingDetailsScreen() {
                 {/* ── Action Buttons ── */}
                 {booking.status === 'confirmed' && (
                     <TouchableOpacity
-                        style={[s.actionBtn, s.startBtn]}
+                        style={[s.actionBtn, s.startBtn, { backgroundColor: colors.warning || '#f59e0b' }]}
                         onPress={handleStartService}
                         disabled={actionLoading}
                     >
@@ -360,7 +362,7 @@ export default function WasherBookingDetailsScreen() {
 
                 {booking.status === 'in_progress' && (
                     <TouchableOpacity
-                        style={[s.actionBtn, s.completeBtn]}
+                        style={[s.actionBtn, s.completeBtn, { backgroundColor: colors.success || '#16a34a' }]}
                         onPress={handleCompleteService}
                         disabled={actionLoading}
                     >
@@ -372,9 +374,9 @@ export default function WasherBookingDetailsScreen() {
                 )}
 
                 {booking.status === 'completed' && (
-                    <View style={s.completedBanner}>
-                        <Ionicons name="trophy" size={28} color="#16a34a" />
-                        <Text style={s.completedTxt}>Great job! This service is complete.</Text>
+                    <View style={[s.completedBanner, { backgroundColor: isDark ? 'rgba(22, 163, 74, 0.15)' : '#dcfce7' }]}>
+                        <Ionicons name="trophy" size={28} color={colors.success || '#16a34a'} />
+                        <Text style={[s.completedTxt, { color: colors.success || '#16a34a' }]}>Great job! This service is complete.</Text>
                     </View>
                 )}
 
@@ -384,20 +386,20 @@ export default function WasherBookingDetailsScreen() {
     );
 }
 
-function CardTitle({ icon, title }: { icon: string; title: string }) {
+function CardTitle({ icon, title, colors }: { icon: string; title: string; colors: any }) {
     return (
         <View style={s.cardTitleRow}>
-            <Ionicons name={icon as any} size={18} color="#0ca6e8" />
-            <Text style={s.cardTitle}>{title}</Text>
+            <Ionicons name={icon as any} size={18} color={colors.accent} />
+            <Text style={[s.cardTitle, { color: colors.textPrimary }]}>{title}</Text>
         </View>
     );
 }
 
-function ScheduleItem({ label, value }: { label: string; value: string }) {
+function ScheduleItem({ label, value, colors }: { label: string; value: string; colors: any }) {
     return (
-        <View style={s.scheduleItem}>
-            <Text style={s.scheduleLbl}>{label}</Text>
-            <Text style={s.scheduleVal}>{value}</Text>
+        <View style={[s.scheduleItem, { backgroundColor: colors.background }]}>
+            <Text style={[s.scheduleLbl, { color: colors.textSecondary }]}>{label}</Text>
+            <Text style={[s.scheduleVal, { color: colors.textPrimary }]}>{value}</Text>
         </View>
     );
 }
