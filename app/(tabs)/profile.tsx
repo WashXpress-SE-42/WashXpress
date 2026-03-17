@@ -13,11 +13,11 @@ import {
   View,
   Switch
 } from 'react-native';
-import { Header } from '../components/Header';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { auth } from '../firebaseConfig';
-import { useProfile } from '../hooks/useProfile';
+import { Header } from '../../components/Header';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { auth } from '../../firebaseConfig';
+import { useProfile } from '../../hooks/useProfile';
 
 export default function ProfileScreen() {
   const router = useRouter();

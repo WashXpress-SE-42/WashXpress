@@ -9,7 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 
 type Destination =
   | '/login'
-  | '/customer-home'
+  | '/(tabs)'
   | '/washer-home'
   | '/washer-pending';
 
@@ -46,7 +46,7 @@ export default function Index() {
         }
 
         if (userType === 'customer') {
-          setDestination('/customer-home');
+          setDestination('/(tabs)');
           return;
         }
 
@@ -109,5 +109,5 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={destination} />;
+  return <Redirect href={destination as any} />;
 }

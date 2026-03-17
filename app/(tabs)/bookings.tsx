@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { apiFetch } from '../services/apiClient';
-import { useTheme } from '../context/ThemeContext';
+import { apiFetch } from '../../services/apiClient';
+import { useTheme } from '../../context/ThemeContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Booking {
@@ -126,9 +126,6 @@ export default function BookingListScreen() {
         <View style={[s.container, { backgroundColor: colors.background }]}>
             {/* ── Header ── */}
             <View style={[s.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider }]}>
-                <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-                </TouchableOpacity>
                 <Text style={[s.headerTitle, { color: colors.textPrimary }]}>My Bookings</Text>
                 <TouchableOpacity
                     onPress={() => switchTab('history')}
@@ -320,7 +317,6 @@ const s = StyleSheet.create({
         paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
         borderBottomWidth: 1,
     },
-    backBtn: { width: 40, height: 40, justifyContent: 'center' },
     headerTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
     historyBtn: {
         width: 40, height: 40, borderRadius: 12,

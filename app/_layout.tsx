@@ -20,11 +20,11 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="Mentorship" />
             <Stack.Screen name="login" />
             <Stack.Screen name="signup" />
             <Stack.Screen name="washer-signup" />
-            <Stack.Screen name="marketplace" options={{ headerShown: false }} />
             <Stack.Screen name="home" />
             <Stack.Screen name="washer-job-request" options={{ headerShown: false }} />
             <Stack.Screen name="washer-booking-details" options={{ headerShown: false }} />
@@ -39,7 +39,6 @@ export default function RootLayout() {
             <Stack.Screen name="booking-details" />
             <Stack.Screen name="edit-profile" />
             <Stack.Screen name="subscriptions" options={{ headerShown: false }} />
-            <Stack.Screen name="profile" />
             <Stack.Screen name="vehicle-list" options={{ headerShown: false }} />
             <Stack.Screen name="add-vehicle" options={{ headerShown: false }} />
             <Stack.Screen name="address-list" options={{ headerShown: false }} />

@@ -1,5 +1,5 @@
-import { apiFetch } from '@/services/apiClient';
-import { getProfileFromFirebase } from '@/services/authService';
+import { apiFetch } from '../../services/apiClient';
+import { getProfileFromFirebase } from '../../services/authService';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Href, useRouter } from 'expo-router';
@@ -19,7 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = width * 0.72;
@@ -95,11 +95,11 @@ interface CarouselServiceItem {
 }
 
 const REAL_SERVICES: CarouselServiceItem[] = [
-  { id: '1', name: 'Exterior Wash', icon: require('../assets/icons/washing.jpg'), route: '/ExteriorWashScreen' },
-  { id: '2', name: 'Interior Clean', icon: require('../assets/icons/interior_cleaning.jpg'), route: '/InteriorWashScreen' },
-  { id: '3', name: 'Full Detail', icon: require('../assets/icons/detailing.jpg'), route: '/FullDetailScreen' },
-  { id: '4', name: 'Tire Cleaning', icon: require('../assets/icons/tire_cleaning.jpg'), route: '/TireCleaningScreen' },
-  { id: '5', name: 'Headlight Repair', icon: require('../assets/icons/headlight_cleaning.jpg'), route: '/HeadlightRepairScreen' },
+  { id: '1', name: 'Exterior Wash', icon: require('../../assets/icons/washing.jpg'), route: '/ExteriorWashScreen' },
+  { id: '2', name: 'Interior Clean', icon: require('../../assets/icons/interior_cleaning.jpg'), route: '/InteriorWashScreen' },
+  { id: '3', name: 'Full Detail', icon: require('../../assets/icons/detailing.jpg'), route: '/FullDetailScreen' },
+  { id: '4', name: 'Tire Cleaning', icon: require('../../assets/icons/tire_cleaning.jpg'), route: '/TireCleaningScreen' },
+  { id: '5', name: 'Headlight Repair', icon: require('../../assets/icons/headlight_cleaning.jpg'), route: '/HeadlightRepairScreen' },
 ];
 
 export default function CustomerHomeScreen() {
@@ -251,7 +251,7 @@ export default function CustomerHomeScreen() {
     <View style={[styles.outerContainer, { backgroundColor: colors.background }]}>
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
@@ -514,28 +514,6 @@ export default function CustomerHomeScreen() {
         </View>
       </ScrollView>
 
-      {/* Quick Actions — Fixed Bottom Bar */}
-      <View style={[styles.quickActions, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/service-browse' as Href)}>
-          <Ionicons name="search" size={24} color={colors.accent} />
-          <Text style={[styles.actionText, { color: colors.textSecondary }]}>Browse</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/vehicle-list' as Href)}>
-          <Ionicons name="car-sport" size={24} color={colors.accent} />
-          <Text style={[styles.actionText, { color: colors.textSecondary }]}>Vehicles</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/booking-list' as Href)}>
-          <Ionicons name="calendar" size={24} color={colors.accent} />
-          <Text style={[styles.actionText, { color: colors.textSecondary }]}>Bookings</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/profile' as Href)}>
-          <Ionicons name="person" size={24} color={colors.accent} />
-          <Text style={[styles.actionText, { color: colors.textSecondary }]}>Account</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -590,29 +568,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    paddingBottom: 28,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 8,
-  },
-  actionButton: {
-    alignItems: 'center',
-  },
-  actionText: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 8,
   },
   section: {
     marginTop: 20,
