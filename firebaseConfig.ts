@@ -17,7 +17,7 @@ const firebaseConfig = {
 console.log("🔍 Initializing Firebase with project:", firebaseConfig.projectId);
 
 // Initialize Firebase (prevent re-initialization on hot reload)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 let auth: Auth;
 try {

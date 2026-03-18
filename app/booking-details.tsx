@@ -623,6 +623,17 @@ export default function BookingDetailsScreen() {
                     )
                 }
 
+                {/* Complaint Button */}
+                {(booking.status === 'completed' || booking.status === 'cancelled') && (
+                    <TouchableOpacity
+                        style={[styles.rateButton, { backgroundColor: colors.error || '#F44336', marginTop: 12 }]}
+                        onPress={() => router.push(`/file-complaints?bookingId=${booking.id}&washerName=${booking.provider.displayName}` as any)}
+                    >
+                        <Ionicons name="alert-circle-outline" size={20} color="#FFF" />
+                        <Text style={[styles.rateButtonText, { color: '#FFF' }]}>File a Complaint</Text>
+                    </TouchableOpacity>
+                )}
+
                 <View style={{ height: 40 }} />
             </ScrollView >
         </View >
