@@ -40,6 +40,7 @@ export default function RootLayout() {
             <Stack.Screen name="service-details" />
             <Stack.Screen name="booking-details" />
             <Stack.Screen name="washer-inprogress" />
+            <Stack.Screen name="pre-existing-damage-section" options={{ headerShown: false }} />
             <Stack.Screen name="edit-profile" />
             <Stack.Screen name="subscriptions" options={{ headerShown: false }} />
             <Stack.Screen name="vehicle-list" options={{ headerShown: false }} />
