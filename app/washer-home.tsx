@@ -113,10 +113,25 @@ export default function WasherHome() {
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
-                const fetched: BookingDoc[] = snapshot.docs.map((d) => ({
-                    id: d.id,
-                    ...(d.data() as Omit<BookingDoc, 'id'>),
-                }));
+                console.log(`📦 Firestore snapshot: ${snapshot.docs.length} pending bookings`);
+
+                const fetched: BookingDoc[] = snapshot.docs.map((d) => {
+                    const data = d.data();
+                    console.log(`  → ${d.id}:`, data.service?.name, data.vehicle?.make, data.status);
+                    return {
+                        id: d.id,
+                        customerName: data.customerName ?? 'Customer',
+                        vehicle: data.vehicle ?? { make: '', model: '', color: '', licensePlate: '' },
+                        service: data.service ?? { name: 'Service', categoryId: '', duration: 60 },
+                        address: data.address ?? { addressLine1: '', city: '' },
+                        scheduledDate: data.scheduledDate ?? '',
+                        scheduledTime: data.scheduledTime ?? '',
+                        totalPrice: data.totalPrice ?? 0,
+                        currency: data.currency ?? 'LKR',
+                        paidWithSubscription: data.paidWithSubscription ?? false,
+                        notes: data.notes ?? null,
+                    };
+                });
 
                 fetched.sort((a, b) => {
                     if (a.scheduledDate !== b.scheduledDate)
@@ -127,10 +142,6 @@ export default function WasherHome() {
                 setBookings(fetched);
                 setLoading(false);
             },
-            (error) => {
-                console.error('Firestore listener error:', error);
-                setLoading(false);
-            }
         );
 
         return () => unsubscribe();

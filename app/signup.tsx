@@ -118,7 +118,7 @@ export default function SignupScreen() {
     try {
       const cleanedPhone = phone.startsWith('0') ? phone.substring(1) : phone;
 
-      // 1️⃣ Register the account (no vehicle in signup payload)
+      // 1️⃣ Register the account
       const result = await signup({
         displayName: `${firstName} ${lastName}`,
         email,
@@ -131,9 +131,8 @@ export default function SignupScreen() {
       // Store auth so apiFetch works for subsequent calls
       setAuthToken(result.token);
       setRegisteredUser(result.user);
-    
 
-      // 2️⃣ Add vehicle with the correct backend field names
+      // 2️⃣ Add vehicle
       await apiFetch('/vehicles', {
         method: 'POST',
         body: JSON.stringify({
@@ -161,7 +160,7 @@ export default function SignupScreen() {
     }
   };
 
-  // ── Step 3 → save address then navigate home ─────────────────────────────
+  // ── Step 3 → save address, THEN set auth, THEN navigate ──────────────────
   const handleStep3Complete = async () => {
     if (!isStep3Valid) {
       Alert.alert('Error', 'Please enter your street address and city');
@@ -169,8 +168,11 @@ export default function SignupScreen() {
     }
 
     setLoading(true);
+    let addressSaved = false;
+
     try {
-      await apiFetch('/profile/addresses', {
+      // FIX: route is /addresses not /profile/addresses
+      await apiFetch('/addresses', {
         method: 'POST',
         body: JSON.stringify({
           label: addressLabel,
@@ -184,24 +186,31 @@ export default function SignupScreen() {
         }),
       }, 'customer');
 
+      addressSaved = true;
+    } catch (error: any) {
+      console.error('❌ Address save error:', error);
+      // Non-fatal — account already created, continue anyway
+    } finally {
+      setLoading(false);
+    }
+
+    // FIX: set auth AFTER all API calls are done to prevent premature navigation
+    if (authToken && registeredUser) {
+      await setAuth(authToken, 'customer', registeredUser);
+    }
+
+    if (addressSaved) {
       Alert.alert(
         'Welcome to WashXpress! 🎉',
         'Your account has been created successfully.',
         [{ text: 'Get Started', onPress: () => router.replace('/customer-home' as any) }]
       );
-    } catch (error: any) {
-      console.error('❌ Address save error:', error);
-      // Address failed but account is created — still proceed
+    } else {
       Alert.alert(
         'Almost there!',
-        'Account created but address could not be saved. You can add it later in your profile.',
+        'Account created but address could not be saved. You can add it later from your profile.',
         [{ text: 'Continue', onPress: () => router.replace('/customer-home' as any) }]
       );
-    } finally {
-      if (authToken && registeredUser) {
-        await setAuth(authToken, 'customer', registeredUser);
-      }
-      setLoading(false);
     }
   };
 
@@ -211,7 +220,16 @@ export default function SignupScreen() {
       'You can add your home address later from your profile.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Skip', onPress: () => router.replace('/customer-home' as any) },
+        {
+          text: 'Skip',
+          onPress: async () => {
+            // Still need to finalise auth even when skipping
+            if (authToken && registeredUser) {
+              await setAuth(authToken, 'customer', registeredUser);
+            }
+            router.replace('/customer-home' as any);
+          },
+        },
       ]
     );
   };
