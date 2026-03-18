@@ -45,6 +45,7 @@ export default function RootLayout() {
             <Stack.Screen name="address-list" options={{ headerShown: false }} />
             <Stack.Screen name="add-address" options={{ headerShown: false }} />
             <Stack.Screen name="create-booking" options={{ headerShown: false }} />
+            <Stack.Screen name="payment-screen" options={{ headerShown: false }} />
             <Stack.Screen name="booking-confirmation" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
         </QueryClientProvider>

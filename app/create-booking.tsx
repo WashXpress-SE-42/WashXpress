@@ -1,13 +1,13 @@
+import PayHere from '@/utils/Payhere';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator, Alert, Modal, ScrollView, StyleSheet,
     Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { apiFetch } from '../services/apiClient';
-import PayHere from '@/utils/Payhere';
 import { useTheme } from '../context/ThemeContext';
+import { apiFetch } from '../services/apiClient';
 
 interface Service { id: string; name: string; price: number; currency: string; duration: number; categoryId: string; }
 interface Vehicle { id: string; make: string; model: string; year: number; color: string; licensePlate: string; nickname: string; type: string; }
@@ -109,6 +109,11 @@ export default function CreateBookingScreen() {
         setSelectedVehicle(v); setVehicleModal(false); setSubscription(null); setPaymentPath(null);
         await checkSub(v.id);
     };
+
+    const handlePay = useCallback(() => {
+        console.log('create-booking: handlePay called, paymentPath=', paymentPath);
+        router.push('/payment-screen' as any);
+    }, [paymentPath]);
 
     const handleBook = async () => {
         if (!service || !selectedVehicle || !selectedAddress || !selectedTime || !paymentPath) {
@@ -328,11 +333,11 @@ export default function CreateBookingScreen() {
                 )}
 
                 {/* CTA */}
-                <TouchableOpacity style={[s.bookBtn, { backgroundColor: colors.accent }, (!canBook || submitting) && [s.bookBtnDisabled, { backgroundColor: colors.divider }]]} onPress={handleBook} disabled={!canBook || submitting}>
+                <TouchableOpacity style={[s.bookBtn, { backgroundColor: colors.accent }, (paymentPath === 'subscription' && (!canBook || submitting) || submitting) && [s.bookBtnDisabled, { backgroundColor: colors.divider }]]} onPress={paymentPath === 'one_time' ? handlePay : handleBook} disabled={paymentPath === 'subscription' ? (!canBook || submitting) : submitting}>
                     {submitting ? <ActivityIndicator color="#fff" /> : (
                         <>
                             <Ionicons name={paymentPath === 'subscription' ? 'checkmark-circle' : 'card'} size={20} color="#fff" />
-                            <Text style={s.bookBtnTxt}>{paymentPath === 'subscription' ? 'Confirm Booking (Free)' : `Pay LKR ${priceBreakdown?.totalPrice.toLocaleString() ?? ''} & Book`}</Text>
+                            <Text style={s.bookBtnTxt}>{paymentPath === 'subscription' ? 'Confirm Booking (Free)' : 'Pay & Continue'}</Text>
                         </>
                     )}
                 </TouchableOpacity>
