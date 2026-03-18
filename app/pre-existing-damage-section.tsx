@@ -55,7 +55,7 @@ interface Props {
  *     />
  *   )}
  */
-export function PreExistingDamageSection({ bookingId, existingPhotos = [], onPhotosUploaded }: Props) {
+export default function PreExistingDamageSection({ bookingId, existingPhotos = [], onPhotosUploaded }: Props) {
   const [photos, setPhotos] = useState<string[]>(existingPhotos);
   const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(existingPhotos.length > 0);
