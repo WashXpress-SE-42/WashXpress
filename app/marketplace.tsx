@@ -107,46 +107,72 @@ export default function Marketplace() {
     };
 
     // ── Filtered products ────────────────────────────────
-    const filtered = useMemo(() => PRODUCTS.filter(p => {
-        const matchCat = activeCategory === 'All' || p.category === activeCategory;
-        const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-            p.description.toLowerCase().includes(search.toLowerCase());
-        return matchCat && matchSearch;
-    }), [search, activeCategory]);
+    const filtered = useMemo(() => {
+        const results = PRODUCTS.filter(p => {
+            const matchCat = activeCategory === 'All' || p.category === activeCategory;
+            const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
+                p.description.toLowerCase().includes(search.toLowerCase());
+            return matchCat && matchSearch;
+        });
+        // Pad to even count so lone last item doesn't stretch full-width
+        if (results.length % 2 !== 0) {
+            results.push({ id: '__spacer__', name: '', description: '', price: 0, rating: 0, reviews: 0, image: null, category: '' });
+        }
+        return results;
+    }, [search, activeCategory]);
 
     // ── Render product card ──────────────────────────────
-    const renderProduct = (product: Product) => {
+    const renderProduct = ({ item: product }: { item: Product }) => {
+        // Transparent spacer for odd-count grids
+        if (product.id === '__spacer__') {
+            return <View style={{ flex: 1, margin: 5 }} />;
+        }
         const qty = getQty(product.id);
         return (
-            <View key={product.id} style={[styles.productCard, { backgroundColor: colors.cardBackground, borderColor: colors.divider }]}>
-                <View style={[styles.productImageBox, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#f8fafc' }]}>
-                    <Image source={product.image} style={styles.productImage} resizeMode="contain" />
+            <View style={[styles.productCard, { backgroundColor: colors.cardBackground, borderColor: colors.divider }]}>
+                {/* Image — fixed 1:1 aspect ratio */}
+                <View style={[styles.productImageBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f4f8fb' }]}>
+                    <Image source={product.image} style={styles.productImage} resizeMode="cover" />
                 </View>
-                <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={2}>{product.name}</Text>
-                <Text style={[styles.productDesc, { color: colors.textSecondary }]} numberOfLines={2}>{product.description}</Text>
-                {product.unit && <Text style={[styles.productUnit, { color: colors.accent }]}>{product.unit}</Text>}
-                <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={12} color="#f59e0b" />
-                    <Text style={[styles.ratingText, { color: colors.textPrimary }]}>{product.rating}</Text>
-                    <Text style={[styles.reviewText, { color: colors.textSecondary }]}>({product.reviews})</Text>
-                </View>
-                <Text style={[styles.productPrice, { color: colors.accent }]}>LKR {product.price.toFixed(2)}</Text>
-                {qty === 0 ? (
-                    <TouchableOpacity style={[styles.addBtn, { backgroundColor: colors.accent }]} onPress={() => addToCart(product)}>
-                        <Ionicons name="cart-outline" size={14} color="#fff" />
-                        <Text style={styles.addBtnText}> Add to Cart</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <View style={styles.qtyRow}>
-                        <TouchableOpacity style={[styles.qtyMinus, { backgroundColor: colors.error }]} onPress={() => updateQty(product.id, -1)}>
-                            <Ionicons name="remove" size={16} color="#fff" />
-                        </TouchableOpacity>
-                        <Text style={[styles.qtyText, { color: colors.textPrimary }]}>{qty}</Text>
-                        <TouchableOpacity style={[styles.qtyPlus, { backgroundColor: colors.accent }]} onPress={() => updateQty(product.id, 1)}>
-                            <Ionicons name="add" size={16} color="#fff" />
-                        </TouchableOpacity>
+
+                {/* Content — grows to fill remaining space */}
+                <View style={styles.cardBody}>
+                    <Text style={[styles.productName, { color: colors.textPrimary }]} numberOfLines={2}>{product.name}</Text>
+                    <Text style={[styles.productDesc, { color: colors.textSecondary }]} numberOfLines={2}>{product.description}</Text>
+
+                    <View style={styles.ratingRow}>
+                        <Ionicons name="star" size={11} color="#f59e0b" />
+                        <Text style={[styles.ratingText, { color: colors.textPrimary }]}>{product.rating}</Text>
+                        <Text style={[styles.reviewText, { color: colors.textSecondary }]}>({product.reviews})</Text>
+                        {product.unit && <Text style={[styles.unitBadge, { color: colors.accent, borderColor: colors.accent }]}>{product.unit}</Text>}
                     </View>
-                )}
+
+                    {/* Spacer pushes price+button to bottom */}
+                    <View style={{ flex: 1 }} />
+
+                    <Text style={[styles.productPrice, { color: colors.textPrimary }]}>LKR {product.price.toFixed(2)}</Text>
+
+                    {qty === 0 ? (
+                        <TouchableOpacity
+                            activeOpacity={0.75}
+                            style={[styles.addBtn, { backgroundColor: colors.accent }]}
+                            onPress={() => addToCart(product)}
+                        >
+                            <Ionicons name="cart-outline" size={14} color="#fff" />
+                            <Text style={styles.addBtnText}> Add</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={[styles.qtyRow, { borderColor: colors.divider }]}>
+                            <TouchableOpacity style={[styles.qtyBtn, { backgroundColor: colors.error + '18' }]} onPress={() => updateQty(product.id, -1)}>
+                                <Ionicons name="remove" size={16} color={colors.error} />
+                            </TouchableOpacity>
+                            <Text style={[styles.qtyText, { color: colors.textPrimary }]}>{qty}</Text>
+                            <TouchableOpacity style={[styles.qtyBtn, { backgroundColor: colors.accent + '18' }]} onPress={() => updateQty(product.id, 1)}>
+                                <Ionicons name="add" size={16} color={colors.accent} />
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
             </View>
         );
     };
@@ -224,9 +250,15 @@ export default function Marketplace() {
                         <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>Try a different search or category</Text>
                     </View>
                 ) : (
-                    <View style={styles.productGrid}>
-                        {filtered.map(renderProduct)}
-                    </View>
+                    <FlatList
+                        data={filtered}
+                        keyExtractor={(item) => item.id}
+                        renderItem={renderProduct}
+                        numColumns={2}
+                        columnWrapperStyle={styles.gridRow}
+                        scrollEnabled={false}
+                        showsVerticalScrollIndicator={false}
+                    />
                 )}
 
                 {/* ── Info Banner ── */}
@@ -274,13 +306,13 @@ export default function Marketplace() {
                                                 <Text style={[styles.cartItemName, { color: colors.textPrimary }]} numberOfLines={1}>{item.product.name}</Text>
                                                 <Text style={[styles.cartItemPrice, { color: colors.textSecondary }]}>LKR {item.product.price.toFixed(2)}</Text>
                                             </View>
-                                            <View style={styles.qtyRow}>
-                                                <TouchableOpacity style={[styles.qtyMinus, { backgroundColor: colors.error }]} onPress={() => updateQty(item.product.id, -1)}>
-                                                    <Ionicons name="remove" size={14} color="#fff" />
+                                            <View style={[styles.qtyRow, { borderColor: colors.divider }]}>
+                                                <TouchableOpacity style={[styles.qtyBtn, { backgroundColor: colors.error + '18' }]} onPress={() => updateQty(item.product.id, -1)}>
+                                                    <Ionicons name="remove" size={14} color={colors.error} />
                                                 </TouchableOpacity>
                                                 <Text style={[styles.qtyText, { color: colors.textPrimary }]}>{item.quantity}</Text>
-                                                <TouchableOpacity style={[styles.qtyPlus, { backgroundColor: colors.accent }]} onPress={() => updateQty(item.product.id, 1)}>
-                                                    <Ionicons name="add" size={14} color="#fff" />
+                                                <TouchableOpacity style={[styles.qtyBtn, { backgroundColor: colors.accent + '18' }]} onPress={() => updateQty(item.product.id, 1)}>
+                                                    <Ionicons name="add" size={14} color={colors.accent} />
                                                 </TouchableOpacity>
                                             </View>
                                             <Text style={[styles.cartItemTotal, { color: colors.accent }]}>LKR {(item.product.price * item.quantity).toFixed(2)}</Text>
@@ -354,23 +386,23 @@ const styles = StyleSheet.create({
     categoryText:       { fontSize: 13, fontWeight: '500' },
     categoryTextActive: { color: '#fff' },
 
-    // Products
-    productGrid:        { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-    productCard:        { width: '48.5%', borderRadius: 16, padding: 12, marginBottom: 12, borderWidth: 1, elevation: 2 },
-    productImageBox:    { borderRadius: 12, height: 120, justifyContent: 'center', alignItems: 'center', marginBottom: 8, overflow: 'hidden' },
+    // Products grid
+    gridRow:            { gap: 10, marginBottom: 10 },
+    productCard:        { flex: 1, borderRadius: 16, borderWidth: 1, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
+    productImageBox:    { width: '100%', aspectRatio: 1, overflow: 'hidden' },
     productImage:       { width: '100%', height: '100%' },
-    productName:        { fontSize: 13, fontWeight: '700', marginBottom: 4 },
-    productDesc:        { fontSize: 11, marginBottom: 4, lineHeight: 16 },
-    productUnit:        { fontSize: 11, fontWeight: '600', marginBottom: 4 },
-    ratingRow:          { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-    ratingText:         { fontSize: 11, fontWeight: '600', marginLeft: 3 },
-    reviewText:         { fontSize: 11, marginLeft: 2 },
-    productPrice:       { fontSize: 16, fontWeight: '800', marginBottom: 8 },
-    addBtn:             { flexDirection: 'row', borderRadius: 10, paddingVertical: 8, justifyContent: 'center', alignItems: 'center' },
+    cardBody:           { flex: 1, padding: 10 },
+    productName:        { fontSize: 12, fontWeight: '700', marginBottom: 3, lineHeight: 17 },
+    productDesc:        { fontSize: 10, lineHeight: 14, marginBottom: 6 },
+    ratingRow:          { flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 3 },
+    ratingText:         { fontSize: 10, fontWeight: '600' },
+    reviewText:         { fontSize: 10, flex: 1 },
+    unitBadge:          { fontSize: 9, fontWeight: '700', borderWidth: 1, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 },
+    productPrice:       { fontSize: 14, fontWeight: '800', marginBottom: 8 },
+    addBtn:             { flexDirection: 'row', borderRadius: 10, paddingVertical: 9, justifyContent: 'center', alignItems: 'center' },
     addBtnText:         { color: '#fff', fontSize: 12, fontWeight: '700' },
-    qtyRow:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    qtyMinus:           { width: 28, height: 28, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
-    qtyPlus:            { width: 28, height: 28, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+    qtyRow:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 10, padding: 2 },
+    qtyBtn:             { width: 30, height: 30, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
     qtyText:            { fontSize: 14, fontWeight: '700' },
 
     // Empty
