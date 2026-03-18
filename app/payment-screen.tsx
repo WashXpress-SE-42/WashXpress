@@ -11,7 +11,8 @@ Platform,
 Keyboard,
 TouchableWithoutFeedback,
 Animated,
-Image
+Image,
+Switch
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -23,6 +24,9 @@ const cardLogos:any = {
   "American Express": require("../assets/cards/amex.png"),
 };
 
+const chip = require("../assets/cards/chip.png");
+const nfc = require("../assets/cards/nfc.png");
+
 export default function PaymentScreen(){
 
 const [cardType,setCardType] = useState("Visa");
@@ -30,9 +34,13 @@ const [cardNumber,setCardNumber] = useState("");
 const [holder,setHolder] = useState("");
 const [expiry,setExpiry] = useState("");
 const [cvv,setCvv] = useState("");
+const [saveCard,setSaveCard] = useState(false);
 
+// animations
 const flipAnim = useState(new Animated.Value(0))[0];
+const tilt = useState(new Animated.Value(0))[0];
 
+// flip
 const frontRotate = flipAnim.interpolate({
 inputRange:[0,180],
 outputRange:["0deg","180deg"]
@@ -43,6 +51,20 @@ inputRange:[0,180],
 outputRange:["180deg","360deg"]
 });
 
+// tilt effect
+const tiltRotate = tilt.interpolate({
+inputRange:[-1,1],
+outputRange:["-5deg","5deg"]
+});
+
+function handleTilt(x:number){
+Animated.spring(tilt,{
+toValue:x,
+useNativeDriver:true
+}).start();
+}
+
+// flip functions
 function flipFront(){
 Animated.timing(flipAnim,{
 toValue:0,
@@ -59,16 +81,33 @@ useNativeDriver:true
 }).start();
 }
 
+// auto detect card type
+function detectCardType(num:string){
+const cleaned=num.replace(/\s/g,"");
+
+if(/^4/.test(cleaned)) return "Visa";
+if(/^5[1-5]/.test(cleaned)) return "MasterCard";
+if(/^3[47]/.test(cleaned)) return "American Express";
+
+return "Visa";
+}
+
+// format
 function formatCard(text:string){
 let clean=text.replace(/\D/g,"");
 let groups=clean.match(/.{1,4}/g);
 return groups?groups.join(" "):"";
 }
 
+// card input
 function handleCardNumber(text:string){
-let formatted=formatCard(text);
 
-if(cardType==="American Express"){
+let formatted=formatCard(text);
+let detected=detectCardType(formatted);
+
+setCardType(detected);
+
+if(detected==="American Express"){
 formatted=formatted.slice(0,17);
 }else{
 formatted=formatted.slice(0,19);
@@ -77,61 +116,40 @@ formatted=formatted.slice(0,19);
 setCardNumber(formatted);
 }
 
+// cvv
 function handleCVV(text:string){
 let max=cardType==="American Express"?4:3;
 setCvv(text.slice(0,max));
 }
 
-function validateLuhn(card:string){
-
-let num=card.replace(/\s/g,"");
-let sum=0;
-let double=false;
-
-for(let i=num.length-1;i>=0;i--){
-
-let digit=parseInt(num.charAt(i));
-
-if(double){
-digit*=2;
-if(digit>9) digit-=9;
-}
-
-sum+=digit;
-double=!double;
-
-}
-
-return sum%10===0;
-}
-
+// gradient
 function getGradient():[string,string,string]{
 
 switch(cardType){
 
 case "Visa":
-return ["#7F7FD5","#86A8E7","#91EAE4"];
+return ["#667eea","#764ba2","#6B73FF"];
 
 case "MasterCard":
-return ["#141E30","#243B55","#0F2027"];
+return ["#f12711","#f5af19","#f7971e"];
 
 case "American Express":
-return ["#56CCF2","#2F80ED","#1C92D2"];
+return ["#00c6ff","#0072ff","#00d2ff"];
 
 default:
-return ["#7F7FD5","#86A8E7","#91EAE4"];
+return ["#667eea","#764ba2","#6B73FF"];
 
 }
 }
 
+// pay
 function handlePay(){
 
-if(!validateLuhn(cardNumber)){
-alert("Invalid Card Number");
-return;
-}
+alert(
+`Payment Successful 🎉
+Save Card: ${saveCard ? "YES" : "NO"}`
+);
 
-alert("Payment Successful 🎉");
 }
 
 return(
@@ -149,24 +167,43 @@ behavior={Platform.OS==="ios"?"padding":undefined}
 
 <ScrollView contentContainerStyle={styles.content}>
 
-{/* CARD PREVIEW */}
+{/* CARD */}
 
-<View style={styles.cardContainer}>
+<View
+style={styles.cardContainer}
+onTouchMove={(e)=>{
+const x=e.nativeEvent.locationX;
+handleTilt(x>150?1:-1);
+}}
+onTouchEnd={()=>handleTilt(0)}
+>
+
+{/* FRONT */}
 
 <Animated.View
-style={[styles.card,{transform:[{rotateY:frontRotate}]}]}
+style={[
+styles.card,
+{
+transform:[
+{rotateY:frontRotate},
+{rotateZ:tiltRotate}
+]
+}
+]}
 >
 
-<LinearGradient
-colors={getGradient()}
-style={styles.cardGradient}
->
+<LinearGradient colors={getGradient()} style={styles.cardGradient}>
 
-<Image
-source={cardLogos[cardType]}
-style={styles.cardLogo}
-resizeMode="contain"
-/>
+{/* TOP ROW */}
+<View style={styles.topRow}>
+
+<Image source={chip} style={styles.chip}/>
+
+<Image source={nfc} style={styles.nfc}/>
+
+<Image source={cardLogos[cardType]} style={styles.cardLogo}/>
+
+</View>
 
 <Text style={styles.number}>
 {cardNumber || "XXXX XXXX XXXX XXXX"}
@@ -175,27 +212,13 @@ resizeMode="contain"
 <View style={styles.cardRow}>
 
 <View>
-
-<Text style={styles.labelSmall}>
-CARD HOLDER
-</Text>
-
-<Text style={styles.value}>
-{holder || "YOUR NAME"}
-</Text>
-
+<Text style={styles.labelSmall}>CARD HOLDER</Text>
+<Text style={styles.value}>{holder || "YOUR NAME"}</Text>
 </View>
 
 <View>
-
-<Text style={styles.labelSmall}>
-EXPIRES
-</Text>
-
-<Text style={styles.value}>
-{expiry || "MM/YY"}
-</Text>
-
+<Text style={styles.labelSmall}>EXPIRES</Text>
+<Text style={styles.value}>{expiry || "MM/YY"}</Text>
 </View>
 
 </View>
@@ -204,25 +227,24 @@ EXPIRES
 
 </Animated.View>
 
-
-{/* BACK CARD */}
+{/* BACK */}
 
 <Animated.View
-style={[styles.cardBack,{transform:[{rotateY:backRotate}]}]}
+style={[
+styles.cardBack,
+{transform:[{rotateY:backRotate}]}
+]}
 >
 
 <View style={styles.strip}/>
 
-<Text style={styles.cvv}>
-{cvv || "***"}
-</Text>
+<Text style={styles.cvv}>{cvv || "***"}</Text>
 
 </Animated.View>
 
 </View>
 
-
-{/* CARD TYPE SELECTOR */}
+{/* CARD TYPE */}
 
 <Text style={styles.label}>Card Type</Text>
 
@@ -242,15 +264,12 @@ onPress={()=>setCardType(type)}
 <Image
 source={cardLogos[type]}
 style={styles.selectorLogo}
-resizeMode="contain"
 />
 
-<Text
-style={[
+<Text style={[
 styles.typeText,
 cardType===type && {color:"#fff"}
-]}
->
+]}>
 {type==="American Express"?"AMEX":type}
 </Text>
 
@@ -260,8 +279,7 @@ cardType===type && {color:"#fff"}
 
 </View>
 
-
-{/* CARD NUMBER */}
+{/* INPUTS */}
 
 <Text style={styles.label}>Card Number</Text>
 
@@ -270,11 +288,7 @@ style={styles.input}
 keyboardType="numeric"
 value={cardNumber}
 onChangeText={handleCardNumber}
-placeholder="1234 5678 9012 3456"
 />
-
-
-{/* HOLDER */}
 
 <Text style={styles.label}>Card Holder</Text>
 
@@ -282,11 +296,7 @@ placeholder="1234 5678 9012 3456"
 style={styles.input}
 value={holder}
 onChangeText={setHolder}
-placeholder="John Doe"
 />
-
-
-{/* EXPIRY + CVV */}
 
 <View style={styles.row}>
 
@@ -297,9 +307,8 @@ placeholder="John Doe"
 <TextInput
 style={styles.input}
 value={expiry}
-placeholder="MM/YY"
-onChangeText={setExpiry}
 onFocus={flipFront}
+onChangeText={setExpiry}
 />
 
 </View>
@@ -311,7 +320,6 @@ onFocus={flipFront}
 <TextInput
 style={styles.input}
 value={cvv}
-placeholder={cardType==="American Express"?"1234":"123"}
 keyboardType="numeric"
 onFocus={flipBack}
 onBlur={flipFront}
@@ -322,18 +330,23 @@ onChangeText={handleCVV}
 
 </View>
 
+{/* SAVE CARD */}
 
-{/* PAY BUTTON */}
+<View style={styles.saveRow}>
 
-<TouchableOpacity
-style={styles.payBtn}
-onPress={handlePay}
->
+<Text style={{fontWeight:"600"}}>Save Card</Text>
 
-<Text style={styles.payText}>
-PROCEED TO PAY
-</Text>
+<Switch
+value={saveCard}
+onValueChange={setSaveCard}
+/>
 
+</View>
+
+{/* PAY */}
+
+<TouchableOpacity style={styles.payBtn} onPress={handlePay}>
+<Text style={styles.payText}>PAY NOW</Text>
 </TouchableOpacity>
 
 </ScrollView>
@@ -349,19 +362,10 @@ PROCEED TO PAY
 
 const styles=StyleSheet.create({
 
-container:{
-flex:1,
-backgroundColor:"#f5f6fa"
-},
+container:{flex:1,backgroundColor:"#c2d2db"},
+content:{padding:20},
 
-content:{
-padding:20
-},
-
-cardContainer:{
-height:200,
-marginBottom:30
-},
+cardContainer:{height:200,marginBottom:30},
 
 card:{
 position:"absolute",
@@ -374,15 +378,19 @@ cardGradient:{
 flex:1,
 borderRadius:20,
 padding:20,
-justifyContent:"space-between",
-elevation:10
+justifyContent:"space-between"
 },
 
-cardLogo:{
-width:70,
-height:40,
-alignSelf:"flex-end"
+topRow:{
+flexDirection:"row",
+justifyContent:"space-between",
+alignItems:"center"
 },
+
+chip:{width:50,height:35},
+nfc:{width:30,height:25},
+
+cardLogo:{width:60,height:35},
 
 cardBack:{
 position:"absolute",
@@ -394,45 +402,18 @@ padding:20,
 backfaceVisibility:"hidden"
 },
 
-strip:{
-height:40,
-backgroundColor:"#000",
-marginBottom:20
-},
+strip:{height:40,backgroundColor:"#000",marginBottom:20},
 
-cvv:{
-color:"#fff",
-alignSelf:"flex-end",
-fontSize:18
-},
+cvv:{color:"#fff",alignSelf:"flex-end",fontSize:18},
 
-number:{
-color:"#fff",
-fontSize:22,
-letterSpacing:3
-},
+number:{color:"#fff",fontSize:22,letterSpacing:3},
 
-cardRow:{
-flexDirection:"row",
-justifyContent:"space-between"
-},
+cardRow:{flexDirection:"row",justifyContent:"space-between"},
 
-labelSmall:{
-color:"#ddd",
-fontSize:10
-},
+labelSmall:{color:"#ddd",fontSize:10},
+value:{color:"#fff",fontSize:16,fontWeight:"600"},
 
-value:{
-color:"#fff",
-fontSize:16,
-fontWeight:"600"
-},
-
-label:{
-fontWeight:"600",
-marginTop:15,
-marginBottom:5
-},
+label:{fontWeight:"600",marginTop:15,marginBottom:5},
 
 input:{
 backgroundColor:"#fff",
@@ -442,26 +423,11 @@ borderWidth:1,
 borderColor:"#e5e7eb"
 },
 
-row:{
-flexDirection:"row",
-justifyContent:"space-between"
-},
+row:{flexDirection:"row",justifyContent:"space-between"},
+half:{width:"48%"},
 
-half:{
-width:"48%"
-},
-
-selector:{
-flexDirection:"row",
-justifyContent:"space-between",
-marginBottom:10
-},
-
-selectorLogo:{
-width:35,
-height:20,
-marginBottom:4
-},
+selector:{flexDirection:"row",justifyContent:"space-between"},
+selectorLogo:{width:35,height:20},
 
 typeBtn:{
 borderWidth:1,
@@ -477,8 +443,13 @@ backgroundColor:"#6C5CE7",
 borderColor:"#6C5CE7"
 },
 
-typeText:{
-fontWeight:"600"
+typeText:{fontWeight:"600"},
+
+saveRow:{
+flexDirection:"row",
+justifyContent:"space-between",
+alignItems:"center",
+marginTop:20
 },
 
 payBtn:{
@@ -486,13 +457,9 @@ backgroundColor:"#6C5CE7",
 padding:16,
 borderRadius:14,
 alignItems:"center",
-marginTop:30
+marginTop:20
 },
 
-payText:{
-color:"#fff",
-fontWeight:"bold",
-fontSize:16
-}
+payText:{color:"#fff",fontWeight:"bold",fontSize:16}
 
 });
