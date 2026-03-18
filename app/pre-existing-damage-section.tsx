@@ -10,10 +10,13 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { getAuth } from 'firebase/auth';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTheme } from '../context/ThemeContext';
 
 const Colors = {
   secondary: '#1E96FC',
@@ -30,32 +33,32 @@ const Colors = {
 };
 
 const USE_MOCK_API = false;
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8859';
+const API_BASE_URL = process.env.EXPO_PUBLIC_PROVIDER_API_URL || process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8859';
 
 interface Props {
-  bookingId: string;
+  bookingId?: string;
   existingPhotos?: string[];
   onPhotosUploaded?: (photos: string[]) => void;
 }
 
-/**
- * PreExistingDamageSection
- *
- * Shows when booking.status === 'confirmed' in the washer's job detail screen.
- * Lets the washer photograph pre-existing damage BEFORE starting the job.
- * Photos are saved to the booking's `preExistingDamagePhotos` field in Firestore
- * and displayed to admin if a customer damage complaint is filed.
- *
- * Usage:
- *   {booking.status === 'confirmed' && (
- *     <PreExistingDamageSection
- *       bookingId={booking.id}
- *       existingPhotos={booking.preExistingDamagePhotos}
- *       onPhotosUploaded={(photos) => setBooking(prev => ({...prev, preExistingDamagePhotos: photos}))}
- *     />
- *   )}
- */
-export default function PreExistingDamageSection({ bookingId, existingPhotos = [], onPhotosUploaded }: Props) {
+export default function PreExistingDamageSection({ bookingId: propBookingId, existingPhotos = [], onPhotosUploaded }: Props) {
+  const router = useRouter();
+  const { colors, isDark } = useTheme();
+  const params = useLocalSearchParams<{ id: string }>();
+  const bId = propBookingId || params.id;
+  const bookingId = bId as string;
+  
+  if (!bId) {
+    return (
+      <View style={[styles.container, { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.textPrimary }}>Error: No Booking ID provided</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
+          <Text style={{ color: colors.accent }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const [photos, setPhotos] = useState<string[]>(existingPhotos);
   const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(existingPhotos.length > 0);
@@ -156,28 +159,40 @@ export default function PreExistingDamageSection({ bookingId, existingPhotos = [
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Standalone Header */}
+      {!propBookingId && (
+        <View style={[styles.standaloneHeader, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.headerBackBtn}>
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Vehicle Damage</Text>
+          <View style={{ width: 40 }} /> 
+        </View>
+      )}
+
+      <View style={[styles.container, { margin: propBookingId ? 0 : 16, backgroundColor: colors.cardBackground, borderColor: isDark ? 'rgba(245,158,11,0.28)' : 'rgba(245,158,11,0.15)' }]}>
       {/* Header row */}
       <View style={styles.headerRow}>
-        <View style={styles.iconWrap}>
-          <Ionicons name="camera-outline" size={19} color={Colors.warning} />
+        <View style={[styles.iconWrap, { backgroundColor: isDark ? 'rgba(245,158,11,0.13)' : 'rgba(245,158,11,0.08)' }]}>
+          <Ionicons name="camera-outline" size={19} color={colors.warning || Colors.warning} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>Document Pre-Existing Damage</Text>
-          <Text style={styles.subtitle}>Photograph damage visible before you start</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Document Pre-Existing Damage</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Photograph damage visible before you start</Text>
         </View>
         {saved && (
-          <View style={styles.savedBadge}>
-            <Ionicons name="checkmark-circle" size={15} color={Colors.success} />
-            <Text style={styles.savedBadgeText}>Saved</Text>
+          <View style={[styles.savedBadge, { backgroundColor: isDark ? 'rgba(16,185,129,0.13)' : 'rgba(16,185,129,0.08)' }]}>
+            <Ionicons name="checkmark-circle" size={15} color={colors.success || Colors.success} />
+            <Text style={[styles.savedBadgeText, { color: colors.success || Colors.success }]}>Saved</Text>
           </View>
         )}
       </View>
 
       {/* Why this matters */}
-      <View style={styles.infoBanner}>
-        <Ionicons name="shield-outline" size={15} color={Colors.warning} />
-        <Text style={styles.infoText}>
+      <View style={[styles.infoBanner, { backgroundColor: isDark ? 'rgba(245,158,11,0.07)' : 'rgba(245,158,11,0.04)', borderColor: isDark ? 'rgba(245,158,11,0.15)' : 'rgba(245,158,11,0.1)' }]}>
+        <Ionicons name="shield-outline" size={15} color={colors.warning || Colors.warning} />
+        <Text style={[styles.infoText, { color: colors.textSecondary }]}>
           If the customer files a damage complaint, these photos are shown to the admin as evidence
           that the damage existed before your service. Take clear shots of any scratches, dents,
           dirt, or existing marks.
@@ -195,9 +210,9 @@ export default function PreExistingDamageSection({ bookingId, existingPhotos = [
           </View>
         ))}
         {photos.length < 6 && (
-          <TouchableOpacity style={styles.addBtn} onPress={showOptions}>
-            <Ionicons name="add" size={22} color={Colors.warning} />
-            <Text style={styles.addBtnText}>Add Photo</Text>
+          <TouchableOpacity style={[styles.addBtn, { borderColor: isDark ? 'rgba(245,158,11,0.45)' : 'rgba(245,158,11,0.35)', backgroundColor: isDark ? 'rgba(245,158,11,0.05)' : 'rgba(245,158,11,0.02)' }]} onPress={showOptions}>
+            <Ionicons name="add" size={22} color={colors.warning || Colors.warning} />
+            <Text style={[styles.addBtnText, { color: colors.warning || Colors.warning }]}>Add Photo</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -205,16 +220,16 @@ export default function PreExistingDamageSection({ bookingId, existingPhotos = [
       {/* Save button */}
       {photos.length > 0 && !saved && (
         <TouchableOpacity
-          style={[styles.saveBtn, uploading && { opacity: 0.6 }]}
+          style={[styles.saveBtn, uploading && { opacity: 0.6 }, { backgroundColor: isDark ? 'rgba(245,158,11,0.18)' : 'rgba(245,158,11,0.12)', borderColor: isDark ? 'rgba(245,158,11,0.35)' : 'rgba(245,158,11,0.25)' }]}
           onPress={handleSave}
           disabled={uploading}
         >
           {uploading ? (
-            <ActivityIndicator size="small" color={Colors.textPrimary} />
+            <ActivityIndicator size="small" color={colors.textPrimary} />
           ) : (
             <>
-              <Ionicons name="cloud-upload-outline" size={17} color={Colors.textPrimary} />
-              <Text style={styles.saveBtnText}>
+              <Ionicons name="cloud-upload-outline" size={17} color={colors.textPrimary} />
+              <Text style={[styles.saveBtnText, { color: colors.textPrimary }]}>
                 Save {photos.length} Photo{photos.length > 1 ? 's' : ''} — Protect Yourself
               </Text>
             </>
@@ -224,24 +239,43 @@ export default function PreExistingDamageSection({ bookingId, existingPhotos = [
 
       {saved && (
         <View style={styles.savedConfirm}>
-          <Ionicons name="checkmark-circle-outline" size={17} color={Colors.success} />
-          <Text style={styles.savedConfirmText}>
+          <Ionicons name="checkmark-circle-outline" size={17} color={colors.success || Colors.success} />
+          <Text style={[styles.savedConfirmText, { color: colors.success || Colors.success }]}>
             {photos.length} photo{photos.length > 1 ? 's' : ''} saved — you're protected
           </Text>
         </View>
       )}
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.28)',
+  },
+  standaloneHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  headerBackBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary,
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   iconWrap: {
