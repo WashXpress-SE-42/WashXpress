@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
 
-  content: { padding: 20 },
+  content: { padding: 20, paddingBottom: 110 },
 
   // Booking card
   bookingCard: {

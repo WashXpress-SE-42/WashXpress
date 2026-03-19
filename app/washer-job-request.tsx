@@ -426,7 +426,7 @@ const s = StyleSheet.create({
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1 },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
     headerTitle: { fontSize: 18, fontWeight: '700' },
-    scroll: { padding: 20, paddingBottom: 40 },
+    scroll: { padding: 20, paddingBottom: 110 },
 
     // Race banner
     raceBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 16, padding: 16, marginBottom: 16 },

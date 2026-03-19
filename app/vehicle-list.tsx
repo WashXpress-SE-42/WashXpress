@@ -193,7 +193,7 @@ const s = StyleSheet.create({
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
     headerTitle: { fontSize: 18, fontWeight: '700', color: '#0d1629' },
     headerAddBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-end' },
-    scroll: { padding: 20 },
+    scroll: { padding: 20, paddingBottom: 110 },
 
     emptyState: { alignItems: 'center', paddingVertical: 60 },
     emptyIconCircle: { width: 100, height: 100, borderRadius: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },

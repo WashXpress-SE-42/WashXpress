@@ -634,7 +634,7 @@ export default function BookingDetailsScreen() {
                     </TouchableOpacity>
                 )}
 
-                <View style={{ height: 40 }} />
+                <View style={{ height: 110 }} />
             </ScrollView >
         </View >
     );
@@ -681,6 +681,7 @@ const styles = StyleSheet.create({
     pendingContent: {
         flexGrow: 1,
         padding: 20,
+        paddingBottom: 110,
     },
     searchingContainer: {
         alignItems: 'center',

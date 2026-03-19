@@ -72,7 +72,7 @@ export default function CheckoutScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.scrollContent}>
       
       {/* Plan Card */}
       <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
@@ -110,7 +110,8 @@ export default function CheckoutScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: { flex: 1 },
+  scrollContent: { padding: 20, paddingBottom: 110 },
 
   card: {
     padding: 20,

@@ -430,7 +430,7 @@ const s = StyleSheet.create({
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1 },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
     headerTitle: { fontSize: 18, fontWeight: '700' },
-    scroll: { padding: 20, paddingBottom: 40 },
+    scroll: { padding: 20, paddingBottom: 110 },
     serviceCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, padding: 16, marginBottom: 24, borderWidth: 1 },
     serviceIconCircle: { width: 52, height: 52, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
     serviceName: { fontSize: 16, fontWeight: '700' },

@@ -407,7 +407,7 @@ const s = StyleSheet.create({
     },
     listContent: {
         padding: 20,
-        paddingBottom: 40,
+        paddingBottom: 110,
     },
     jobCard: {
         borderRadius: 16,

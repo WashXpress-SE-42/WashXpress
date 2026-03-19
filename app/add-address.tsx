@@ -277,7 +277,7 @@ const s = StyleSheet.create({
     },
     backBtn: { width: 40, height: 40, justifyContent: 'center' },
     headerTitle: { fontSize: 18, fontWeight: '700' },
-    scroll: { padding: 20 },
+    scroll: { padding: 20, paddingBottom: 110 },
 
     fieldWrap: { marginBottom: 20 },
     fieldLabel: { fontSize: 14, fontWeight: '600', marginBottom: 8 },

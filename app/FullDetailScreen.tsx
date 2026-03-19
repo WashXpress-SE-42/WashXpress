@@ -1,46 +1,49 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, StatusBar } from 'react-native';
 import { Header } from '../components/Header';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, Href } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { useTheme } from '../context/ThemeContext';
 
 export default function FullDetailScreen() {
     const router = useRouter();
+    const { colors, isDark } = useTheme();
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
             <Header title="Full Detail" />
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <Image source={require('../assets/icons/detailing.jpg')} style={styles.image} />
-                <View style={styles.content}>
-                    <Text style={styles.title}>Full Detail Service</Text>
-                    <Text style={styles.description}>
+                <View style={[styles.content, { backgroundColor: colors.cardBackground }]}>
+                    <Text style={[styles.title, { color: colors.textPrimary }]}>Full Detail Service</Text>
+                    <Text style={[styles.description, { color: colors.textSecondary }]}>
                         The ultimate treat for your vehicle. Our full detail service combines our top-tier exterior and interior cleaning packages to restore your car to showroom condition inside and out.
                     </Text>
                     
-                    <View style={styles.featuresContainer}>
-                        <View style={styles.featureItem}>
-                            <Ionicons name="star-outline" size={24} color="#0ca6e8" />
-                            <Text style={styles.featureText}>Complete Exterior Wash & Wax</Text>
+                    <View style={[styles.featuresContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc' }]}>
+                        <View style={[styles.featureItem, { borderBottomColor: colors.border }]}>
+                            <Ionicons name="star-outline" size={24} color={colors.accent} />
+                            <Text style={[styles.featureText, { color: colors.textPrimary }]}>Complete Exterior Wash & Wax</Text>
                         </View>
-                        <View style={styles.featureItem}>
-                            <Ionicons name="car-outline" size={24} color="#0ca6e8" />
-                            <Text style={styles.featureText}>Deep Interior Extraction</Text>
+                        <View style={[styles.featureItem, { borderBottomColor: colors.border }]}>
+                            <Ionicons name="car-outline" size={24} color={colors.accent} />
+                            <Text style={[styles.featureText, { color: colors.textPrimary }]}>Deep Interior Extraction</Text>
                         </View>
-                        <View style={styles.featureItem}>
-                            <Ionicons name="sparkles-outline" size={24} color="#0ca6e8" />
-                            <Text style={styles.featureText}>Engine Bay & Trunk Cleaning</Text>
+                        <View style={[styles.featureItem, { borderBottomColor: colors.border, borderBottomWidth: 0 }]}>
+                            <Ionicons name="sparkles-outline" size={24} color={colors.accent} />
+                            <Text style={[styles.featureText, { color: colors.textPrimary }]}>Engine Bay & Trunk Cleaning</Text>
                         </View>
                     </View>
 
                     <TouchableOpacity 
-                        style={styles.orderButton}
+                        style={[styles.orderButton, { backgroundColor: colors.accent, shadowColor: colors.accent }]}
                         onPress={() => router.push({
                             pathname: '/create-booking',
-                            params: { categoryId: 'full-detail' }
+                            params: { serviceId: 'full-detail' }
                         } as any)}
                     >
-                        <Text style={styles.orderButtonText}>Order Service</Text>
+                        <Text style={styles.orderButtonText}>Book Service</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
@@ -51,10 +54,9 @@ export default function FullDetailScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F5F5',
     },
     scrollContent: {
-        paddingBottom: 40,
+        paddingBottom: 110,
     },
     image: {
         width: '100%',
@@ -63,52 +65,48 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
-        backgroundColor: '#FFF',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         marginTop: -24,
+        minHeight: 500,
     },
     title: {
         fontSize: 26,
         fontWeight: 'bold',
-        color: '#0d1629',
         marginBottom: 12,
     },
     description: {
         fontSize: 16,
-        color: '#64748b',
         lineHeight: 24,
         marginBottom: 24,
     },
     featuresContainer: {
         marginBottom: 30,
-        backgroundColor: '#f8fafc',
-        borderRadius: 16,
+        borderRadius: 20,
         padding: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.05)',
     },
     featureItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 10,
+        paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#e2e8f0',
     },
     featureText: {
         fontSize: 16,
-        color: '#334155',
         marginLeft: 16,
-        fontWeight: '500',
+        fontWeight: '600',
     },
     orderButton: {
-        backgroundColor: '#0ca6e8',
-        borderRadius: 16,
-        paddingVertical: 16,
+        borderRadius: 18,
+        paddingVertical: 18,
         alignItems: 'center',
-        shadowColor: '#0ca6e8',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
-        shadowRadius: 8,
+        shadowRadius: 12,
         elevation: 8,
+        marginTop: 10,
     },
     orderButtonText: {
         fontSize: 18,

@@ -408,7 +408,7 @@ export default function MySubscriptionScreen() {
 const s = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f8fafc' },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    scroll: { padding: 20 },
+    scroll: { padding: 20, paddingBottom: 110 },
 
     // Empty state
     emptyState: { alignItems: 'center', paddingVertical: 48 },

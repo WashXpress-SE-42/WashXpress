@@ -400,7 +400,7 @@ const s = StyleSheet.create({
     topService: { fontSize: 16, fontWeight: '700' },
     topMeta: { fontSize: 13, marginTop: 4 },
     topAddress: { fontSize: 13, marginTop: 4, maxWidth: '100%' },
-    scroll: { padding: 20, paddingBottom: 40 },
+    scroll: { padding: 20, paddingBottom: 110 },
 
     earningsBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 18, padding: 20, marginBottom: 16 },
     earningsLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6 },

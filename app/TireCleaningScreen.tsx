@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
     },
     scrollContent: {
-        paddingBottom: 40,
+        paddingBottom: 110,
     },
     image: {
         width: '100%',

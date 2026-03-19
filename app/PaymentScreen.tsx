@@ -252,7 +252,7 @@ export default function PaymentScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
-  content: { padding: 20, paddingBottom: 40 },
+  content: { padding: 20, paddingBottom: 110 },
   centeredContainer: {
     flex: 1,
     backgroundColor: '#f8fafc',

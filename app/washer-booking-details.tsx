@@ -431,7 +431,7 @@ const s = StyleSheet.create({
     topActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     iconActionBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 999, gap: 6 },
     iconActionTxt: { fontSize: 12, fontWeight: '600', color: '#0f172a' },
-    scroll: { padding: 20, paddingBottom: 40 },
+    scroll: { padding: 20, paddingBottom: 110 },
 
     earningsBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0d1629', borderRadius: 18, padding: 20, marginBottom: 14 },
     earningsLabel: { fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: '600', marginBottom: 4 },

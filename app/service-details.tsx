@@ -159,7 +159,7 @@ export default function ServiceDetailsScreen() {
             {/* Header */}
             <Header title="Service Details" />
 
-            <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 120 }}>
+            <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 180 }}>
                 {/* Hero */}
                 <View style={[styles.hero, { backgroundColor: type.bgColor }]}>
                     <View style={[styles.heroIcon, { backgroundColor: type.color + '22' }]}>
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
 
     footer: {
         position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row',
-        alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingBottom: 36,
+        alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingBottom: 90,
         backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#f1f5f9',
         shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.06, elevation: 8
     },
