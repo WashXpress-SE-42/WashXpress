@@ -32,12 +32,14 @@ export default function HeadlightRepairScreen() {
                             <Text style={styles.featureText}>UV Protection Coating</Text>
                         </View>
                     </View>
-
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.orderButton}
-                        onPress={() => router.push('/service-browse' as Href)}
+                        onPress={() => router.push({
+                            pathname: '/create-booking',
+                            params: { categoryId: 'headlight-repair' }
+                        } as any)}
                     >
-                        <Text style={styles.orderButtonText}>Find Service</Text>
+                        <Text style={styles.orderButtonText}>Book Service</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

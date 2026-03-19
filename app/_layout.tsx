@@ -37,8 +37,8 @@ export default function RootLayout() {
               <Stack.Screen name="washer-booking-details" options={{ headerShown: false }} />
               <Stack.Screen name="provider-home" />
               <Stack.Screen name="washer-home" />
-              <Stack.Screen name="complain-status" options={{ headerShown: false }} />
-              <Stack.Screen name="complain-new" options={{ headerShown: false }} />
+              <Stack.Screen name="complaint-status" options={{ headerShown: false }} />
+              <Stack.Screen name="complaint-new" options={{ headerShown: false }} />
               <Stack.Screen name="washer-pending" />
               <Stack.Screen name="washer-requests" />
               <Stack.Screen name="myjobs" />

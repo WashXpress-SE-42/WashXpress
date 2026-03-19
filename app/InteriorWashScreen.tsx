@@ -35,7 +35,10 @@ export default function InteriorWashScreen() {
 
                     <TouchableOpacity 
                         style={styles.orderButton}
-                        onPress={() => router.push('/service-browse?category=interior-clean' as Href)}
+                        onPress={() => router.push({ 
+                            pathname: '/create-booking', 
+                            params: { categoryId: 'interior-clean' } 
+                        } as any)}
                     >
                         <Text style={styles.orderButtonText}>Order Service</Text>
                     </TouchableOpacity>

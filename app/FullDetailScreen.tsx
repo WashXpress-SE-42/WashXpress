@@ -35,7 +35,10 @@ export default function FullDetailScreen() {
 
                     <TouchableOpacity 
                         style={styles.orderButton}
-                        onPress={() => router.push('/service-browse?category=full-detail' as Href)}
+                        onPress={() => router.push({
+                            pathname: '/create-booking',
+                            params: { categoryId: 'full-detail' }
+                        } as any)}
                     >
                         <Text style={styles.orderButtonText}>Order Service</Text>
                     </TouchableOpacity>

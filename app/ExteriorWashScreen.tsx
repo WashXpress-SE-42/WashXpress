@@ -35,7 +35,10 @@ export default function ExteriorWashScreen() {
 
                     <TouchableOpacity 
                         style={styles.orderButton}
-                        onPress={() => router.push('/service-browse?category=exterior-wash' as Href)}
+                        onPress={() => router.push({ 
+                            pathname: '/create-booking', 
+                            params: { categoryId: 'exterior-wash' } 
+                        } as any)}
                     >
                         <Text style={styles.orderButtonText}>Order Service</Text>
                     </TouchableOpacity>
