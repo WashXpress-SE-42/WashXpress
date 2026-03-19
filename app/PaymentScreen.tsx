@@ -144,6 +144,8 @@ export default function PaymentScreen() {
         const data = await res.json();
         if (data.data?.paymentStatus === 'paid') {
           setStatus('success');
+          // Auto-redirect to confirmation if we want to skip the intermediate success view
+          router.replace({ pathname: '/booking-confirmation', params: { bookingId, path: 'one_time' } });
           return;
         }
       } catch (e) {
@@ -162,9 +164,9 @@ export default function PaymentScreen() {
         </Text>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => router.replace(`/(customer)/bookings/${bookingId}` as any)}
+          onPress={() => router.replace({ pathname: '/booking-confirmation', params: { bookingId, path: 'one_time' } })}
         >
-          <Text style={styles.primaryButtonText}>View Booking</Text>
+          <Text style={styles.primaryButtonText}>View Confirmation</Text>
         </TouchableOpacity>
       </View>
     );

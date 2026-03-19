@@ -110,10 +110,45 @@ export default function CreateBookingScreen() {
         await checkSub(v.id);
     };
 
-    const handlePay = useCallback(() => {
-        console.log('create-booking: handlePay called, paymentPath=', paymentPath);
-        router.push('/payment-screen' as any);
-    }, [paymentPath]);
+    const handlePay = useCallback(async () => {
+        if (!service || !selectedVehicle || !selectedAddress || !selectedTime) {
+            Alert.alert('Incomplete', 'Please complete all required fields.'); return;
+        }
+        setSubmitting(true);
+        try {
+            const res = await apiFetch('/bookings', {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    serviceId: service.id, 
+                    vehicleId: selectedVehicle.id, 
+                    addressId: selectedAddress.id, 
+                    scheduledDate: toDateStr(selectedDate), 
+                    scheduledTime: selectedTime, 
+                    notes: notes.trim() || undefined, 
+                    paymentPath: 'one_time' 
+                }),
+            }, 'customer');
+            
+            if (res.success) {
+                router.push({
+                    pathname: '/payment-screen',
+                    params: {
+                        bookingId: res.data.booking.id,
+                        amount: String(priceBreakdown?.totalPrice || service.price),
+                        serviceName: service.name,
+                        scheduledDate: toDateStr(selectedDate),
+                        scheduledTime: selectedTime,
+                    }
+                } as any);
+            } else {
+                Alert.alert('Error', res.message || 'Failed to create booking.');
+            }
+        } catch (e: any) {
+            Alert.alert('Error', e.message);
+        } finally {
+            setSubmitting(false);
+        }
+    }, [service, selectedVehicle, selectedAddress, selectedDate, selectedTime, notes, priceBreakdown, router]);
 
     const handleBook = async () => {
         if (!service || !selectedVehicle || !selectedAddress || !selectedTime || !paymentPath) {
