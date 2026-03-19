@@ -234,6 +234,7 @@ const styles = StyleSheet.create({
     },
     footer: {
         padding: 20,
+        paddingBottom: Platform.OS === 'ios' ? 108 : 88,
         borderTopWidth: 1,
     },
     saveButton: {
