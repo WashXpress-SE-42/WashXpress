@@ -98,7 +98,7 @@ export default function PaymentScreen() {
 
   function getGradient(): [string, string, string] {
     switch (cardType) {
-      case 'Visa':             return ['#667eea', '#764ba2', '#6B73FF'];
+      case 'Visa':             return ['#5a71d8ff', '#764ba2', '#6B73FF'];
       case 'MasterCard':       return ['#f12711', '#f5af19', '#f7971e'];
       case 'American Express': return ['#00c6ff', '#0072ff', '#00d2ff'];
       default:                 return ['#667eea', '#764ba2', '#6B73FF'];
