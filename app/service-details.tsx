@@ -12,6 +12,7 @@ import {
     View,
 } from 'react-native';
 import { Header } from '../components/Header';
+import { useTheme } from '../context/ThemeContext';
 
 const BRAND = '#0ca6e8';
 const BRAND_DARK = '#0d1629';
@@ -103,6 +104,7 @@ interface Category {
 export default function ServiceDetailsScreen() {
     const router = useRouter();
     const { id: serviceId } = useLocalSearchParams<{ id: string }>();
+    const { colors, isDark } = useTheme();
 
     const [service, setService] = useState<Service | null>(null);
     const [category, setCategory] = useState<Category | null>(null);
@@ -133,19 +135,19 @@ export default function ServiceDetailsScreen() {
 
     if (loading) {
         return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color={BRAND} />
-                <Text style={styles.loadingText}>Loading service...</Text>
+            <View style={[styles.centered, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.accent} />
+                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading service...</Text>
             </View>
         );
     }
 
     if (!service) {
         return (
-            <View style={styles.centered}>
-                <Ionicons name="alert-circle-outline" size={56} color="#cbd5e1" />
-                <Text style={styles.errorText}>Service not found</Text>
-                <TouchableOpacity style={styles.goBackBtn} onPress={() => router.back()}>
+            <View style={[styles.centered, { backgroundColor: colors.background }]}>
+                <Ionicons name="alert-circle-outline" size={56} color={colors.textSecondary} />
+                <Text style={[styles.errorText, { color: colors.textSecondary }]}>Service not found</Text>
+                <TouchableOpacity style={[styles.goBackBtn, { backgroundColor: colors.accent }]} onPress={() => router.back()}>
                     <Text style={styles.goBackText}>Go Back</Text>
                 </TouchableOpacity>
             </View>
@@ -155,13 +157,13 @@ export default function ServiceDetailsScreen() {
     const type = getServiceType(service.categoryId);
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Header */}
             <Header title="Service Details" />
 
             <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 180 }}>
                 {/* Hero */}
-                <View style={[styles.hero, { backgroundColor: type.bgColor }]}>
+                <View style={[styles.hero, { backgroundColor: isDark ? '#203354' : type.bgColor }]}>
                     <View style={[styles.heroIcon, { backgroundColor: type.color + '22' }]}>
                         <Ionicons name={type.icon} size={64} color={type.color} />
                     </View>
@@ -173,43 +175,41 @@ export default function ServiceDetailsScreen() {
                 </View>
 
                 {/* Info */}
-                <View style={styles.infoSection}>
-                    <Text style={styles.serviceName}>{service.name}</Text>
-                    <Text style={styles.serviceDesc}>{service.description || type.whatToExpect}</Text>
+                <View style={[styles.infoSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.divider }]}>
+                    <Text style={[styles.serviceName, { color: colors.textPrimary }]}>{service.name}</Text>
+                    <Text style={[styles.serviceDesc, { color: colors.textSecondary }]}>{service.description || type.whatToExpect}</Text>
 
                     {/* Duration & Price */}
                     <View style={styles.metaRow}>
-                        <View style={[styles.metaCard, { flex: 1, marginRight: 8 }]}>
-                            <Ionicons name="time-outline" size={20} color="#94a3b8" />
-                            <Text style={styles.metaLabel}>Duration</Text>
-                            <Text style={styles.metaValue}>~{service.duration} min</Text>
+                        <View style={[styles.metaCard, { flex: 1, marginRight: 8, backgroundColor: colors.inputBackground, borderColor: colors.border, borderWidth: 1 }]}>
+                            <Ionicons name="time-outline" size={20} color={colors.textSecondary} />
+                            <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Duration</Text>
+                            <Text style={[styles.metaValue, { color: colors.textPrimary }]}>~{service.duration} min</Text>
                         </View>
-                        <View style={[styles.metaCard, { flex: 1, marginLeft: 8 }]}>
-                            <Ionicons name="cash-outline" size={20} color="#94a3b8" />
-                            <Text style={styles.metaLabel}>Price</Text>
-                            <Text style={[styles.metaValue, { color: type.color }]}>
-                                LKR {service.price.toLocaleString()}
-                            </Text>
+                        <View style={[styles.metaCard, { flex: 1, marginLeft: 8, backgroundColor: colors.inputBackground, borderColor: colors.border, borderWidth: 1 }]}>
+                            <Ionicons name="cash-outline" size={20} color={colors.textSecondary} />
+                            <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Price</Text>
+                            <Text style={[styles.metaValue, { color: type.color }]}>LKR {service.price.toLocaleString()}</Text>
                         </View>
                     </View>
                 </View>
 
                 {/* What's Included */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>What's Included</Text>
+                <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.divider, borderWidth: isDark ? 1 : 0 }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>What's Included</Text>
                     {type.features.map((f, i) => (
                         <View key={i} style={styles.featureRow}>
                             <View style={[styles.featureCheck, { backgroundColor: type.color + '18' }]}>
                                 <Ionicons name="checkmark" size={14} color={type.color} />
                             </View>
-                            <Text style={styles.featureText}>{f}</Text>
+                            <Text style={[styles.featureText, { color: colors.textSecondary }]}>{f}</Text>
                         </View>
                     ))}
                 </View>
 
                 {/* How It Works */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>How It Works</Text>
+                <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.divider, borderWidth: isDark ? 1 : 0 }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>How It Works</Text>
                     {[
                         { step: '1', title: 'Book the Service', desc: 'Select your vehicle, date & time, and confirm your booking.' },
                         { step: '2', title: 'Washer Assigned', desc: 'Available certified washers in your area race to accept your job.' },
@@ -221,32 +221,27 @@ export default function ServiceDetailsScreen() {
                                 <Text style={styles.stepNum}>{s.step}</Text>
                             </View>
                             <View style={styles.stepContent}>
-                                <Text style={styles.stepTitle}>{s.title}</Text>
-                                <Text style={styles.stepDesc}>{s.desc}</Text>
+                                <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{s.title}</Text>
+                                <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>{s.desc}</Text>
                             </View>
                         </View>
                     ))}
                 </View>
 
                 {/* Washer assignment note */}
-                <View style={[styles.note, { borderLeftColor: type.color }]}>
+                <View style={[styles.note, { backgroundColor: colors.cardBackground, borderLeftColor: type.color, borderColor: colors.border, borderWidth: isDark ? 1 : 0 }]}>
                     <Ionicons name="flash-outline" size={18} color={type.color} />
-                    <Text style={styles.noteText}>
-                        No specific washer is pre-assigned. Once you book, the nearest available certified washer claims your job — just like Uber!
-                    </Text>
+                    <Text style={[styles.noteText, { color: colors.textSecondary }]}>No specific washer is pre-assigned. Once you book, the nearest available certified washer claims your job — just like Uber!</Text>
                 </View>
             </ScrollView>
 
             {/* Footer */}
-            <View style={styles.footer}>
+            <View style={[styles.footer, { backgroundColor: colors.cardBackground, borderTopColor: colors.divider }]}> 
                 <View>
-                    <Text style={styles.footerLabel}>Total Price</Text>
-                    <Text style={styles.footerPrice}>LKR {service.price.toLocaleString()}</Text>
+                    <Text style={[styles.footerLabel, { color: colors.textSecondary }]}>Total Price</Text>
+                    <Text style={[styles.footerPrice, { color: colors.textPrimary }]}>LKR {service.price.toLocaleString()}</Text>
                 </View>
-                <TouchableOpacity
-                    style={[styles.bookBtn, { backgroundColor: type.color }]}
-                    onPress={() => router.push({ pathname: '/create-booking' as any, params: { serviceId: service.id } })}
-                >
+                <TouchableOpacity style={[styles.bookBtn, { backgroundColor: type.color }]} onPress={() => router.push({ pathname: '/create-booking' as any, params: { serviceId: service.id } })}>
                     <Text style={styles.bookBtnText}>Book Now</Text>
                     <Ionicons name="arrow-forward" size={20} color="#fff" />
                 </TouchableOpacity>
