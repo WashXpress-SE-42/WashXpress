@@ -52,6 +52,8 @@ export default function RootLayout() {
                 <Stack.Screen name="my-subscription" options={{ headerShown: false }} />
                 <Stack.Screen name="service-details" />
                 <Stack.Screen name="booking-details" />
+                <Stack.Screen name="checkout-page" options={{ headerShown: false }} />
+                <Stack.Screen name="subscriptionPaymentScreen" options={{ headerShown: false }} />
                 <Stack.Screen name="washer-inprogress" />
                 <Stack.Screen name="pre-existing-damage-section" options={{ headerShown: false }} />
                 <Stack.Screen name="edit-profile" />

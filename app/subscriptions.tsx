@@ -1,8 +1,7 @@
-import PayHere from '@/utils/Payhere';
 import { apiFetch } from '@/services/apiClient';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { useTheme } from '../context/ThemeContext';
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { Header } from '../components/Header';
+import { useTheme } from '../context/ThemeContext';
 
 interface Allowances {
   washes: number;
@@ -68,13 +68,13 @@ interface Subscription {
 function AllowanceBar({ label, used, total, color, colors }: { label: string; used: number; total: number; color: string; colors: any }) {
   const pct = total > 0 ? ((total - used) / total) * 100 : 0;
   return (
-    <View style={styles.allowanceRow}>
-      <View style={styles.allowanceLabelRow}>
-        <Text style={[styles.allowanceLabel, { color: colors.textSecondary }]}>{label}</Text>
-        <Text style={[styles.allowanceCount, { color: colors.textPrimary }]}>{used} / {total} remaining</Text>
+    <View style={s.allowanceRow}>
+      <View style={s.allowanceLabelRow}>
+        <Text style={[s.allowanceLabel, { color: colors.textSecondary }]}>{label}</Text>
+        <Text style={[s.allowanceCount, { color: colors.textPrimary }]}>{used} / {total} remaining</Text>
       </View>
-      <View style={[styles.progressBg, { backgroundColor: colors.divider }]}>
-        <View style={[styles.progressFill, { width: `${pct}%` as any, backgroundColor: color }]} />
+      <View style={[s.progressBg, { backgroundColor: colors.divider }]}>
+        <View style={[s.progressFill, { width: `${pct}%` as any, backgroundColor: color }]} />
       </View>
     </View>
   );
@@ -88,19 +88,19 @@ function ActiveSubCard({ sub, onCancel, colors }: { sub: Subscription; onCancel:
   const daysLeft = Math.max(0, Math.ceil((new Date(sub.endDate).getTime() - Date.now()) / 86400000));
 
   return (
-    <View style={[styles.activeCard, { backgroundColor: colors.cardBackground, borderColor: color }]}>
-      <View style={[styles.activeCardHeader, { backgroundColor: color }]}>
+    <View style={[s.activeCard, { backgroundColor: colors.cardBackground, borderColor: color }]}>
+      <View style={[s.activeCardHeader, { backgroundColor: color }]}>
         <View>
-          <Text style={styles.activeCardTitle}>{sub.planName} Plan</Text>
-          <Text style={styles.activeCardSub}>{sub.vehicle?.make} {sub.vehicle?.model} · {sub.vehicle?.licensePlate}</Text>
+          <Text style={s.activeCardTitle}>{sub.planName} Plan</Text>
+          <Text style={s.activeCardSub}>{sub.vehicle?.make} {sub.vehicle?.model} · {sub.vehicle?.licensePlate}</Text>
         </View>
-        <View style={styles.activeBadge}>
-          <Text style={styles.activeBadgeText}>ACTIVE</Text>
+        <View style={s.activeBadge}>
+          <Text style={s.activeBadgeText}>ACTIVE</Text>
         </View>
       </View>
-      <View style={styles.activeCardBody}>
-        <Text style={[styles.renewalText, { color: colors.textSecondary }]}>Renews on {endDate} · {daysLeft} days left</Text>
-        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Service Allowances</Text>
+      <View style={s.activeCardBody}>
+        <Text style={[s.renewalText, { color: colors.textSecondary }]}>Renews on {endDate} · {daysLeft} days left</Text>
+        <Text style={[s.sectionLabel, { color: colors.textPrimary }]}>Service Allowances</Text>
         <AllowanceBar label="Exterior Washes" used={sub.remainingWashes} total={sub.totalWashes} color={color} colors={colors} />
         <AllowanceBar label="Interior Cleans" used={sub.remainingInteriorCleans} total={sub.totalInteriorCleans} color={color} colors={colors} />
         {sub.totalTireCleans > 0 && (
@@ -109,45 +109,45 @@ function ActiveSubCard({ sub, onCancel, colors }: { sub: Subscription; onCancel:
         {sub.totalFullDetails > 0 && (
           <AllowanceBar label="Full Details" used={sub.remainingFullDetails} total={sub.totalFullDetails} color={color} colors={colors} />
         )}
-        <TouchableOpacity style={[styles.cancelBtn, { borderColor: colors.divider }]} onPress={onCancel}>
-          <Text style={styles.cancelBtnText}>Cancel Subscription</Text>
+        <TouchableOpacity style={[s.cancelBtn, { borderColor: colors.divider }]} onPress={onCancel}>
+          <Text style={s.cancelBtnText}>Cancel Subscription</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
+// ── Allowance Pill ────────────────────────────────────────────────────────────
+function AllowancePill({ icon, label, color, colors, isDark }: { icon: string; label: string; color: string; colors: any; isDark: boolean }) {
+  return (
+    <View style={[s.pill, { backgroundColor: isDark ? `${color}25` : `${color}15`, borderColor: `${color}40` }]}>
+      <Text style={s.pillIcon}>{icon}</Text>
+      <Text style={[s.pillLabel, { color }]}>{label}</Text>
+    </View>
+  );
+}
+
 // ── Plan Card ─────────────────────────────────────────────────────────────────
-function PlanCard({
-  plan,
-  onSelect,
-  isCurrentPlan,
-  colors,
-  isDark,
-}: {
-  plan: Plan;
-  onSelect: () => void;
-  isCurrentPlan?: boolean;
-  colors: any;
-  isDark: boolean;
+function PlanCard({ plan, onSelect, isCurrentPlan, colors, isDark }: {
+  plan: Plan; onSelect: () => void; isCurrentPlan?: boolean; colors: any; isDark: boolean;
 }) {
   return (
-    <View style={[styles.planCard, { backgroundColor: colors.cardBackground, borderColor: colors.divider }, plan.isPopular && { borderColor: plan.color, borderWidth: 2 }]}>
+    <View style={[s.planCard, { backgroundColor: colors.cardBackground, borderColor: colors.divider }, plan.isPopular && { borderColor: plan.color, borderWidth: 2 }]}>
       {plan.isPopular && (
-        <View style={[styles.popularBadge, { backgroundColor: plan.color }]}>
-          <Text style={styles.popularBadgeText}>MOST POPULAR</Text>
+        <View style={[s.popularBadge, { backgroundColor: plan.color }]}>
+          <Text style={s.popularBadgeText}>MOST POPULAR</Text>
         </View>
       )}
-      <View style={[styles.planHeader, { backgroundColor: isDark ? `${plan.color}25` : `${plan.color}15` }]}>
-        <Text style={[styles.planName, { color: plan.color }]}>{plan.name}</Text>
-        <Text style={[styles.planTagline, { color: colors.textSecondary }]}>{plan.tagline}</Text>
-        <Text style={[styles.planPrice, { color: plan.color }]}>
+      <View style={[s.planHeader, { backgroundColor: isDark ? `${plan.color}25` : `${plan.color}15` }]}>
+        <Text style={[s.planName, { color: plan.color }]}>{plan.name}</Text>
+        <Text style={[s.planTagline, { color: colors.textSecondary }]}>{plan.tagline}</Text>
+        <Text style={[s.planPrice, { color: plan.color }]}>
           LKR {plan.price.toLocaleString()}
-          <Text style={[styles.planPricePer, { color: colors.textSecondary }]}> /month</Text>
+          <Text style={[s.planPricePer, { color: colors.textSecondary }]}> /month</Text>
         </Text>
       </View>
-      <View style={styles.planBody}>
-        <View style={styles.allowanceSummary}>
+      <View style={s.planBody}>
+        <View style={s.allowanceSummary}>
           <AllowancePill icon="🚿" label={`${plan.allowances?.washes ?? 0} Washes`} color={plan.color} colors={colors} isDark={isDark} />
           <AllowancePill icon="🧹" label={`${plan.allowances?.interiorCleans ?? 0} Interior`} color={plan.color} colors={colors} isDark={isDark} />
           {(plan.allowances?.tireCleans ?? 0) > 0 && (
@@ -158,18 +158,18 @@ function PlanCard({
           )}
         </View>
         {plan.features.map((f, i) => (
-          <View key={i} style={styles.featureRow}>
-            <Text style={[styles.featureCheck, { color: plan.color }]}>✓</Text>
-            <Text style={[styles.featureText, { color: colors.textSecondary }]}>{f}</Text>
+          <View key={i} style={s.featureRow}>
+            <Ionicons name="checkmark-circle" size={16} color={plan.color} />
+            <Text style={[s.featureText, { color: colors.textSecondary }]}>{f}</Text>
           </View>
         ))}
         {isCurrentPlan ? (
-          <View style={[styles.currentPlanBadge, { borderColor: plan.color }]}>
-            <Text style={[styles.currentPlanBadgeText, { color: plan.color }]}>✓ Your Current Plan</Text>
+          <View style={[s.currentPlanBadge, { borderColor: plan.color }]}>
+            <Text style={[s.currentPlanBadgeText, { color: plan.color }]}>✓ Your Current Plan</Text>
           </View>
         ) : (
-          <TouchableOpacity style={[styles.selectBtn, { backgroundColor: plan.color }]} onPress={onSelect}>
-            <Text style={styles.selectBtnText}>Choose {plan.name}</Text>
+          <TouchableOpacity style={[s.selectBtn, { backgroundColor: plan.color }]} onPress={onSelect}>
+            <Text style={s.selectBtnText}>Choose {plan.name}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -177,21 +177,9 @@ function PlanCard({
   );
 }
 
-function AllowancePill({ icon, label, color, colors, isDark }: { icon: string; label: string; color: string; colors: any; isDark: boolean }) {
-  return (
-    <View style={[styles.pill, { backgroundColor: isDark ? `${color}25` : `${color}15`, borderColor: `${color}40` }]}>
-      <Text style={styles.pillIcon}>{icon}</Text>
-      <Text style={[styles.pillLabel, { color }]}>{label}</Text>
-    </View>
-  );
-}
-
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function SubscriptionsScreen() {
   const { colors, isDark } = useTheme();
-  const router = useRouter();
-
-  // changeSubscriptionId passed from my-subscription.tsx when changing plan
   const { changeSubscriptionId } = useLocalSearchParams<{ changeSubscriptionId?: string }>();
   const isChangingPlan = !!changeSubscriptionId;
 
@@ -201,7 +189,6 @@ export default function SubscriptionsScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [vehicleModalVisible, setVehicleModalVisible] = useState(false);
-  const [paying, setPaying] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -237,103 +224,38 @@ export default function SubscriptionsScreen() {
     setSelectedPlan(plan);
 
     if (isChangingPlan && changingSubscription) {
-      // Changing plan: confirm then pay using same vehicle
       Alert.alert(
         'Change Plan',
-        `Switch from ${changingSubscription.planName} to ${plan.name}?\n\nYour current plan will be cancelled and the new plan starts immediately after payment.`,
+        `Switch from ${changingSubscription.planName} to ${plan.name}?\n\nYour current plan will be cancelled and the new plan starts after payment.`,
         [
           { text: 'Go Back', style: 'cancel' },
           {
             text: 'Continue to Payment',
-            onPress: () => handleSubscribe(changingSubscription.vehicle!.id, plan, changeSubscriptionId),
+            onPress: () => navigateToPayment(plan, changingSubscription.vehicle!, changeSubscriptionId),
           },
         ]
       );
     } else {
-      // Fresh subscription: let user pick vehicle
       setVehicleModalVisible(true);
     }
   }
 
-  async function handleSubscribe(vehicleId: string, plan?: Plan, cancelExistingId?: string) {
-    const activePlan = plan ?? selectedPlan;
-    if (!activePlan) return;
-
-    setVehicleModalVisible(false);
-    setPaying(true);
-
-    try {
-      // Cancel old plan first when changing
-      if (cancelExistingId) {
-        await apiFetch(`/subscriptions/${cancelExistingId}/cancel`, {
-          method: 'PATCH',
-          body: JSON.stringify({ reason: 'Upgrading/changing plan' }),
-        }, 'customer');
-      }
-
-      const data = await apiFetch('/subscriptions/initiate', {
-        method: 'POST',
-        body: JSON.stringify({ planId: activePlan.id, vehicleId }),
-      }, 'customer');
-
-      if (!data.success) throw new Error(data.message);
-
-      const p = data.data.payment;
-
-      PayHere.startPayment(
-        {
-          sandbox: p.sandbox ?? true,
-          merchant_id: p.merchantId,
-          notify_url: p.notifyUrl,
-          order_id: p.orderId,
-          items: p.items,
-          amount: p.amount,
-          currency: p.currency,
-          first_name: p.firstName,
-          last_name: p.lastName,
-          email: p.email,
-          phone: p.phone,
-          address: p.address,
-          city: p.city,
-          country: p.country,
-          custom_1: data.data.subscriptionId,
-          custom_2: '',
-        },
-        async () => {
-          // Success
-          try {
-            await apiFetch(`/subscriptions/${data.data.subscriptionId}/activate`, { method: 'PATCH' }, 'customer');
-          } catch (e) {
-            console.error('Failed to activate plan via fallback', e);
-          }
-
-          setPaying(false);
-          Alert.alert(
-            cancelExistingId ? '🔄 Plan Changed!' : '🎉 Subscription Activated!',
-            `Your ${activePlan.name} plan is now active.`,
-            [{ text: 'OK', onPress: () => router.back() }]
-          );
-          fetchData();
-        },
-        (errorData: string) => {
-          setPaying(false);
-          Alert.alert('Payment Failed', errorData);
-        },
-        () => {
-          // Dismissed
-          setPaying(false);
-        }
-      );
-    } catch (error: any) {
-      setPaying(false);
-      Alert.alert('Error', error.message);
-    }
+  function navigateToPayment(plan: Plan, vehicle: Vehicle, cancelExistingId?: string) {
+    // Navigate to PaymentScreen (card UI), passing plan + vehicle as serialised params
+    router.push({
+      pathname: '/subscriptionPaymentScreen',
+      params: {
+        plan: JSON.stringify(plan),
+        vehicle: JSON.stringify(vehicle),
+        changeSubscriptionId: cancelExistingId ?? '',
+      },
+    } as any);
   }
 
   async function handleCancel(subscriptionId: string) {
     Alert.alert(
       'Cancel Subscription',
-      'Are you sure you want to cancel? You will retain access until the end of the billing period.',
+      'Are you sure? You will retain access until the end of the billing period.',
       [
         { text: 'Keep Subscription', style: 'cancel' },
         {
@@ -354,53 +276,47 @@ export default function SubscriptionsScreen() {
     );
   }
 
-  const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
+  const activeSubscriptions = subscriptions.filter(sub => sub.status === 'active');
   const currentPlanId = changingSubscription?.planId;
 
   if (loading) {
     return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+      <View style={[s.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[s.container, { backgroundColor: colors.background }]}>
       <Header title={isChangingPlan ? 'Change Plan' : 'Subscriptions'} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={s.content}>
 
-        {/* Change plan info banner */}
         {isChangingPlan && changingSubscription && (
-          <View style={[styles.changeBanner, { backgroundColor: isDark ? 'rgba(12, 166, 232, 0.1)' : '#e0f4fd', borderLeftColor: colors.accent }]}>
-            <Text style={[styles.changeBannerTitle, { color: colors.textPrimary }]}>Changing from {changingSubscription.planName}</Text>
-            <Text style={[styles.changeBannerSub, { color: colors.textSecondary }]}>
+          <View style={[s.changeBanner, { backgroundColor: isDark ? 'rgba(12,166,232,0.1)' : '#e0f4fd', borderLeftColor: colors.accent }]}>
+            <Text style={[s.changeBannerTitle, { color: colors.textPrimary }]}>Changing from {changingSubscription.planName}</Text>
+            <Text style={[s.changeBannerSub, { color: colors.textSecondary }]}>
               Your current plan will be cancelled and the new plan activates immediately after payment.
             </Text>
           </View>
         )}
 
         {!isChangingPlan && (
-          <Text style={[styles.subheading, { color: colors.textSecondary }]}>Save more with monthly plans</Text>
+          <Text style={[s.subheading, { color: colors.textSecondary }]}>Save more with monthly plans</Text>
         )}
 
-        {/* Active plans — hidden when in change mode */}
         {!isChangingPlan && activeSubscriptions.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Your Active Plans</Text>
+          <View style={s.section}>
+            <Text style={[s.sectionTitle, { color: colors.textPrimary }]}>Your Active Plans</Text>
             {activeSubscriptions.map(sub => (
               <ActiveSubCard key={sub.id} sub={sub} onCancel={() => handleCancel(sub.id)} colors={colors} />
             ))}
           </View>
         )}
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {isChangingPlan
-              ? 'Select New Plan'
-              : activeSubscriptions.length > 0
-                ? 'Add Another Plan'
-                : 'Choose a Plan'}
+        <View style={s.section}>
+          <Text style={[s.sectionTitle, { color: colors.textPrimary }]}>
+            {isChangingPlan ? 'Select New Plan' : activeSubscriptions.length > 0 ? 'Add Another Plan' : 'Choose a Plan'}
           </Text>
           {plans.map(plan => (
             <PlanCard
@@ -415,32 +331,39 @@ export default function SubscriptionsScreen() {
         </View>
       </ScrollView>
 
-      {/* Payment overlay */}
-      {paying && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.overlayText}>Processing payment...</Text>
-        </View>
-      )}
-
-      {/* Vehicle picker modal — fresh subscriptions only */}
+      {/* Vehicle picker modal */}
       <Modal visible={vehicleModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalBox, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Select Vehicle</Text>
-            <Text style={[styles.modalSub, { color: colors.textSecondary }]}>Which vehicle is this plan for?</Text>
+        <View style={s.modalOverlay}>
+          <View style={[s.modalBox, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[s.modalTitle, { color: colors.textPrimary }]}>Select Vehicle</Text>
+            <Text style={[s.modalSub, { color: colors.textSecondary }]}>Which vehicle is this plan for?</Text>
             <FlatList
               data={vehicles}
               keyExtractor={v => v.id}
               renderItem={({ item: v }) => (
-                <TouchableOpacity style={[styles.vehicleItem, { borderBottomColor: colors.divider }]} onPress={() => handleSubscribe(v.id)}>
-                  <Text style={[styles.vehicleName, { color: colors.textPrimary }]}>{v.nickname || `${v.make} ${v.model}`}</Text>
-                  <Text style={[styles.vehiclePlate, { color: colors.textSecondary }]}>{v.licensePlate} · {v.year} </Text>
+                <TouchableOpacity
+                  style={[s.vehicleItem, { borderBottomColor: colors.divider }]}
+                  onPress={() => {
+                    setVehicleModalVisible(false);
+                    navigateToPayment(selectedPlan!, v);
+                  }}
+                >
+                  <View style={[s.vehicleIcon, { backgroundColor: isDark ? 'rgba(12,166,232,0.1)' : '#e0f4fd' }]}>
+                    <Ionicons name="car" size={20} color={colors.accent} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={[s.vehicleName, { color: colors.textPrimary }]}>{v.nickname || `${v.make} ${v.model}`}</Text>
+                    <Text style={[s.vehiclePlate, { color: colors.textSecondary }]}>{v.licensePlate} · {v.year}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
                 </TouchableOpacity>
               )}
             />
-            <TouchableOpacity style={[styles.modalCancelBtn, { borderColor: colors.divider }]} onPress={() => setVehicleModalVisible(false)}>
-              <Text style={[styles.modalCancelText, { color: colors.textSecondary }]}>Cancel</Text>
+            <TouchableOpacity
+              style={[s.modalCancelBtn, { borderColor: colors.divider }]}
+              onPress={() => setVehicleModalVisible(false)}
+            >
+              <Text style={[s.modalCancelText, { color: colors.textSecondary }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -449,7 +372,7 @@ export default function SubscriptionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 20, paddingBottom: 110 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -457,10 +380,7 @@ const styles = StyleSheet.create({
   section: { marginBottom: 28 },
   sectionTitle: { fontSize: 17, fontWeight: '700', marginBottom: 14 },
 
-  changeBanner: {
-    borderRadius: 14, padding: 16,
-    marginBottom: 24, borderLeftWidth: 4,
-  },
+  changeBanner: { borderRadius: 14, padding: 16, marginBottom: 24, borderLeftWidth: 4 },
   changeBannerTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
   changeBannerSub: { fontSize: 13, lineHeight: 20 },
 
@@ -488,7 +408,7 @@ const styles = StyleSheet.create({
   popularBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700', letterSpacing: 1 },
   planHeader: { padding: 20 },
   planName: { fontSize: 22, fontWeight: '800' },
-  planTagline: { fontSize: 13, color: '#64748b', marginTop: 2, marginBottom: 10 },
+  planTagline: { fontSize: 13, marginTop: 2, marginBottom: 10 },
   planPrice: { fontSize: 28, fontWeight: '800' },
   planPricePer: { fontSize: 14, fontWeight: '400' },
   planBody: { padding: 20 },
@@ -496,24 +416,19 @@ const styles = StyleSheet.create({
   pill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
   pillIcon: { fontSize: 13 },
   pillLabel: { fontSize: 12, fontWeight: '600' },
-  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
-  featureCheck: { fontSize: 15, fontWeight: '700' },
-  featureText: { fontSize: 14 },
+  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  featureText: { fontSize: 14, flex: 1 },
   selectBtn: { marginTop: 16, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   selectBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   currentPlanBadge: { marginTop: 16, paddingVertical: 13, borderRadius: 12, borderWidth: 2, alignItems: 'center' },
   currentPlanBadgeText: { fontSize: 15, fontWeight: '700' },
 
-  overlay: {
-    ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center', justifyContent: 'center', zIndex: 99,
-  },
-  overlayText: { color: '#fff', marginTop: 12, fontSize: 15 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalBox: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: '60%' },
   modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 4 },
   modalSub: { fontSize: 14, marginBottom: 16 },
-  vehicleItem: { paddingVertical: 14, borderBottomWidth: 1 },
+  vehicleItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1 },
+  vehicleIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   vehicleName: { fontSize: 16, fontWeight: '600' },
   vehiclePlate: { fontSize: 13, marginTop: 2 },
   modalCancelBtn: { marginTop: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
