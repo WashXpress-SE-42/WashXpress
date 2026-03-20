@@ -21,6 +21,7 @@ const getActiveTab = (pathname: string, userType: string) => {
     if (pathname === '/washer-home' || pathname === '/provider-home' || pathname.startsWith('/washer-job-request')) return 'home';
     if (pathname === '/myjobs' || pathname.startsWith('/washer-booking-details') || pathname.startsWith('/washer-inprogress') || pathname === '/washer-requests') return 'jobs';
     if (pathname === '/marketplace') return 'shop';
+    if (pathname === '/washer-earnings') return 'earnings';
     if (pathname === '/profile' || pathname === '/edit-profile') return 'profile';
   } else {
     if (pathname === '/customer-home') return 'home';
@@ -50,7 +51,7 @@ export const UnifiedBottomNav = () => {
     ? [
         { key: 'home', icon: 'home', label: 'Home', route: '/washer-home' },
         { key: 'jobs', icon: 'briefcase', label: 'My Jobs', route: '/myjobs' },
-        { key: 'earnings', icon: 'cash', label: 'Earnings', route: '/washer-home' }, 
+        { key: 'earnings', icon: 'cash', label: 'Earnings', route: '/washer-earnings' }, 
         { key: 'shop', icon: 'cart', label: 'Shop', route: '/marketplace' },
         { key: 'profile', icon: 'person', label: 'Profile', route: '/profile' },
       ]
