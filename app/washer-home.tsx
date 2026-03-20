@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator, Alert,
     BackHandler,
+    Image,
     SafeAreaView,
     ScrollView,
     StatusBar,
@@ -12,7 +13,6 @@ import {
     Text,
     TouchableOpacity,
     View,
-    Image,
 } from 'react-native';
 import { auth, db } from '../firebaseConfig';
 
@@ -309,7 +309,7 @@ export default function WasherHome() {
                 {/* ── Mentorship Banner ── */}
                 <TouchableOpacity
                     style={styles.mentorshipBtn}
-                    onPress={() => router.push('/washer-mentorship' as any)}
+                    onPress={() => router.push('/Mentorship' as any)}
                     activeOpacity={0.85}
                 >
                     <View style={styles.mentorshipLeft}>
