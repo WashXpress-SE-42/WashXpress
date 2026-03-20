@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   scrollContent: { paddingVertical: 24 },
 
   avatarSection: { alignItems: 'center', marginBottom: 28, paddingHorizontal: 20 },
-  avatarContainer: { width: 100, height: 100, borderRadius: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 16, borderWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4, overflow: 'hidden' },
+  avatarContainer: { width: 100, height: 100, borderRadius: 50, justifyContent: 'center', alignItems: 'center', borderWidth: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4, overflow: 'hidden' },
   avatarImage: { width: '100%', height: '100%' },
   userName: { fontSize: 24, fontWeight: 'bold', marginBottom: 8 },
   badge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, marginBottom: 16 },
