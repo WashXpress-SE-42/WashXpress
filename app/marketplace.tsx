@@ -99,11 +99,28 @@ export default function Marketplace() {
 
     const checkout = () => {
         if (cart.length === 0) { Alert.alert('Your cart is empty!'); return; }
-        Alert.alert(
-            'Order Placed!',
-            `Total: LKR ${total.toFixed(2)}\nYour supplies will be delivered in 2–3 business days.`,
-            [{ text: 'OK', onPress: () => { clearCart(); setCartOpen(false); } }]
-        );
+        setCartOpen(false);
+
+        // Serialize cart for navigation (only pass what's needed, no image assets)
+        const cartForNav = cart.map(item => ({
+            product: {
+                id: item.product.id,
+                name: item.product.name,
+                price: item.product.price,
+                image: null, // images can't be passed as params
+            },
+            quantity: item.quantity,
+        }));
+
+        router.push({
+            pathname: '/marketplace-checkout',
+            params: {
+                cartJson: JSON.stringify(cartForNav),
+                subtotal: subtotal.toFixed(2),
+                shipping: shipping.toFixed(2),
+                total: total.toFixed(2),
+            },
+        } as any);
     };
 
     // ── Filtered products ────────────────────────────────

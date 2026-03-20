@@ -59,6 +59,7 @@ export default function RootLayout() {
                 <Stack.Screen name="washer-inprogress" />
                 <Stack.Screen name="pre-existing-damage-section" options={{ headerShown: false }} />
                 <Stack.Screen name="edit-profile" />
+                <Stack.Screen name="marketplace-checkout" options={{ headerShown: false }} />
                 <Stack.Screen name="subscriptions" options={{ headerShown: false }} />
                 <Stack.Screen name="vehicle-list" options={{ headerShown: false }} />
                 <Stack.Screen name="add-vehicle" options={{ headerShown: false }} />
