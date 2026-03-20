@@ -249,10 +249,11 @@ const s = StyleSheet.create({
   addressActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 4, borderTopWidth: 1, paddingTop: 10 },
   actionBtn: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
 
+  
   addCard: {
     flexDirection: 'row', alignItems: 'center',
     borderRadius: 18, padding: 18, borderWidth: 1.5, borderStyle: 'dashed',
   },
   addCardIcon: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
   addCardTxt: { flex: 1, fontSize: 15, fontWeight: '600' },
-});
+}); 
