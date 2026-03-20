@@ -1,10 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator, Animated, RefreshControl,
-    ScrollView, StyleSheet, Text, TouchableOpacity, View,
+    StyleSheet, Text, TouchableOpacity, View
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { useTheme } from '../context/ThemeContext';
 import { auth } from '../firebaseConfig';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -66,22 +67,22 @@ function toDateStr(d: Date) {
 const API_BASE = process.env.EXPO_PUBLIC_PROVIDER_API_URL || '';
 
 // ── Mini Bar Chart ────────────────────────────────────────────────────────────
-function BarChart({ data }: { data: DayData[] }) {
+function BarChart({ data, colors, isDark }: { data: DayData[]; colors: any; isDark: boolean }) {
     const max = Math.max(...data.map(d => d.earnings), 1);
     const last7 = data.slice(-7);
 
     return (
-        <View style={chart.wrap}>
+        <View style={[chart.wrap, { backgroundColor: 'transparent' }]}>
             {last7.map((d, i) => {
                 const pct = d.earnings / max;
                 const day = new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' });
                 return (
                     <View key={i} style={chart.col}>
-                        <Text style={chart.val}>{d.earnings > 0 ? `${Math.round(d.earnings / 1000)}k` : ''}</Text>
-                        <View style={chart.barBg}>
-                            <View style={[chart.barFill, { height: `${Math.max(pct * 100, 4)}%` as any }]} />
+                        <Text style={[chart.val, { color: colors.textSecondary }]}>{d.earnings > 0 ? `${Math.round(d.earnings / 1000)}k` : ''}</Text>
+                        <View style={[chart.barBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+                            <View style={[chart.barFill, { height: `${Math.max(pct * 100, 4)}%` as any, backgroundColor: colors.accent }]} />
                         </View>
-                        <Text style={chart.day}>{day}</Text>
+                        <Text style={[chart.day, { color: colors.textSecondary }]}>{day}</Text>
                     </View>
                 );
             })}
@@ -91,6 +92,9 @@ function BarChart({ data }: { data: DayData[] }) {
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function WasherEarningsScreen() {
+    const { colors, isDark } = useTheme();
+    const s = React.useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+
     const [summary, setSummary] = useState<EarningsSummary | null>(null);
     const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
     const [chartData, setChartData] = useState<DayData[]>([]);
@@ -290,9 +294,9 @@ export default function WasherEarningsScreen() {
                         <Text style={s.cardTitle}>Last 7 Days</Text>
                     </View>
                     {chartLoading ? (
-                        <ActivityIndicator color="#2563eb" style={{ paddingVertical: 24 }} />
+                        <ActivityIndicator color={colors.accent} style={{ paddingVertical: 24 }} />
                     ) : chartData.length > 0 ? (
-                        <BarChart data={chartData} />
+                        <BarChart data={chartData} colors={colors} isDark={isDark} />
                     ) : (
                         <View style={s.emptyChart}>
                             <Text style={s.emptyChartTxt}>No data yet</Text>
@@ -393,61 +397,61 @@ export default function WasherEarningsScreen() {
 const chart = StyleSheet.create({
     wrap:   { flexDirection: 'row', alignItems: 'flex-end', height: 120, gap: 6, paddingTop: 16 },
     col:    { flex: 1, alignItems: 'center', gap: 4 },
-    barBg:  { width: '100%', height: 80, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 6, justifyContent: 'flex-end', overflow: 'hidden' },
-    barFill:{ width: '100%', backgroundColor: '#2563eb', borderRadius: 6 },
-    val:    { fontSize: 9, color: '#64748b', height: 12 },
-    day:    { fontSize: 10, color: '#64748b', fontWeight: '600' },
+    barBg:  { width: '100%', height: 80, borderRadius: 6, justifyContent: 'flex-end', overflow: 'hidden' },
+    barFill:{ width: '100%', borderRadius: 6 },
+    val:    { fontSize: 9, height: 12 },
+    day:    { fontSize: 10, fontWeight: '600' },
 });
 
 // ── Main Styles ───────────────────────────────────────────────────────────────
-const s = StyleSheet.create({
-    safe:           { flex: 1, backgroundColor: '#0d1629' },
+const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
+    safe:           { flex: 1, backgroundColor: colors.background },
     center:         { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20, backgroundColor: '#1e2d4a', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
+    header:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20, backgroundColor: colors.cardBackground, borderBottomWidth: 1, borderBottomColor: colors.divider },
     backBtn:        { width: 40, height: 40, justifyContent: 'center' },
-    headerTitle:    { fontSize: 18, fontWeight: '700', color: '#fff' },
+    headerTitle:    { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
     scroll:         { padding: 16, paddingBottom: 48 },
 
-    heroCard:       { backgroundColor: '#1e2d4a', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(37,99,235,0.3)' },
+    heroCard:       { backgroundColor: colors.cardBackground, borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: colors.divider },
     heroTop:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
-    heroLabel:      { fontSize: 13, color: '#64748b', fontWeight: '600', marginBottom: 6 },
-    heroAmount:     { fontSize: 32, fontWeight: '800', color: '#fff' },
+    heroLabel:      { fontSize: 13, color: colors.textSecondary, fontWeight: '600', marginBottom: 6 },
+    heroAmount:     { fontSize: 32, fontWeight: '800', color: colors.textPrimary },
     heroRight:      { alignItems: 'flex-end', gap: 6 },
     heroJobsBadge:  { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(74,222,128,0.1)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
     heroJobsTxt:    { fontSize: 13, fontWeight: '700', color: '#4ade80' },
-    heroAvg:        { fontSize: 11, color: '#64748b' },
+    heroAvg:        { fontSize: 11, color: colors.textSecondary },
 
-    periodTabs:     { flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: 3, gap: 2 },
+    periodTabs:     { flexDirection: 'row', backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderRadius: 12, padding: 3, gap: 2 },
     periodTab:      { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
-    periodTabActive:{ backgroundColor: '#2563eb' },
-    periodTabTxt:   { fontSize: 12, fontWeight: '600', color: '#64748b' },
+    periodTabActive:{ backgroundColor: colors.accent },
+    periodTabTxt:   { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
     periodTabTxtActive:{ color: '#fff' },
 
     statsGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
-    statCard:       { width: '47.5%', backgroundColor: '#1e2d4a', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
+    statCard:       { width: '47.5%', backgroundColor: colors.cardBackground, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.divider },
     statIconCircle: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-    statLabel:      { fontSize: 12, color: '#64748b', marginBottom: 4 },
-    statAmount:     { fontSize: 16, fontWeight: '800', marginBottom: 2 },
-    statJobs:       { fontSize: 11, color: '#64748b' },
+    statLabel:      { fontSize: 12, color: colors.textSecondary, marginBottom: 4 },
+    statAmount:     { fontSize: 16, fontWeight: '800', marginBottom: 2, color: colors.textPrimary },
+    statJobs:       { fontSize: 11, color: colors.textSecondary },
 
-    card:           { backgroundColor: '#1e2d4a', borderRadius: 18, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
+    card:           { backgroundColor: colors.cardBackground, borderRadius: 18, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: colors.divider },
     cardTitleRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-    cardTitle:      { fontSize: 15, fontWeight: '700', color: '#fff', flex: 1 },
-    cardCount:      { fontSize: 13, fontWeight: '700', color: '#64748b' },
+    cardTitle:      { fontSize: 15, fontWeight: '700', color: colors.textPrimary, flex: 1 },
+    cardCount:      { fontSize: 13, fontWeight: '700', color: colors.textSecondary },
 
     emptyChart:     { paddingVertical: 24, alignItems: 'center' },
-    emptyChartTxt:  { color: '#64748b', fontSize: 13 },
+    emptyChartTxt:  { color: colors.textSecondary, fontSize: 13 },
 
-    subNote:        { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: 'rgba(37,99,235,0.08)', borderRadius: 12, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: 'rgba(37,99,235,0.2)' },
-    subNoteTxt:     { flex: 1, fontSize: 12, color: '#94a3b8', lineHeight: 17 },
+    subNote:        { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: isDark ? 'rgba(37,99,235,0.08)' : 'rgba(37,99,235,0.08)', borderRadius: 12, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: isDark ? 'rgba(37,99,235,0.2)' : 'rgba(37,99,235,0.2)' },
+    subNoteTxt:     { flex: 1, fontSize: 12, color: colors.textSecondary, lineHeight: 17 },
 
     jobRow:         { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
-    jobRowBorder:   { borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+    jobRowBorder:   { borderBottomWidth: 1, borderBottomColor: colors.divider },
     jobIconCircle:  { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
     jobIconPaid:    { backgroundColor: 'rgba(74,222,128,0.1)' },
     jobIconSub:     { backgroundColor: 'rgba(96,165,250,0.1)' },
-    jobService:     { fontSize: 14, fontWeight: '600', color: '#fff', marginBottom: 3 },
-    jobMeta:        { fontSize: 12, color: '#64748b' },
+    jobService:     { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 3 },
+    jobMeta:        { fontSize: 12, color: colors.textSecondary },
     jobAmount:      { fontSize: 15, fontWeight: '800', color: '#4ade80' },
     jobAmountSub:   { color: '#60a5fa', fontSize: 13 },
 
@@ -455,8 +459,8 @@ const s = StyleSheet.create({
     subBadgeTxt:    { fontSize: 10, fontWeight: '700', color: '#60a5fa' },
 
     emptyJobs:      { paddingVertical: 24, alignItems: 'center' },
-    emptyJobsTxt:   { fontSize: 13, color: '#64748b' },
+    emptyJobsTxt:   { fontSize: 13, color: colors.textSecondary },
 
     tipRow:         { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
-    tipTxt:         { flex: 1, fontSize: 13, color: '#94a3b8', lineHeight: 19 },
+    tipTxt:         { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 19 },
 });
