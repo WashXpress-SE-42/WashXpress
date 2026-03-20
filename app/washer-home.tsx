@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -97,6 +97,8 @@ export default function WasherHome() {
     const [loading, setLoading] = useState(true);
     const [accepting, setAccepting] = useState<string | null>(null);
     const [hasPendingTrainees, setHasPendingTrainees] = useState(false);
+    const [completedCount, setCompletedCount] = useState(0);
+    const [upcomingCount, setUpcomingCount] = useState(0);
 
     // for mentorship program 
 
@@ -198,6 +200,29 @@ export default function WasherHome() {
         return () => unsubscribe();
     }, [washerProfile?.serviceAreas]);
 
+    // ── Fetch completed and upcoming jobs counts ───────────────────────────────────────────
+    const fetchCounts = useCallback(async () => {
+        try {
+            const [confirmedRes, inProgressRes, completedRes] = await Promise.all([
+                apiFetch('/bookings?status=confirmed', {}, 'provider'),
+                apiFetch('/bookings?status=in_progress', {}, 'provider'),
+                apiFetch('/bookings?status=completed', {}, 'provider'),
+            ]);
+
+            const upcomingJobs = [
+                ...(confirmedRes.data?.bookings || []),
+                ...(inProgressRes.data?.bookings || []),
+            ];
+
+            setUpcomingCount(upcomingJobs.length);
+            setCompletedCount(completedRes.data?.bookings?.length || 0);
+        } catch (error) {
+            console.error('Error fetching counts:', error);
+        }
+    }, []);
+
+    useFocusEffect(useCallback(() => { fetchCounts(); }, [fetchCounts]));
+
     // ── Quick-accept directly from home card ─────────────────────────────────
     const handleAcceptJob = useCallback(async (bookingId: string) => {
         try {
@@ -285,7 +310,7 @@ export default function WasherHome() {
                             </View>
                         </View>
                         <View style={styles.earningsRight}>
-                            <Text style={[styles.jobsDoneCount, { color: colors.accent }]}>0</Text>
+                            <Text style={[styles.jobsDoneCount, { color: colors.accent }]}>{completedCount}</Text>
                             <Text style={[styles.jobsDoneLabel, { color: colors.textSecondary }]}>Jobs Done</Text>
                         </View>
                     </TouchableOpacity>
@@ -295,8 +320,8 @@ export default function WasherHome() {
                 <View style={styles.statsGrid}>
                     {[
                         { icon: 'star', color: '#f59e0b', value: '—', label: 'Rating' },
-                        { icon: 'calendar-outline', color: colors.accent, value: String(bookings.length), label: 'Available' },
-                        { icon: 'checkmark-circle-outline', color: colors.success || '#16a34a', value: '0', label: 'Completed' },
+                        { icon: 'calendar-outline', color: colors.accent, value: String(upcomingCount), label: 'Available' },
+                        { icon: 'checkmark-circle-outline', color: colors.success || '#16a34a', value: String(completedCount), label: 'Completed' },
                     ].map((stat) => (
                         <View key={stat.label} style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
                             <Ionicons name={stat.icon as any} size={22} color={stat.color} />
