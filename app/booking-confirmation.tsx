@@ -35,26 +35,22 @@ function formatDate(d: string) {
 
 export default function BookingConfirmationScreen() {
     const { bookingId, path } = useLocalSearchParams<{ bookingId: string; path: string }>();
-    const { width, height } = useWindowDimensions();
+    const { width } = useWindowDimensions();
     const [booking, setBooking] = useState<BookingDetail | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Animation
     const scaleAnim = useRef(new Animated.Value(0)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
-    useEffect(() => {
-        loadBooking();
-    }, []);
+    useEffect(() => { loadBooking(); }, []);
 
     const loadBooking = async () => {
         try {
             const res = await apiFetch(`/bookings/${bookingId}`, {}, 'customer');
             if (res.success) setBooking(res.data.booking);
-        } catch { /* non-fatal */ }
+        } catch { }
         finally {
             setLoading(false);
-            // Trigger animation
             Animated.parallel([
                 Animated.spring(scaleAnim, { toValue: 1, tension: 60, friction: 7, useNativeDriver: true }),
                 Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
@@ -66,25 +62,27 @@ export default function BookingConfirmationScreen() {
 
     return (
         <SafeAreaView style={s.container}>
-            <ScrollView contentContainerStyle={[s.scroll, { minHeight: height - 100 }]} showsVerticalScrollIndicator={false}>
-
+            <ScrollView
+                contentContainerStyle={s.scroll}
+                showsVerticalScrollIndicator={false}
+            >
                 {/* Success Icon */}
                 <Animated.View style={[s.iconWrap, { transform: [{ scale: scaleAnim }], opacity: fadeAnim }]}>
-                    <View style={[s.iconCircle, { 
+                    <View style={[s.iconCircle, {
                         backgroundColor: isSubscription ? '#dcfce7' : '#e0f4fd',
-                        width: width * 0.35,
-                        height: width * 0.35,
-                        borderRadius: (width * 0.35) / 2
+                        width: width * 0.32,
+                        height: width * 0.32,
+                        borderRadius: (width * 0.32) / 2,
                     }]}>
                         <Ionicons
                             name="checkmark-circle"
-                            size={width * 0.2}
+                            size={width * 0.18}
                             color={isSubscription ? '#16a34a' : '#0ca6e8'}
                         />
                     </View>
                 </Animated.View>
 
-                <Animated.View style={{ opacity: fadeAnim }}>
+                <Animated.View style={[s.content, { opacity: fadeAnim }]}>
                     <Text style={s.title}>Booking Confirmed!</Text>
                     <Text style={s.subtitle}>
                         {isSubscription
@@ -159,7 +157,6 @@ export default function BookingConfirmationScreen() {
                                 </>
                             )}
 
-                            {/* Customer notes */}
                             {booking.notes && (
                                 <>
                                     <View style={s.divider} />
@@ -210,7 +207,7 @@ function DetailRow({ icon, label, value, sub }: { icon: string; label: string; v
             <View style={s.detailIconWrap}>
                 <Ionicons name={icon as any} size={16} color="#0ca6e8" />
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={s.detailRowText}>
                 <Text style={s.detailLbl}>{label}</Text>
                 <Text style={s.detailVal}>{value}</Text>
                 {sub && <Text style={s.detailSub}>{sub}</Text>}
@@ -222,7 +219,9 @@ function DetailRow({ icon, label, value, sub }: { icon: string; label: string; v
 function NextStep({ n, text }: { n: number; text: string }) {
     return (
         <View style={s.nextStepRow}>
-            <View style={s.nextStepDot}><Text style={s.nextStepNum}>{n}</Text></View>
+            <View style={s.nextStepDot}>
+                <Text style={s.nextStepNum}>{n}</Text>
+            </View>
             <Text style={s.nextStepTxt}>{text}</Text>
         </View>
     );
@@ -230,13 +229,21 @@ function NextStep({ n, text }: { n: number; text: string }) {
 
 const s = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f8fafc' },
-    scroll: { paddingHorizontal: 24, paddingVertical: 10, alignItems: 'center' },
+
+    // Removed alignItems: 'center' — was clipping card widths and text
+    scroll: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+    },
 
     iconWrap: { alignItems: 'center', marginTop: 20, marginBottom: 24 },
     iconCircle: { justifyContent: 'center', alignItems: 'center' },
 
-    title: { fontSize: 28, fontWeight: '800', color: '#0d1629', textAlign: 'center', marginBottom: 10 },
-    subtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center', lineHeight: 22, marginBottom: 18, paddingHorizontal: 10 },
+    // content block fills full width
+    content: { width: '100%' },
+
+    title: { fontSize: 26, fontWeight: '800', color: '#0d1629', textAlign: 'center', marginBottom: 10 },
+    subtitle: { fontSize: 15, color: '#6b7280', textAlign: 'center', lineHeight: 22, marginBottom: 18 },
 
     badgeRow: { alignItems: 'center', marginBottom: 24 },
     badge: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7 },
@@ -244,11 +251,20 @@ const s = StyleSheet.create({
 
     loadingCard: { width: '100%', backgroundColor: '#fff', borderRadius: 20, padding: 30, alignItems: 'center', marginBottom: 20 },
 
-    detailCard: { width: '100%', backgroundColor: '#fff', borderRadius: 20, padding: 20, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10, elevation: 3 },
+    detailCard: {
+        width: '100%', backgroundColor: '#fff', borderRadius: 20, padding: 20,
+        marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06, shadowRadius: 10, elevation: 3,
+    },
     detailCardTitle: { fontSize: 16, fontWeight: '700', color: '#0d1629', marginBottom: 16 },
 
     detailRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 },
-    detailIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#e0f4fd', justifyContent: 'center', alignItems: 'center', marginRight: 12, marginTop: 2 },
+    detailIconWrap: {
+        width: 32, height: 32, borderRadius: 10, backgroundColor: '#e0f4fd',
+        justifyContent: 'center', alignItems: 'center', marginRight: 12, marginTop: 2,
+        flexShrink: 0,  // prevents icon from shrinking
+    },
+    detailRowText: { flex: 1 },  // ensures text fills remaining space and wraps correctly
     detailLbl: { fontSize: 12, color: '#9ca3af', fontWeight: '600', marginBottom: 2 },
     detailVal: { fontSize: 15, fontWeight: '600', color: '#0d1629' },
     detailSub: { fontSize: 12, color: '#6b7280', marginTop: 2 },
@@ -267,11 +283,17 @@ const s = StyleSheet.create({
     nextStepsCard: { width: '100%', backgroundColor: '#fff', borderRadius: 20, padding: 20, marginBottom: 20 },
     nextStepsTitle: { fontSize: 15, fontWeight: '700', color: '#0d1629', marginBottom: 14 },
     nextStepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
-    nextStepDot: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#0ca6e8', justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0 },
-    nextStepNum: { fontSize: 12, fontWeight: '800', color: '#fff' },
-    nextStepTxt: { flex: 1, fontSize: 14, color: '#374151', lineHeight: 20, paddingTop: 3 },
+    nextStepDot: {
+        width: 28, height: 28, borderRadius: 14, backgroundColor: '#0ca6e8',
+        justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0,
+    },
+    nextStepNum: { fontSize: 13, fontWeight: '800', color: '#fff' },
+    nextStepTxt: { flex: 1, fontSize: 14, color: '#374151', lineHeight: 22, paddingTop: 4 },
 
-    primaryBtn: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#0ca6e8', borderRadius: 16, paddingVertical: 18, marginBottom: 12 },
+    primaryBtn: {
+        width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+        gap: 10, backgroundColor: '#0ca6e8', borderRadius: 16, paddingVertical: 18, marginBottom: 12,
+    },
     primaryBtnTxt: { fontSize: 16, fontWeight: '800', color: '#fff' },
     secondaryBtn: { width: '100%', alignItems: 'center', paddingVertical: 14 },
     secondaryBtnTxt: { fontSize: 15, fontWeight: '600', color: '#6b7280' },

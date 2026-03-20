@@ -1,11 +1,8 @@
-import PayHere from '@/utils/Payhere';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
   Animated,
   Image,
   Keyboard,
@@ -13,7 +10,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -21,38 +17,32 @@ import {
   View,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { apiFetch } from '../services/apiClient';
 
 const cardLogos: any = {
   Visa: require('../assets/cards/visa.png'),
   MasterCard: require('../assets/cards/mastercard.png'),
   'American Express': require('../assets/cards/amex.png'),
 };
-
 const chip = require('../assets/cards/chip.png');
 const nfc = require('../assets/cards/nfc.png');
 
-export default function PaymentScreen() {
+export default function SubscriptionPaymentScreen() {
   const { colors, isDark } = useTheme();
-
-  // Route params from CreateBookingScreen
-  const { bookingId, amount, serviceName } = useLocalSearchParams<{
-    bookingId: string;
-    amount: string;
-    serviceName: string;
-    scheduledDate: string;
-    scheduledTime: string;
+  const { plan, vehicle, changeSubscriptionId } = useLocalSearchParams<{
+    plan: string;
+    vehicle: string;
+    changeSubscriptionId?: string;
   }>();
+
+  const selectedPlan = JSON.parse(plan as string);
+  const selectedVehicle = JSON.parse(vehicle as string);
 
   const [cardType, setCardType] = useState('Visa');
   const [cardNumber, setCardNumber] = useState('');
   const [holder, setHolder] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
-  const [saveCard, setSaveCard] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
-  // Animations
   const flipAnim = useState(new Animated.Value(0))[0];
   const tilt = useState(new Animated.Value(0))[0];
 
@@ -78,14 +68,10 @@ export default function PaymentScreen() {
     return 'Visa';
   }
 
-  function formatCard(text: string) {
+  function handleCardNumber(text: string) {
     const clean = text.replace(/\D/g, '');
     const groups = clean.match(/.{1,4}/g);
-    return groups ? groups.join(' ') : '';
-  }
-
-  function handleCardNumber(text: string) {
-    let formatted = formatCard(text);
+    let formatted = groups ? groups.join(' ') : '';
     const detected = detectCardType(formatted);
     setCardType(detected);
     formatted = detected === 'American Express' ? formatted.slice(0, 17) : formatted.slice(0, 19);
@@ -105,65 +91,20 @@ export default function PaymentScreen() {
     }
   }
 
-  async function handlePay() {
+  function handleContinue() {
     if (!cardNumber || !holder || !expiry || !cvv) {
-      Alert.alert('Incomplete', 'Please fill in all card details.');
+      alert('Please fill in all card details.');
       return;
     }
-    if (!bookingId) {
-      Alert.alert('Error', 'Missing booking information.');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const hashRes = await apiFetch(
-        '/payments/hash',
-        { method: 'POST', body: JSON.stringify({ bookingId, amount: Number(amount), currency: 'LKR' }) },
-        'customer'
-      );
-
-      if (!hashRes.success) {
-        Alert.alert('Error', 'Failed to initiate payment.');
-        return;
-      }
-
-      const p = hashRes.data;
-
-      PayHere.startPayment(
-        {
-          sandbox: true,
-          merchant_id: p.merchantId,
-          notify_url: p.notifyUrl,
-          order_id: bookingId,
-          items: serviceName || 'Car Wash',
-          amount: String(amount),
-          currency: 'LKR',
-          first_name: p.firstName || '',
-          last_name: p.lastName || '',
-          email: p.email || '',
-          phone: p.phone || '',
-          address: p.address || '',
-          city: p.city || '',
-          country: 'Sri Lanka',
-          custom_1: bookingId,
-          custom_2: '',
-          hash: p.hash,
-        },
-        () => {
-          router.replace({
-            pathname: '/booking-confirmation',
-            params: { bookingId, path: 'one_time' },
-          });
-        },
-        (err: string) => { Alert.alert('Payment Failed', err); },
-        () => { Alert.alert('Cancelled', 'Payment was cancelled. Your booking is held for 10 minutes.'); }
-      );
-    } catch (e: any) {
-      Alert.alert('Error', e.message);
-    } finally {
-      setSubmitting(false);
-    }
+    // Navigate to CheckoutScreen — no payment happens here, just card UX
+    router.push({
+      pathname: '/checkout-page',
+      params: {
+        plan,
+        vehicle,
+        changeSubscriptionId: changeSubscriptionId ?? '',
+      },
+    } as any);
   }
 
   return (
@@ -176,24 +117,34 @@ export default function PaymentScreen() {
             <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
               <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
-            <Text style={[s.headerTitle, { color: colors.textPrimary }]}>Payment</Text>
+            <Text style={[s.headerTitle, { color: colors.textPrimary }]}>Card Details</Text>
             <View style={{ width: 40 }} />
           </View>
 
           <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
 
-            {/* Amount banner */}
-            {amount ? (
-              <View style={[s.amountBanner, { backgroundColor: isDark ? 'rgba(12,166,232,0.1)' : '#e0f4fd', borderColor: isDark ? colors.accent : '#bae6fd' }]}>
-                <View style={[s.amountIconCircle, { backgroundColor: isDark ? 'rgba(12,166,232,0.2)' : '#bae6fd' }]}>
-                  <Ionicons name="card" size={22} color={colors.accent} />
-                </View>
-                <View style={{ marginLeft: 12 }}>
-                  <Text style={[s.amountLabel, { color: colors.textSecondary }]}>{serviceName || 'Car Wash'}</Text>
-                  <Text style={[s.amountValue, { color: colors.accent }]}>LKR {Number(amount).toLocaleString()}</Text>
-                </View>
+            {/* Plan banner */}
+            <View style={[s.planBanner, { backgroundColor: isDark ? 'rgba(12,166,232,0.1)' : '#e0f4fd', borderColor: isDark ? colors.accent : '#bae6fd' }]}>
+              <View style={[s.planIconCircle, { backgroundColor: isDark ? 'rgba(12,166,232,0.2)' : '#bae6fd' }]}>
+                <Ionicons name="refresh-circle" size={22} color={colors.accent} />
               </View>
-            ) : null}
+              <View style={{ marginLeft: 12, flex: 1 }}>
+                <Text style={[s.planBannerLabel, { color: colors.textSecondary }]}>{selectedPlan.name} Plan · {selectedVehicle.nickname || `${selectedVehicle.make} ${selectedVehicle.model}`}</Text>
+                <Text style={[s.planBannerAmount, { color: colors.accent }]}>LKR {selectedPlan.price.toLocaleString()} / month</Text>
+              </View>
+            </View>
+
+            {/* Step indicator */}
+            <View style={s.stepRow}>
+              <View style={[s.stepDot, { backgroundColor: colors.accent }]}>
+                <Text style={s.stepNum}>1</Text>
+              </View>
+              <View style={[s.stepLine, { backgroundColor: colors.accent }]} />
+              <View style={[s.stepDot, { backgroundColor: colors.divider }]}>
+                <Text style={[s.stepNum, { color: colors.textSecondary }]}>2</Text>
+              </View>
+              <Text style={[s.stepLabel, { color: colors.textSecondary }]}>  Card details → Review & Pay</Text>
+            </View>
 
             {/* Card preview */}
             <View
@@ -201,7 +152,6 @@ export default function PaymentScreen() {
               onTouchMove={(e) => handleTilt(e.nativeEvent.locationX > 150 ? 1 : -1)}
               onTouchEnd={() => handleTilt(0)}
             >
-              {/* Front */}
               <Animated.View style={[s.card, { transform: [{ rotateY: frontRotate }, { rotateZ: tiltRotate }] }]}>
                 <LinearGradient colors={getGradient()} style={s.cardGradient}>
                   <View style={s.topRow}>
@@ -222,8 +172,6 @@ export default function PaymentScreen() {
                   </View>
                 </LinearGradient>
               </Animated.View>
-
-              {/* Back */}
               <Animated.View style={[s.cardBack, { transform: [{ rotateY: backRotate }] }]}>
                 <View style={s.strip} />
                 <Text style={s.cvv}>{cvv || '***'}</Text>
@@ -236,11 +184,7 @@ export default function PaymentScreen() {
               {['Visa', 'MasterCard', 'American Express'].map(type => (
                 <TouchableOpacity
                   key={type}
-                  style={[
-                    s.typeBtn,
-                    { borderColor: colors.divider, backgroundColor: colors.cardBackground },
-                    cardType === type && { backgroundColor: colors.accent, borderColor: colors.accent },
-                  ]}
+                  style={[s.typeBtn, { borderColor: colors.divider, backgroundColor: colors.cardBackground }, cardType === type && { backgroundColor: colors.accent, borderColor: colors.accent }]}
                   onPress={() => setCardType(type)}
                 >
                   <Image source={cardLogos[type]} style={s.selectorLogo} />
@@ -251,25 +195,18 @@ export default function PaymentScreen() {
               ))}
             </View>
 
-            {/* Inputs */}
             <Text style={[s.label, { color: colors.textPrimary }]}>Card Number</Text>
             <TextInput
               style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
-              keyboardType="numeric"
-              value={cardNumber}
-              onChangeText={handleCardNumber}
-              placeholderTextColor={colors.textSecondary}
-              placeholder="0000 0000 0000 0000"
+              keyboardType="numeric" value={cardNumber} onChangeText={handleCardNumber}
+              placeholderTextColor={colors.textSecondary} placeholder="0000 0000 0000 0000"
             />
 
             <Text style={[s.label, { color: colors.textPrimary }]}>Card Holder</Text>
             <TextInput
               style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
-              value={holder}
-              onChangeText={setHolder}
-              placeholderTextColor={colors.textSecondary}
-              placeholder="Full name on card"
-              autoCapitalize="words"
+              value={holder} onChangeText={setHolder}
+              placeholderTextColor={colors.textSecondary} placeholder="Full name on card" autoCapitalize="words"
             />
 
             <View style={s.row}>
@@ -277,73 +214,38 @@ export default function PaymentScreen() {
                 <Text style={[s.label, { color: colors.textPrimary }]}>Expiry</Text>
                 <TextInput
                   style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
-                  value={expiry}
-                  onFocus={flipFront}
+                  value={expiry} onFocus={flipFront}
                   onChangeText={(text) => {
-                    // Strip non-numeric except slash
                     let cleaned = text.replace(/[^\d]/g, '');
-                    // Auto-insert slash after MM
-                    if (cleaned.length >= 2) {
-                      cleaned = cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4);
-                    }
+                    if (cleaned.length >= 2) cleaned = cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4);
                     setExpiry(cleaned);
                   }}
-                  placeholderTextColor={colors.textSecondary}
-                  placeholder="MM/YY"
-                  keyboardType="numeric"
-                  maxLength={5}
+                  placeholderTextColor={colors.textSecondary} placeholder="MM/YY"
+                  keyboardType="numeric" maxLength={5}
                 />
               </View>
               <View style={s.half}>
                 <Text style={[s.label, { color: colors.textPrimary }]}>CVV</Text>
                 <TextInput
                   style={[s.input, { backgroundColor: colors.cardBackground, borderColor: colors.divider, color: colors.textPrimary }]}
-                  value={cvv}
-                  keyboardType="numeric"
-                  onFocus={flipBack}
-                  onBlur={flipFront}
-                  onChangeText={handleCVV}
-                  placeholderTextColor={colors.textSecondary}
-                  placeholder="***"
-                  secureTextEntry
+                  value={cvv} keyboardType="numeric" onFocus={flipBack} onBlur={flipFront}
+                  onChangeText={handleCVV} placeholderTextColor={colors.textSecondary}
+                  placeholder="***" secureTextEntry
                 />
               </View>
             </View>
 
-            {/* Save card */}
-            <View style={[s.saveRow, { borderTopColor: colors.divider }]}>
-              <View>
-                <Text style={[s.saveLabel, { color: colors.textPrimary }]}>Save Card</Text>
-                <Text style={[s.saveSub, { color: colors.textSecondary }]}>For faster checkout next time</Text>
-              </View>
-              <Switch
-                value={saveCard}
-                onValueChange={setSaveCard}
-                trackColor={{ false: colors.divider, true: colors.accent }}
-                thumbColor="#fff"
-              />
-            </View>
-
-            {/* Pay button */}
             <TouchableOpacity
-              style={[s.payBtn, { backgroundColor: colors.accent }, submitting && { opacity: 0.6 }]}
-              onPress={handlePay}
-              disabled={submitting}
+              style={[s.continueBtn, { backgroundColor: colors.accent }]}
+              onPress={handleContinue}
             >
-              {submitting ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="lock-closed" size={18} color="#fff" />
-                  <Text style={s.payText}>Pay LKR {Number(amount || 0).toLocaleString()}</Text>
-                </>
-              )}
+              <Ionicons name="arrow-forward-circle" size={20} color="#fff" />
+              <Text style={s.continueBtnText}>Review & Pay</Text>
             </TouchableOpacity>
 
             <Text style={[s.secureNote, { color: colors.textSecondary }]}>
-              Secured by PayHere. Your card details are never stored on our servers.
+              Secured by PayHere. Card details never stored on our servers.
             </Text>
-
             <View style={{ height: 40 }} />
           </ScrollView>
         </View>
@@ -354,20 +256,22 @@ export default function PaymentScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1,
-  },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20, borderBottomWidth: 1 },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontWeight: '700' },
   content: { padding: 20, paddingBottom: 40 },
-  amountBanner: {
-    flexDirection: 'row', alignItems: 'center', borderRadius: 16,
-    padding: 16, marginBottom: 24, borderWidth: 1,
-  },
-  amountIconCircle: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  amountLabel: { fontSize: 13, marginBottom: 2 },
-  amountValue: { fontSize: 20, fontWeight: '800' },
+
+  planBanner: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1 },
+  planIconCircle: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  planBannerLabel: { fontSize: 13, marginBottom: 2 },
+  planBannerAmount: { fontSize: 18, fontWeight: '800' },
+
+  stepRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
+  stepDot: { width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  stepNum: { fontSize: 12, fontWeight: '800', color: '#fff' },
+  stepLine: { height: 2, width: 20, marginHorizontal: 4 },
+  stepLabel: { fontSize: 13 },
+
   cardContainer: { height: 200, marginBottom: 28 },
   card: { position: 'absolute', width: '100%', height: 200, backfaceVisibility: 'hidden' },
   cardGradient: { flex: 1, borderRadius: 20, padding: 20, justifyContent: 'space-between' },
@@ -375,37 +279,24 @@ const s = StyleSheet.create({
   chip: { width: 50, height: 35 },
   nfc: { width: 30, height: 25 },
   cardLogo: { width: 60, height: 35 },
-  cardBack: {
-    position: 'absolute', width: '100%', height: 200,
-    backgroundColor: '#1e293b', borderRadius: 20, padding: 20, backfaceVisibility: 'hidden',
-  },
+  cardBack: { position: 'absolute', width: '100%', height: 200, backgroundColor: '#1e293b', borderRadius: 20, padding: 20, backfaceVisibility: 'hidden' },
   strip: { height: 40, backgroundColor: '#000', marginBottom: 20 },
   cvv: { color: '#fff', alignSelf: 'flex-end', fontSize: 18, fontWeight: '700' },
   number: { color: '#fff', fontSize: 22, letterSpacing: 3 },
   cardRow: { flexDirection: 'row', justifyContent: 'space-between' },
   labelSmall: { color: '#ddd', fontSize: 10 },
   cardValue: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
   label: { fontSize: 14, fontWeight: '600', marginTop: 16, marginBottom: 6 },
   input: { padding: 14, borderRadius: 12, borderWidth: 1, fontSize: 15 },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   half: { width: '48%' },
   selector: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   selectorLogo: { width: 35, height: 20, marginBottom: 4 },
-  typeBtn: {
-    flex: 1, borderWidth: 1, paddingVertical: 10, paddingHorizontal: 6,
-    borderRadius: 12, alignItems: 'center', gap: 4,
-  },
+  typeBtn: { flex: 1, borderWidth: 1, paddingVertical: 10, paddingHorizontal: 6, borderRadius: 12, alignItems: 'center', gap: 4 },
   typeText: { fontWeight: '600', fontSize: 12 },
-  saveRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginTop: 20, paddingTop: 20, borderTopWidth: 1,
-  },
-  saveLabel: { fontSize: 15, fontWeight: '600' },
-  saveSub: { fontSize: 12, marginTop: 2 },
-  payBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 10, borderRadius: 16, paddingVertical: 18, marginTop: 24,
-  },
-  payText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+
+  continueBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 18, marginTop: 24 },
+  continueBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
   secureNote: { fontSize: 12, textAlign: 'center', marginTop: 12, lineHeight: 18 },
 });
