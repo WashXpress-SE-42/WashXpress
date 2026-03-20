@@ -362,6 +362,7 @@ function EmptyState({ tab, colors }: { tab: 'active' | 'history'; colors: any })
     );
 }
 
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
     container: { flex: 1 },
