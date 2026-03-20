@@ -1,12 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator, Alert, RefreshControl, ScrollView,
     StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { apiFetch } from '../services/apiClient';
 import { useTheme } from '../context/ThemeContext';
+import { apiFetch } from '../services/apiClient';
 
 interface Vehicle {
     id: string;
@@ -114,7 +114,7 @@ export default function VehicleListScreen() {
                             <TouchableOpacity
                                 key={v.id}
                                 style={[s.vehicleCard, { backgroundColor: colors.cardBackground }]}
-                                onPress={() => router.push({ pathname: '/add-vehicle', params: { vehicleId: v.id, edit: 'true' } } as any)}
+                                onPress={() => router.push(`/add-vehicle?vehicleId=${v.id}&edit=true` as any)}
                                 activeOpacity={0.85}
                             >
                                 <View style={[s.vehicleIconCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : (TYPE_COLORS[v.type] || '#f8fafc') }]}>
