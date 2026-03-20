@@ -1,19 +1,18 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Animated,
-    FlatList,
     RefreshControl,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { apiFetch } from '../services/apiClient';
 import { useTheme } from '../context/ThemeContext';
+import { apiFetch } from '../services/apiClient';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Booking {
@@ -34,11 +33,11 @@ interface Booking {
 // ─── Constants ────────────────────────────────────────────────────────────────
 // STATUS_CONFIG is now moved inside the component to use theme colors
 
-const CATEGORY_EMOJI: Record<string, string> = {
-    'exterior-wash': '🚿',
-    'interior-clean': '🧹',
-    'tire-cleaning': '⚙️',
-    'full-detail': '✨',
+const CATEGORY_ICONS: Record<string, { icon: string; color: string; description: string }> = {
+    'exterior-wash': { icon: 'water-outline', color: '#0ca6e8', description: 'Full exterior body wash & dry' },
+    'interior-clean': { icon: 'sparkles-outline', color: '#7c3aed', description: 'Deep interior vacuum & wipe down' },
+    'tire-cleaning': { icon: 'ellipse-outline', color: '#d97706', description: 'Tire & wheel deep clean' },
+    'full-detail': { icon: 'star-outline', color: '#059669', description: 'Complete interior & exterior detail' },
 };
 
 function formatDate(dateStr: string) {
@@ -197,7 +196,7 @@ export default function BookingListScreen() {
 // ─── Booking Card ─────────────────────────────────────────────────────────────
 function BookingCard({ booking, colors, isDark, statusConfig }: { booking: Booking; colors: any; isDark: boolean; statusConfig: any }) {
     const cfg = statusConfig[booking.status] || statusConfig.pending;
-    const emoji = CATEGORY_EMOJI[booking.service?.categoryId] || '🚗';
+    const serviceMeta = CATEGORY_ICONS[booking.service?.categoryId] || { icon: 'car-outline', color: colors.textPrimary, description: booking.service?.name || 'Service' };
     const isPending = booking.status === 'pending';
     const isInProgress = booking.status === 'in_progress';
 
@@ -212,7 +211,7 @@ function BookingCard({ booking, colors, isDark, statusConfig }: { booking: Booki
             {/* Top */}
             <View style={s.cardTop}>
                 <View style={[s.serviceIconCircle, { backgroundColor: cfg.bg }]}>
-                    <Text style={s.serviceEmoji}>{emoji}</Text>
+                    <Ionicons name={serviceMeta.icon as any} size={24} color={serviceMeta.color} />
                     {isInProgress && <View style={[s.inProgressDot, { borderColor: colors.cardBackground }]} />}
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
