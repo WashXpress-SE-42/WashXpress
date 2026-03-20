@@ -1,3 +1,6 @@
+import * as ImagePicker from 'expo-image-picker';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { updateProfile } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -54,6 +57,55 @@ export default function ProfileScreen() {
       }
     } catch {
       // non-fatal — subscription card just won't show
+    }
+  };
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const handlePhotoUpload = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please allow photo library access.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled) return;
+
+    setUploadingPhoto(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('Not authenticated');
+
+      const uri = result.assets[0].uri;
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      const storage = getStorage();
+      const storageRef = ref(storage, `profile-photos/${user.uid}.jpg`);
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // Update Firebase Auth profile
+      await updateProfile(user, { photoURL: downloadURL });
+
+      // Update backend
+      await apiFetch('/profile', {
+        method: 'PUT',
+        body: JSON.stringify({ photoURL: downloadURL }),
+      }, userType === 'customer' ? 'customer' : 'provider');
+
+      await refetch();
+      Alert.alert('Success', 'Profile photo updated!');
+    } catch (e: any) {
+      Alert.alert('Error', e.message || 'Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
@@ -149,22 +201,24 @@ export default function ProfileScreen() {
 
         {/* ── Avatar Section ── */}
         <View style={styles.avatarSection}>
-          <View style={[styles.avatarContainer, { backgroundColor: colors.accentLight, borderColor: colors.cardBackground }]}>
-            {profile?.photoURL ? (
-              <Image source={{ uri: profile.photoURL }} style={styles.avatarImage} />
-            ) : (
-              <Ionicons name="person" size={48} color={colors.accent} />
-            )}
-          </View>
-          <Text style={[styles.userName, { color: colors.textPrimary }]}>{getUserName()}</Text>
+          <TouchableOpacity onPress={handlePhotoUpload} disabled={uploadingPhoto} style={styles.avatarWrapper}>
+            <View style={[styles.avatarContainer, { backgroundColor: colors.accentLight, borderColor: colors.cardBackground }]}>
+              {profile?.photoURL ? (
+                <Image source={{ uri: profile.photoURL }} style={styles.avatarImage} />
+              ) : (
+                <Ionicons name="person" size={48} color={colors.accent} />
+              )}
+            </View>
 
-          <View style={[styles.badge, { backgroundColor: colors.accentLight }]}>
-            <Text style={[styles.badgeText, { color: colors.accent }]}>
-              {userType === 'customer'
-                ? subscription ? `${subscription.planName} Plan` : 'Free Member'
-                : 'Verified Washer'}
-            </Text>
-          </View>
+            <View style={[styles.cameraBadge, { backgroundColor: colors.accent }]}>
+              {uploadingPhoto
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Ionicons name="camera" size={14} color="#fff" />
+              }
+            </View>
+          </TouchableOpacity>
+
+  <Text style={[styles.userName, { color: colors.textPrimary }]}>{getUserName()}</Text>
 
           {/* ── Active Subscription Card (customer only) ── */}
           {userType === 'customer' && subscription && (
@@ -370,6 +424,14 @@ const styles = StyleSheet.create({
   userName: { fontSize: 24, fontWeight: 'bold', marginBottom: 8 },
   badge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, marginBottom: 16 },
   badgeText: { fontSize: 12, fontWeight: '600' },
+
+  avatarWrapper: { position: 'relative', marginBottom: 16 },
+  cameraBadge: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: 28, height: 28, borderRadius: 14,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 2, borderColor: '#fff',
+  },
 
   // Subscription card
   subCard: { width: '100%', borderRadius: 16, borderWidth: 1.5, overflow: 'hidden', marginTop: 4 },
