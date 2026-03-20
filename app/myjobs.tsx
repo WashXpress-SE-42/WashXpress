@@ -1,14 +1,21 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-    View, Text, ScrollView, TouchableOpacity,
-    StyleSheet, SafeAreaView, StatusBar, Alert,
-    Linking, ActivityIndicator, RefreshControl,
-    Platform,
+    ActivityIndicator,
+    Alert,
+    Linking,
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { apiFetch } from '../services/apiClient';
 import { useTheme } from '../context/ThemeContext';
+import { apiFetch } from '../services/apiClient';
 
 // ── Types ────────────────────────────────────────────────
 interface Booking {
@@ -28,12 +35,17 @@ interface Booking {
 }
 
 // ── Helpers ──────────────────────────────────────────────
-const CATEGORY_EMOJI: Record<string, string> = {
-    'exterior-wash': '🚿',
-    'interior-clean': '🧹',
-    'tire-cleaning': '⚙️',
-    'full-detail': '✨',
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+const CATEGORY_META: Record<string, { icon: IoniconName; color: string; description: string }> = {
+    'exterior-wash': { icon: 'water-outline', color: '#0ca6e8', description: 'Full exterior body wash & dry' },
+    'interior-clean': { icon: 'sparkles-outline', color: '#7c3aed', description: 'Deep interior vacuum & wipe down' },
+    'tire-cleaning': { icon: 'ellipse-outline', color: '#d97706', description: 'Tire & wheel deep clean' },
+    'full-detail': { icon: 'star-outline', color: '#059669', description: 'Complete interior & exterior detail' },
 };
+
+function getCategoryMeta(categoryId?: string) {
+    return CATEGORY_META[categoryId || ''] || { icon: 'car-outline', color: '#0ca6e8', description: 'Car wash service' };
+}
 
 function formatDate(dateStr: string) {
     if (!dateStr) return '—';
@@ -226,7 +238,7 @@ export default function MyJobs() {
 // ── Upcoming Job Card ────────────────────────────────────
 function UpcomingJobCard({ job, colors, isDark, onMap, onView }: { job: Booking; colors: any; isDark: boolean; onMap: (a: string) => void; onView: (id: string) => void }) {
     const today = isToday(job.scheduledDate);
-    const emoji = CATEGORY_EMOJI[job.service?.categoryId] || '🚿';
+    const categoryMeta = getCategoryMeta(job.service?.categoryId);
     const addressStr = `${job.address?.addressLine1}, ${job.address?.city}`;
     const arrivalTime = job.washerPreferredTime || job.scheduledTime;
     const timeAdjusted = job.washerPreferredTime && job.washerPreferredTime !== job.scheduledTime;
@@ -252,7 +264,7 @@ function UpcomingJobCard({ job, colors, isDark, onMap, onView }: { job: Booking;
             {/* Header */}
             <View style={s.cardHeader}>
                 <View style={[s.serviceEmoji, { backgroundColor: isInProgress ? 'rgba(139,92,246,0.12)' : 'rgba(37,99,235,0.12)' }]}>
-                    <Text style={{ fontSize: 22 }}>{emoji}</Text>
+                    <Ionicons name={categoryMeta.icon} size={22} color={categoryMeta.color} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={[s.jobName, { color: colors.textPrimary }]}>{job.customerName}</Text>
@@ -325,12 +337,12 @@ function UpcomingJobCard({ job, colors, isDark, onMap, onView }: { job: Booking;
 
 // ── Completed Job Card ───────────────────────────────────
 function CompletedJobCard({ job, colors, onView }: { job: Booking; colors: any; onView: (id: string) => void }) {
-    const emoji = CATEGORY_EMOJI[job.service?.categoryId] || '🚿';
+    const categoryMeta = getCategoryMeta(job.service?.categoryId);
     return (
         <TouchableOpacity style={[s.jobCard, { backgroundColor: colors.cardBackground, borderColor: colors.border, opacity: 0.9 }]} onPress={() => onView(job.id)} activeOpacity={0.85}>
             <View style={s.cardHeader}>
                 <View style={[s.serviceEmoji, { backgroundColor: 'rgba(16,185,129,0.12)' }]}>
-                    <Text style={{ fontSize: 22 }}>{emoji}</Text>
+                    <Ionicons name={categoryMeta.icon} size={22} color={categoryMeta.color} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={[s.jobName, { color: colors.textPrimary }]}>{job.customerName}</Text>
