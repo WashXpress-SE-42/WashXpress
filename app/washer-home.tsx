@@ -320,7 +320,7 @@ export default function WasherHome() {
                 <View style={styles.statsGrid}>
                     {[
                         { icon: 'star', color: '#f59e0b', value: '—', label: 'Rating' },
-                        { icon: 'calendar-outline', color: colors.accent, value: String(upcomingCount), label: 'Available' },
+                        { icon: 'calendar-outline', color: colors.accent, value: String(bookings.length), label: 'Available' },
                         { icon: 'checkmark-circle-outline', color: colors.success || '#16a34a', value: String(completedCount), label: 'Completed' },
                     ].map((stat) => (
                         <View key={stat.label} style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
