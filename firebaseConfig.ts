@@ -5,14 +5,16 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import { Auth, getAuth, getReactNativePersistence, initializeAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+import Constants from 'expo-constants';
+
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY?.trim(),
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim(),
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID?.trim(),
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET?.trim(),
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?.trim(),
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID?.trim(),
+  apiKey: (Constants.expoConfig?.extra?.FIREBASE_API_KEY || process.env.EXPO_PUBLIC_FIREBASE_API_KEY)?.trim(),
+  authDomain: (Constants.expoConfig?.extra?.FIREBASE_AUTH_DOMAIN || process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN)?.trim(),
+  projectId: (Constants.expoConfig?.extra?.FIREBASE_PROJECT_ID || process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID)?.trim(),
+  storageBucket: (Constants.expoConfig?.extra?.FIREBASE_STORAGE_BUCKET || process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET)?.trim(),
+  messagingSenderId: (Constants.expoConfig?.extra?.FIREBASE_MESSAGING_SENDER_ID || process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID)?.trim(),
+  appId: (Constants.expoConfig?.extra?.FIREBASE_APP_ID || process.env.EXPO_PUBLIC_FIREBASE_APP_ID)?.trim(),
 };
 console.log("🔍 Initializing Firebase with project:", firebaseConfig.projectId);
 

@@ -10,7 +10,7 @@
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bimsara2k04.WashXpress"
+      "bundleIdentifier": "com.bimsara2k04.washxpress.dev"
     },
     "android": {
       "adaptiveIcon": {
@@ -65,7 +65,13 @@
       "reactCompiler": true
     },
     "extra": {
-      "API_BASE_URL": "http://localhost:3000"
+      "API_BASE_URL": "http://localhost:3000",
+      "FIREBASE_API_KEY": "AIzaSyBjXus8xIr_Cvjtnm3yV5BR9P1lqYGgahQ",
+      "FIREBASE_AUTH_DOMAIN": "washxpress-19b94.firebaseapp.com",
+      "FIREBASE_PROJECT_ID": "washxpress-19b94",
+      "FIREBASE_STORAGE_BUCKET": "washxpress-19b94.firebasestorage.app",
+      "FIREBASE_MESSAGING_SENDER_ID": "1080986101352",
+      "FIREBASE_APP_ID": "1:1080986101352:web:93a4a68b81b75c7e377ddd"
     }
   }
 }
