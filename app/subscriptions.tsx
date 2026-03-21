@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SkeletonLoader from '@/components/SkeletonLoader';
 import { Header } from '../components/Header';
 import { useTheme } from '../context/ThemeContext';
 
@@ -187,29 +188,36 @@ export default function SubscriptionsScreen() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [loadingSubs, setLoadingSubs] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [vehicleModalVisible, setVehicleModalVisible] = useState(false);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    // Isolated non-blocking fetches
+    apiFetch('/subscriptions/plans', { 
+      useCache: true, 
+      onBackgroundUpdate: (d) => setPlans(d.data?.plans ?? []) 
+    }, 'customer')
+      .then(d => setPlans(d.data?.plans ?? []))
+      .catch(() => Alert.alert('Error', 'Failed to load plans'))
+      .finally(() => setLoadingPlans(false));
 
-  async function fetchData() {
-    try {
-      setLoading(true);
-      const [plansData, subsData, vehiclesData] = await Promise.all([
-        apiFetch('/subscriptions/plans', {}, 'customer'),
-        apiFetch('/subscriptions', {}, 'customer'),
-        apiFetch('/vehicles', {}, 'customer'),
-      ]);
-      setPlans(plansData.data?.plans ?? []);
-      setSubscriptions(subsData.data?.subscriptions ?? []);
-      setVehicles((vehiclesData.data?.vehicles ?? []).filter((v: Vehicle) => v.isActive !== false));
-    } catch {
-      Alert.alert('Error', 'Failed to load subscription data');
-    } finally {
-      setLoading(false);
-    }
-  }
+    apiFetch('/subscriptions', { 
+      useCache: true, 
+      onBackgroundUpdate: (d) => setSubscriptions(d.data?.subscriptions ?? []) 
+    }, 'customer')
+      .then(d => setSubscriptions(d.data?.subscriptions ?? []))
+      .catch(() => Alert.alert('Error', 'Failed to load subscriptions'))
+      .finally(() => setLoadingSubs(false));
+
+    apiFetch('/vehicles', { 
+      useCache: true, 
+      onBackgroundUpdate: (d) => setVehicles((d.data?.vehicles ?? []).filter((v: Vehicle) => v.isActive !== false)) 
+    }, 'customer')
+      .then(d => setVehicles((d.data?.vehicles ?? []).filter((v: Vehicle) => v.isActive !== false)))
+      .catch(() => {});
+  }, []);
 
   const changingSubscription = subscriptions.find(s => s.id === changeSubscriptionId);
 
@@ -262,13 +270,18 @@ export default function SubscriptionsScreen() {
         {
           text: 'Cancel', style: 'destructive',
           onPress: async () => {
+            // Optimistic UI updates
+            const prevSubs = [...subscriptions];
+            setSubscriptions(subs => subs.filter(s => s.id !== subscriptionId));
             try {
               await apiFetch(`/subscriptions/${subscriptionId}/cancel`, {
                 method: 'PATCH',
                 body: JSON.stringify({ reason: 'Cancelled by customer' }),
               }, 'customer');
-              fetchData();
+              // Trigger a background refresh to resync
+              apiFetch('/subscriptions', { useCache: true, onBackgroundUpdate: (d) => setSubscriptions(d.data?.subscriptions ?? []) }, 'customer');
             } catch {
+              setSubscriptions(prevSubs); // Rollback
               Alert.alert('Error', 'Failed to cancel subscription');
             }
           },
@@ -279,14 +292,6 @@ export default function SubscriptionsScreen() {
 
   const activeSubscriptions = subscriptions.filter(sub => sub.status === 'active');
   const currentPlanId = changingSubscription?.planId;
-
-  if (loading) {
-    return (
-      <View style={[s.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-      </View>
-    );
-  }
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
@@ -306,29 +311,40 @@ export default function SubscriptionsScreen() {
           <Text style={[s.subheading, { color: colors.textSecondary }]}>Save more with monthly plans</Text>
         )}
 
-        {!isChangingPlan && activeSubscriptions.length > 0 && (
-          <View style={s.section}>
-            <Text style={[s.sectionTitle, { color: colors.textPrimary }]}>Your Active Plans</Text>
-            {activeSubscriptions.map(sub => (
+        <View style={s.section}>
+          <Text style={[s.sectionTitle, { color: colors.textPrimary }]}>Your Active Plans</Text>
+          {loadingSubs ? (
+            <SkeletonLoader width="100%" height={160} borderRadius={16} style={{ marginBottom: 16 }} />
+          ) : activeSubscriptions.length > 0 ? (
+            activeSubscriptions.map(sub => (
               <ActiveSubCard key={sub.id} sub={sub} onCancel={() => handleCancel(sub.id)} colors={colors} />
-            ))}
-          </View>
-        )}
+            ))
+          ) : (
+            <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>No active subscriptions.</Text>
+          )}
+        </View>
 
         <View style={s.section}>
           <Text style={[s.sectionTitle, { color: colors.textPrimary }]}>
             {isChangingPlan ? 'Select New Plan' : activeSubscriptions.length > 0 ? 'Add Another Plan' : 'Choose a Plan'}
           </Text>
-          {plans.map(plan => (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              isCurrentPlan={isChangingPlan && plan.id === currentPlanId}
-              onSelect={() => handleSelectPlan(plan)}
-              colors={colors}
-              isDark={isDark}
-            />
-          ))}
+          {loadingPlans ? (
+            <View style={{ gap: 16 }}>
+              <SkeletonLoader width="100%" height={260} borderRadius={16} />
+              <SkeletonLoader width="100%" height={260} borderRadius={16} />
+            </View>
+          ) : (
+            plans.map(plan => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                isCurrentPlan={isChangingPlan && plan.id === currentPlanId}
+                onSelect={() => handleSelectPlan(plan)}
+                colors={colors}
+                isDark={isDark}
+              />
+            ))
+          )}
         </View>
       </ScrollView>
 

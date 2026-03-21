@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { apiFetch } from '../services/apiClient';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 // ── Types ────────────────────────────────────────────────
 interface Booking {
@@ -83,9 +84,9 @@ export default function MyJobs() {
             if (!silent) setLoading(true);
 
             const [confirmedRes, inProgressRes, completedRes] = await Promise.all([
-                apiFetch('/bookings?status=confirmed', {}, 'provider'),
-                apiFetch('/bookings?status=in_progress', {}, 'provider'),
-                apiFetch('/bookings?status=completed', {}, 'provider'),
+                apiFetch('/bookings?status=confirmed', { useCache: true }, 'provider'),
+                apiFetch('/bookings?status=in_progress', { useCache: true }, 'provider'),
+                apiFetch('/bookings?status=completed', { useCache: true }, 'provider'),
             ]);
 
             const upcomingJobs = [
@@ -151,9 +152,10 @@ export default function MyJobs() {
             </View>
 
             {loading ? (
-                <View style={s.loadingBox}>
-                    <ActivityIndicator size="large" color={colors.accent} />
-                    <Text style={[s.loadingText, { color: colors.textSecondary }]}>Loading your jobs...</Text>
+                <View style={[s.scrollContent, { paddingTop: 20 }]}>
+                    <SkeletonLoader width="100%" height={80} borderRadius={16} style={{ marginBottom: 16 }} />
+                    <SkeletonLoader width="100%" height={200} borderRadius={16} style={{ marginBottom: 12 }} />
+                    <SkeletonLoader width="100%" height={200} borderRadius={16} />
                 </View>
             ) : (
                 <ScrollView

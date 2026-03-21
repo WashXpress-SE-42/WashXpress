@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { apiFetch } from '../services/apiClient';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Booking {
@@ -77,12 +78,12 @@ export default function BookingListScreen() {
 
             const [pendingRes, confirmedRes, inProgressRes, completedRes, cancelledRes, rejectedRes] =
                 await Promise.all([
-                    apiFetch('/bookings?status=pending', {}, 'customer'),
-                    apiFetch('/bookings?status=confirmed', {}, 'customer'),
-                    apiFetch('/bookings?status=in_progress', {}, 'customer'),
-                    apiFetch('/bookings?status=completed', {}, 'customer'),
-                    apiFetch('/bookings?status=cancelled', {}, 'customer'),
-                    apiFetch('/bookings?status=rejected', {}, 'customer'),
+                    apiFetch('/bookings?status=pending', { useCache: true }, 'customer'),
+                    apiFetch('/bookings?status=confirmed', { useCache: true }, 'customer'),
+                    apiFetch('/bookings?status=in_progress', { useCache: true }, 'customer'),
+                    apiFetch('/bookings?status=completed', { useCache: true }, 'customer'),
+                    apiFetch('/bookings?status=cancelled', { useCache: true }, 'customer'),
+                    apiFetch('/bookings?status=rejected', { useCache: true }, 'customer'),
                 ]);
 
             const activeBookings = [
@@ -169,8 +170,10 @@ export default function BookingListScreen() {
 
             {/* ── Content ── */}
             {loading ? (
-                <View style={s.center}>
-                    <ActivityIndicator size="large" color={colors.accent} />
+                <View style={s.scroll}>
+                    <SkeletonLoader width="100%" height={150} borderRadius={20} style={{ marginBottom: 12 }} />
+                    <SkeletonLoader width="100%" height={150} borderRadius={20} style={{ marginBottom: 12 }} />
+                    <SkeletonLoader width="100%" height={150} borderRadius={20} style={{ marginBottom: 12 }} />
                 </View>
             ) : (
                 <ScrollView

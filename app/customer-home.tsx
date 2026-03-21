@@ -4,9 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { getAuth } from 'firebase/auth';
 import { sendEmailVerification } from 'firebase/auth';
 
-import { Href, useRouter } from 'expo-router';
+import { Href, useRouter, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import SkeletonLoader from '@/components/SkeletonLoader';
 import {
   ActivityIndicator,
   Alert,
@@ -132,6 +133,15 @@ export default function CustomerHomeScreen() {
 
   useEffect(() => { loadData(); }, []);
 
+  // Prefetch critical navigation data silently on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      apiFetch('/subscriptions/plans', { useCache: true }, 'customer').catch(() => {});
+      apiFetch('/subscriptions', { useCache: true }, 'customer').catch(() => {});
+      apiFetch('/bookings', { useCache: true }, 'customer').catch(() => {});
+    }, [])
+  );
+
   // Prevent back button from navigating away from home
   useEffect(() => {
     const backAction = () => {
@@ -240,9 +250,26 @@ export default function CustomerHomeScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading...</Text>
+      <View style={[styles.outerContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, paddingBottom: 24 }]}>
+          <View>
+            <SkeletonLoader width={80} height={18} borderRadius={4} style={{ marginBottom: 8 }} />
+            <SkeletonLoader width={140} height={28} borderRadius={6} />
+          </View>
+          <SkeletonLoader width={50} height={50} borderRadius={25} />
+        </View>
+        <View style={styles.section}>
+          <SkeletonLoader width={120} height={24} borderRadius={6} style={{ marginBottom: 16 }} />
+          <View style={{ flexDirection: 'row' }}>
+            <SkeletonLoader width={140} height={130} borderRadius={16} style={{ marginRight: 12 }} />
+            <SkeletonLoader width={140} height={130} borderRadius={16} />
+          </View>
+        </View>
+        <View style={styles.section}>
+          <SkeletonLoader width={160} height={24} borderRadius={6} style={{ marginBottom: 16 }} />
+          <SkeletonLoader width="100%" height={120} borderRadius={16} style={{ marginBottom: 12 }} />
+          <SkeletonLoader width="100%" height={120} borderRadius={16} />
+        </View>
       </View>
     );
   }
@@ -565,14 +592,14 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 22, fontWeight: 'bold', color: '#000', paddingHorizontal: 20, marginBottom: 5 },
   seeAll: { fontSize: 14, color: '#007AFF' },
 
-  vehicleCard: { width: 140, backgroundColor: '#FFF', borderRadius: 12, padding: 16, marginRight: 12, alignItems: 'center' },
+  vehicleCard: { width: 140, borderRadius: 16, padding: 16, marginRight: 12, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3 },
   vehicleName: { fontSize: 16, fontWeight: '600', color: '#000', marginTop: 12 },
   vehicleModel: { fontSize: 12, color: '#666', marginTop: 4 },
   vehiclePlate: { fontSize: 12, color: '#007AFF', marginTop: 4, fontWeight: '500' },
   addVehicleCard: { justifyContent: 'center', borderWidth: 2, borderColor: '#007AFF', borderStyle: 'dashed', backgroundColor: 'transparent' },
   addVehicleText: { fontSize: 14, color: '#007AFF', marginTop: 8 },
 
-  bookingCard: { backgroundColor: '#FFF', borderRadius: 12, padding: 16, marginBottom: 12 },
+  bookingCard: { borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3 },
   bookingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   bookingService: { fontSize: 16, fontWeight: '600', color: '#000' },
   bookingProvider: { fontSize: 14, color: '#666', marginTop: 4 },
@@ -582,12 +609,12 @@ const styles = StyleSheet.create({
   bookingDate: { fontSize: 14, color: '#666', marginLeft: 8 },
 
   carouselContainer: { paddingVertical: 20 },
-  serviceItem: { marginHorizontal: SPACING, height: 220, backgroundColor: '#FFF', borderRadius: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 8 },
+  serviceItem: { marginHorizontal: SPACING, height: 220, borderRadius: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 16, elevation: 6 },
   carouselImage: { width: '100%', height: '100%', position: 'absolute' },
   carouselOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'flex-end', padding: 20 },
   carouselLabel: { fontSize: 20, color: '#FFF', fontWeight: 'bold', textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 4 },
 
-  subscriptionCard: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 3 },
+  subscriptionCard: { borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3 },
   allowanceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
   allowanceInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   allowanceIconWrapper: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#f8fafc', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
@@ -597,7 +624,7 @@ const styles = StyleSheet.create({
   allowanceOrderBtn: { backgroundColor: '#e0f2fe', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginLeft: 12 },
   allowanceOrderBtnText: { fontSize: 13, fontWeight: '700', color: '#0ca6e8' },
 
-  ctaCard: { borderRadius: 16, padding: 18, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
+  ctaCard: { borderRadius: 16, padding: 18, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 5 },
   ctaCardContent: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
   ctaIconContainer: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
   ctaTextContainer: { flex: 1, justifyContent: 'center' },

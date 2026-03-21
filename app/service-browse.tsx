@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import SkeletonLoader from '@/components/SkeletonLoader';
 import { Header } from '../components/Header';
 import { useTheme } from '../context/ThemeContext';
 
@@ -59,7 +60,8 @@ export default function ServiceBrowseScreen() {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam || null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingServices, setLoadingServices] = useState(true);
 
   // Filters
   const [showFilters, setShowFilters] = useState(false);
@@ -67,36 +69,32 @@ export default function ServiceBrowseScreen() {
   const [maxPrice, setMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'duration'>('price_asc');
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { 
+    loadCategories();
+    loadServices();
+  }, []);
   useEffect(() => { if (categoryParam) setSelectedCategory(categoryParam || null); }, [categoryParam]);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([loadCategories(), loadServices()]);
-    } catch {
-      Alert.alert('Error', 'Failed to load services. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Categories & Services data loading
   const loadCategories = async () => {
     try {
-      const data = await apiFetch('/services/categories', { requiresAuth: false }, 'customer');
+      const data = await apiFetch('/services/categories', { requiresAuth: false, useCache: true }, 'customer');
       if (data.success) setCategories(data.data.categories);
     } catch (e) {
       console.error('Load categories error:', e);
+    } finally {
+      setLoadingCategories(false);
     }
   };
 
   const loadServices = async () => {
     try {
-      const data = await apiFetch('/services?limit=50', { requiresAuth: false }, 'customer');
+      const data = await apiFetch('/services?limit=50', { requiresAuth: false, useCache: true }, 'customer');
       if (data.success) setServices(data.data.services);
     } catch (e) {
       console.error('Load services error:', e);
+    } finally {
+      setLoadingServices(false);
     }
   };
 
@@ -162,11 +160,19 @@ export default function ServiceBrowseScreen() {
     );
   };
 
-  if (loading) {
+  // Render the skeleton layout when data is not ready
+  if (loadingCategories && loadingServices) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.accent || BRAND} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading services...</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Header title="Browse Services" />
+        <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <SkeletonLoader width="100%" height={24} borderRadius={4} />
+        </View>
+        <View style={styles.list}>
+            <SkeletonLoader width="100%" height={100} borderRadius={16} style={{ marginBottom: 12 }} />
+            <SkeletonLoader width="100%" height={100} borderRadius={16} style={{ marginBottom: 12 }} />
+            <SkeletonLoader width="100%" height={100} borderRadius={16} />
+        </View>
       </View>
     );
   }
@@ -209,15 +215,19 @@ export default function ServiceBrowseScreen() {
             onPress={() => setSelectedCategory(null)}>
             <Text style={[styles.chipText, !selectedCategory && styles.chipTextActive]}>All</Text>
           </TouchableOpacity>
-          {categories.map(cat => (
-            <TouchableOpacity key={cat.id}
-              style={[styles.chip, { backgroundColor: colors.cardBackground, borderColor: colors.border }, selectedCategory === cat.id && { backgroundColor: colors.accent, borderColor: colors.accent }]}
-              onPress={() => setSelectedCategory(cat.id)}>
-              <Text style={[styles.chipText, { color: colors.textSecondary }, selectedCategory === cat.id && { color: '#fff', fontWeight: '600' }]}>
-                {cat.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {loadingCategories ? (
+             <SkeletonLoader width={80} height={35} borderRadius={20} style={{ marginRight: 8 }} />
+          ) : (
+            categories.map(cat => (
+              <TouchableOpacity key={cat.id}
+                style={[styles.chip, { backgroundColor: colors.cardBackground, borderColor: colors.border }, selectedCategory === cat.id && { backgroundColor: colors.accent, borderColor: colors.accent }]}
+                onPress={() => setSelectedCategory(cat.id)}>
+                <Text style={[styles.chipText, { color: colors.textSecondary }, selectedCategory === cat.id && { color: '#fff', fontWeight: '600' }]}>
+                  {cat.name}
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
         </ScrollView>
       </View>
 
@@ -231,21 +241,28 @@ export default function ServiceBrowseScreen() {
       </View>
 
       {/* 🔥 Optimized Scroll List using FlatList */}
-      <FlatList
-        data={filteredServices}
-        keyExtractor={item => item.id}
-        renderItem={renderServiceItem}
-        style={styles.list}
-        contentContainerStyle={{ paddingBottom: 110 }}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={56} color="#cbd5e1" />
-            <Text style={styles.emptyTitle}>No services found</Text>
-            <Text style={styles.emptySub}>Try adjusting your filters</Text>
-          </View>
-        }
-      />
+      {loadingServices ? (
+         <View style={styles.list}>
+             <SkeletonLoader width="100%" height={100} borderRadius={16} style={{ marginBottom: 12 }} />
+             <SkeletonLoader width="100%" height={100} borderRadius={16} style={{ marginBottom: 12 }} />
+         </View>
+      ) : (
+        <FlatList
+          data={filteredServices}
+          keyExtractor={item => item.id}
+          renderItem={renderServiceItem}
+          style={styles.list}
+          contentContainerStyle={{ paddingBottom: 110 }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="search-outline" size={56} color="#cbd5e1" />
+              <Text style={styles.emptyTitle}>No services found</Text>
+              <Text style={styles.emptySub}>Try adjusting your filters</Text>
+            </View>
+          }
+        />
+      )}
 
       {/* Filter Modal */}
       <Modal visible={showFilters} animationType="slide" transparent onRequestClose={() => setShowFilters(false)}>

@@ -16,7 +16,7 @@ import {
     View,
 } from 'react-native';
 import { auth, db } from '../firebaseConfig';
-
+import SkeletonLoader from '@/components/SkeletonLoader';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useProfile } from '../hooks/useProfile';
@@ -390,9 +390,25 @@ export default function WasherHome() {
                     </View>
 
                     {loading ? (
-                        <View style={styles.loadingBox}>
-                            <ActivityIndicator size="large" color={colors.accent} />
-                            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Fetching available jobs...</Text>
+                        <View style={{ gap: 12, paddingVertical: 8 }}>
+                            <View style={[styles.jobCard, { backgroundColor: colors.cardBackground, borderColor: colors.border, padding: 16 }]}>
+                                <SkeletonLoader width="60%" height={20} borderRadius={4} style={{ marginBottom: 12 }} />
+                                <SkeletonLoader width="40%" height={16} borderRadius={4} style={{ marginBottom: 16 }} />
+                                <SkeletonLoader width="100%" height={40} borderRadius={8} style={{ marginBottom: 12 }} />
+                                <View style={{ flexDirection: 'row', gap: 10 }}>
+                                    <SkeletonLoader width="48%" height={40} borderRadius={8} />
+                                    <SkeletonLoader width="48%" height={40} borderRadius={8} />
+                                </View>
+                            </View>
+                            <View style={[styles.jobCard, { backgroundColor: colors.cardBackground, borderColor: colors.border, padding: 16 }]}>
+                                <SkeletonLoader width="50%" height={20} borderRadius={4} style={{ marginBottom: 12 }} />
+                                <SkeletonLoader width="35%" height={16} borderRadius={4} style={{ marginBottom: 16 }} />
+                                <SkeletonLoader width="100%" height={40} borderRadius={8} style={{ marginBottom: 12 }} />
+                                <View style={{ flexDirection: 'row', gap: 10 }}>
+                                    <SkeletonLoader width="48%" height={40} borderRadius={8} />
+                                    <SkeletonLoader width="48%" height={40} borderRadius={8} />
+                                </View>
+                            </View>
                         </View>
                     ) : bookings.length === 0 ? (
                         <View style={styles.emptyBox}>
@@ -561,7 +577,7 @@ const styles = StyleSheet.create({
     profileBtn: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
 
     // Earnings Card
-    earningsCard: { borderRadius: 16, padding: 16, flexDirection: 'row', flexWrap: 'wrap', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4, borderWidth: 1 },
+    earningsCard: { borderRadius: 16, padding: 16, flexDirection: 'row', flexWrap: 'wrap', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, borderWidth: 1 },
     earningsLeft: { flex: 1 },
     earningsLabelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
     earningsLabel: { fontSize: 12, fontWeight: '500' },
@@ -575,7 +591,7 @@ const styles = StyleSheet.create({
 
     // Stats Grid
     statsGrid: { flexDirection: 'row', paddingHorizontal: 16, marginTop: -20, gap: 10, marginBottom: 8 },
-    statCard: { flex: 1, borderRadius: 16, padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2, borderWidth: 1 },
+    statCard: { flex: 1, borderRadius: 16, padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 1 },
     statValue: { fontSize: 20, fontWeight: '700', marginTop: 6 },
     statLabel: { fontSize: 11, marginTop: 2 },
 
@@ -602,7 +618,7 @@ const styles = StyleSheet.create({
     emptySubtitle: { fontSize: 13, marginTop: 4 },
 
     // Job Card
-    jobCard: { borderRadius: 16, marginBottom: 12, borderWidth: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2, overflow: 'hidden' },
+    jobCard: { borderRadius: 16, marginBottom: 12, borderWidth: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, overflow: 'hidden' },
     jobCardHeader: { flexDirection: 'row', padding: 16, paddingBottom: 10 },
     jobCardLeft: { flex: 1 },
     jobName: { fontSize: 16, fontWeight: '700', marginBottom: 4 },

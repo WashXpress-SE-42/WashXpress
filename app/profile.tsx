@@ -25,6 +25,7 @@ import { useTheme } from '../context/ThemeContext';
 import { auth } from '../firebaseConfig';
 import { useProfile } from '../hooks/useProfile';
 import { apiFetch } from '../services/apiClient';
+import SkeletonLoader from '@/components/SkeletonLoader';
 
 interface Subscription {
   id: string;
@@ -52,7 +53,7 @@ export default function ProfileScreen() {
 
   const loadSubscription = async () => {
     try {
-      const res = await apiFetch('/subscriptions?status=active', {}, 'customer');
+      const res = await apiFetch('/subscriptions?status=active', { useCache: true }, 'customer');
       if (res.success && res.data.subscriptions?.length > 0) {
         setSubscription(res.data.subscriptions[0]);
       } else {
@@ -214,9 +215,17 @@ export default function ProfileScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading profile...</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Header title="My Profile" theme={isDark ? 'dark' : 'light'} />
+        <View style={{ alignItems: 'center', marginTop: 40, marginBottom: 20 }}>
+          <SkeletonLoader width={100} height={100} borderRadius={50} style={{ marginBottom: 16 }} />
+          <SkeletonLoader width={150} height={28} borderRadius={4} />
+        </View>
+        <View style={{ paddingHorizontal: 20 }}>
+          <SkeletonLoader width="100%" height={100} borderRadius={16} style={{ marginBottom: 24 }} />
+          <SkeletonLoader width="100%" height={100} borderRadius={16} style={{ marginBottom: 24 }} />
+          <SkeletonLoader width="100%" height={100} borderRadius={16} />
+        </View>
       </View>
     );
   }
