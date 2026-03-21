@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator, Alert, Modal, Platform, ScrollView,
-    StyleSheet, Text, TouchableOpacity, View, Linking,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+    ActivityIndicator, Alert,
+    Linking,
+    Modal, Platform, ScrollView,
+    StyleSheet, Text, TouchableOpacity, View,
+} from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useProfile } from '../hooks/useProfile';
