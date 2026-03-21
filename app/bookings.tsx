@@ -193,7 +193,7 @@ export default function BookingListScreen() {
 // ─── Booking Card ─────────────────────────────────────────────────────────────
 function BookingCard({ booking, colors, isDark, statusConfig }: { booking: Booking; colors: any; isDark: boolean; statusConfig: any }) {
     const cfg = statusConfig[booking.status] || statusConfig.pending;
-    const emoji = CATEGORY_EMOJI[booking.service?.categoryId] || '🚗';
+    const emoji = CATEGORY_EMOJI[booking.service?.categoryId] || '�';
     const isPending = booking.status === 'pending';
     const isInProgress = booking.status === 'in_progress';
 
