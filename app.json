@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "washxpress",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bimsara2k04.washxpress.dev"
@@ -17,21 +16,15 @@
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png",
-        "package": "com.washxpress.customer",
-        "adaptiveIcon": {
-          " monochromeImage": "./assets/images/android-icon-monochrome.png"
-        }
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "com.bimsara2k04.WashXpress",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
-      ],
-      "package": "com.bimsara2k04.WashXpress"
+      ]
     },
     "web": {
       "output": "static",
@@ -57,6 +50,14 @@
         {
           "locationAlwaysPermission": "Allow WashXpress to use your location to find the nearest car wash service.",
           "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "newArchEnabled": true
+          }
         }
       ]
     ],
